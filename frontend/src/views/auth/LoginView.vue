@@ -49,7 +49,15 @@ const handleSubmit = async () => {
   try {
     await authStore.login(form.value.email, form.value.password)
     toastStore.success(t.value('toast.loginSuccess'))
-    router.push('/dashboard')
+    
+    const role = authStore.userRole
+    if (role === 'ADMIN') {
+      router.push('/admin')
+    } else if (role === 'MENTOR') {
+      router.push('/mentor')
+    } else {
+      router.push('/login')
+    }
   } catch (error) {
     console.error('Login error:', error)
     if (error.response?.data?.message) {

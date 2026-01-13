@@ -9,14 +9,20 @@ const routes = [
         meta: { requiresAuth: false }
     },
     {
-        path: '/dashboard',
-        name: 'Dashboard',
+        path: '/admin',
+        name: 'AdminDashboard',
         component: () => import('@/views/dashboard/AdminDashboardView.vue'),
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, role: 'ADMIN' }
+    },
+    {
+        path: '/mentor',
+        name: 'MentorDashboard',
+        component: () => import('@/views/dashboard/MentorDashboardView.vue'),
+        meta: { requiresAuth: true, role: 'MENTOR' }
     },
     {
         path: '/',
-        redirect: '/dashboard'
+        redirect: '/login'
     }
 ]
 
@@ -28,14 +34,32 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
     const isAuthenticated = authStore.isAuthenticated
+    const userRole = authStore.userRole
 
     if (to.meta.requiresAuth && !isAuthenticated) {
         next({ name: 'Login' })
         return
     }
 
+    if (to.meta.role && to.meta.role !== userRole) {
+        if (userRole === 'ADMIN') {
+            next({ name: 'AdminDashboard' })
+        } else if (userRole === 'MENTOR') {
+            next({ name: 'MentorDashboard' })
+        } else {
+            next({ name: 'Login' })
+        }
+        return
+    }
+
     if (to.name === 'Login' && isAuthenticated) {
-        next({ name: 'Dashboard' })
+        if (userRole === 'ADMIN') {
+            next({ name: 'AdminDashboard' })
+        } else if (userRole === 'MENTOR') {
+            next({ name: 'MentorDashboard' })
+        } else {
+            next()
+        }
         return
     }
 

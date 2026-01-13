@@ -31,9 +31,11 @@ public class SecurityConfig {
 
     String[] PUBLIC_ENDPOINTS = {
             "/swagger-ui/**",
-            "/v3/api-docs/**",
+            "/v3/**",
             "/swagger-ui.html",
-            "/auth/**"
+            "/auth/**",
+            "/actuator/**",
+            "/error/**"
     };
     CustomJwtDecoder customJwtDecoder;
 
@@ -81,7 +83,7 @@ public class SecurityConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
         corsConfiguration.addAllowedMethod("*");
         corsConfiguration.addAllowedHeader("*");
         corsConfiguration.setAllowCredentials(true);
