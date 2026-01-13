@@ -7,6 +7,7 @@ import com.rikai.backend.dto.request.AuthenticationRequest;
 import com.rikai.backend.dto.response.AuthenticationResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.service.AuthenticationService;
+import com.rikai.backend.service.token.ITokenService;
 import jakarta.servlet.http.HttpServletResponse;
 
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthController {
     AuthenticationService authenticationService;
+    private final ITokenService tokenService;
 
     @PostMapping("/login")
     ApiResponse<AuthenticationResponse> authenticate(
@@ -39,7 +41,7 @@ public class AuthController {
         if (refreshToken == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        var result = authenticationService.refreshToken(refreshToken);
+        var result = tokenService.refreshToken(refreshToken);
         authenticationService.setAccessCookie(response, result.getAccessToken());
         return ApiResponse.buildSuccessResponse(result, SuccessCode.REFRESH_TOKEN_SUCCESSFUL);
     }
