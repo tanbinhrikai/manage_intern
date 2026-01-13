@@ -37,6 +37,11 @@
         "logout": "ログアウト",
         "greeting": "こんにちは"
     },
+    "toast": {
+        "loginSuccess": "ログインに成功しました！",
+        "logoutSuccess": "ログアウトしました！",
+        "error": "エラーが発生しました"
+    },
     "dashboard": {
         "title": "ダッシュボード概要",
         "totalInterns": "インターン総数",

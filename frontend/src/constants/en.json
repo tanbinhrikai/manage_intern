@@ -37,6 +37,11 @@
         "logout": "Logout",
         "greeting": "Hello"
     },
+    "toast": {
+        "loginSuccess": "Login successful!",
+        "logoutSuccess": "Logout successful!",
+        "error": "An error occurred"
+    },
     "dashboard": {
         "title": "Dashboard Overview",
         "totalInterns": "Total Interns",

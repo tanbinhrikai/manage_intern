@@ -3,10 +3,13 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/locales/locale'
+import { useToastStore } from '@/stores/toast'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
+const toastStore = useToastStore()
 
 const t = computed(() => localeStore.t)
 
@@ -18,7 +21,6 @@ const form = ref({
 const isLoading = ref(false)
 const errors = ref({})
 const apiError = ref('')
-const showLanguageDropdown = ref(false)
 
 const validateForm = () => {
   errors.value = {}
@@ -46,6 +48,7 @@ const handleSubmit = async () => {
   
   try {
     await authStore.login(form.value.email, form.value.password)
+    toastStore.success(t.value('toast.loginSuccess'))
     router.push('/dashboard')
   } catch (error) {
     console.error('Login error:', error)
@@ -60,79 +63,39 @@ const handleSubmit = async () => {
     isLoading.value = false
   }
 }
-
-const changeLanguage = (locale) => {
-  localeStore.setLocale(locale)
-  showLanguageDropdown.value = false
-}
-
-const toggleLanguageDropdown = () => {
-  showLanguageDropdown.value = !showLanguageDropdown.value
-}
-
-const closeDropdown = () => {
-  showLanguageDropdown.value = false
-}
 </script>
 
 <template>
-  <div class="login-container" @click="closeDropdown">
-    <!-- Language Switcher -->
-    <div class="language-switcher" @click.stop>
-      <button class="language-btn" @click="toggleLanguageDropdown">
-        <svg class="globe-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M2 12h20"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
-        <span>{{ t('language.' + localeStore.currentLocale) }}</span>
-        <svg class="chevron-icon" :class="{ 'rotate': showLanguageDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 9l6 6 6-6"/>
-        </svg>
-      </button>
-      <div v-if="showLanguageDropdown" class="language-dropdown">
-        <button 
-          v-for="locale in localeStore.availableLocales" 
-          :key="locale"
-          @click="changeLanguage(locale)"
-          :class="['dropdown-item', { 'active': locale === localeStore.currentLocale }]"
-        >
-          {{ t('language.' + locale) }}
-        </button>
-      </div>
+  <div class="login-container">
+    <div class="language-wrapper">
+      <LanguageSwitcher />
     </div>
 
     <div class="login-card">
-      <!-- Brand Header -->
       <div class="brand-header">
         <h1 class="brand-name">{{ t('login.brandName') }}</h1>
         <p class="brand-subtitle">{{ t('login.brandSubtitle') }}</p>
       </div>
 
-      <!-- Login Heading -->
       <h2 class="login-heading">{{ t('login.heading') }}</h2>
 
-      <!-- API Error Alert -->
       <div v-if="apiError" class="error-alert">
         {{ apiError }}
       </div>
 
-      <!-- Form -->
-      <form @submit.prevent="handleSubmit" class="login-form">
-        <!-- Email Field -->
+      <form @submit.prevent="handleSubmit" class="login-form" novalidate>
         <div class="form-group">
           <label for="email" class="form-label">{{ t('login.email') }}</label>
           <input
             id="email"
             v-model="form.email"
-            type="email"
+            type="text"
             autocomplete="email"
             :class="['form-input', { 'input-error': errors.email }]"
           />
           <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
         </div>
 
-        <!-- Password Field -->
         <div class="form-group">
           <label for="password" class="form-label">{{ t('login.password') }}</label>
           <input
@@ -145,7 +108,6 @@ const closeDropdown = () => {
           <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
         </div>
 
-        <!-- Submit Button -->
         <button
           type="submit"
           :disabled="isLoading"
@@ -164,7 +126,6 @@ const closeDropdown = () => {
         </button>
       </form>
 
-      <!-- Footer Link -->
       <div class="footer-link">
         <a href="#">{{ t('login.forgotPassword') }}</a>
       </div>
@@ -183,82 +144,10 @@ const closeDropdown = () => {
   position: relative;
 }
 
-.language-switcher {
+.language-wrapper {
   position: absolute;
   top: 20px;
   right: 20px;
-}
-
-.language-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
-  transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.language-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.globe-icon {
-  width: 18px;
-  height: 18px;
-  color: #6b7280;
-}
-
-.chevron-icon {
-  width: 16px;
-  height: 16px;
-  color: #9ca3af;
-  transition: transform 0.2s;
-}
-
-.chevron-icon.rotate {
-  transform: rotate(180deg);
-}
-
-.language-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  min-width: 140px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 100;
-}
-
-.dropdown-item {
-  width: 100%;
-  padding: 10px 14px;
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #374151;
-  transition: background 0.15s;
-}
-
-.dropdown-item:hover {
-  background: #f3f4f6;
-}
-
-.dropdown-item.active {
-  background: #eff6ff;
-  color: #3b82f6;
-  font-weight: 500;
 }
 
 .login-card {

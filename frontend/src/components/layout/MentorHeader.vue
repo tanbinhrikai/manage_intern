@@ -3,10 +3,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/locales/locale'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
+const toastStore = useToastStore()
 const t = computed(() => localeStore.t)
 
 const showLanguageDropdown = ref(false)
@@ -39,6 +41,7 @@ const goToProfile = () => {
 
 const handleLogout = () => {
   showUserDropdown.value = false
+  toastStore.success(t.value('toast.logoutSuccess'))
   authStore.logout()
 }
 </script>
