@@ -1,0 +1,86 @@
+{
+    "login": {
+        "brandName": "InternHub",
+        "brandSubtitle": "Internship management system",
+        "heading": "Login",
+        "email": "Email",
+        "password": "Password",
+        "loginButton": "Login",
+        "signingIn": "Signing in...",
+        "forgotPassword": "Forgot password?",
+        "validation": {
+            "emailRequired": "Email is required",
+            "emailInvalid": "Invalid email format",
+            "passwordRequired": "Password is required",
+            "passwordMinLength": "Password must be at least 8 characters"
+        },
+        "error": {
+            "loginFailed": "Login failed. Please try again."
+        }
+    },
+    "language": {
+        "en": "English",
+        "jp": "日本語"
+    },
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "interns": "Interns",
+        "mentors": "Mentors",
+        "systemConfig": "System Config",
+        "auditLog": "Audit Log",
+        "myInterns": "My Interns",
+        "reports": "Reports",
+        "settings": "Settings"
+    },
+    "header": {
+        "profile": "View Profile",
+        "logout": "Logout",
+        "greeting": "Hello"
+    },
+    "dashboard": {
+        "title": "Dashboard Overview",
+        "totalInterns": "Total Interns",
+        "internsActive": "Interns Active",
+        "internsWarning": "Interns Warning",
+        "totalMentors": "Total Mentors",
+        "internsByStatus": "Interns by Status",
+        "recentActivities": "Recent Activities",
+        "timeAgo": {
+            "minutesAgo": "{n} minutes ago",
+            "hourAgo": "1 hour ago",
+            "yesterday": "Yesterday",
+            "daysAgo": "{n} days ago"
+        },
+        "activities": {
+            "newIntern": "was added",
+            "mentorCompleted": "Mentor {mentor} completed weekly evaluation for {intern}",
+            "statusWarning": "Status of {name} changed to Warning",
+            "systemUpdate": "Admin updated system configuration",
+            "completed": "{name} completed internship program"
+        }
+    },
+    "mentorDashboard": {
+        "title": "Dashboard Mentor",
+        "internsNeedEvaluation": "Interns Need Evaluation This Week",
+        "position": "Position",
+        "deadline": "Deadline",
+        "week": "Week",
+        "submitReport": "Submit Report",
+        "evaluationProgress": "Evaluation Progress Overview",
+        "reportsCompleted": "{completed}/{total} weekly reports completed",
+        "internsUnderSupervision": "Interns Under My Supervision",
+        "table": {
+            "fullName": "Full Name",
+            "position": "Position",
+            "status": "Status",
+            "internshipDuration": "Internship Duration",
+            "actions": "Actions",
+            "viewDetails": "View Details"
+        },
+        "status": {
+            "active": "ACTIVE",
+            "warning": "WARNING",
+            "completed": "COMPLETED"
+        }
+    }
+}

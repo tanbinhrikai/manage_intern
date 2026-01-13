@@ -1,3 +1,43 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+:root {
+    /* Auth Layout Colors */
+    --auth-grid-color: rgba(99, 102, 241, 0.08);
+    --auth-gradient-start: rgba(15, 23, 42, 1);
+    --auth-gradient-end: rgba(79, 70, 229, 0.3);
+
+    /* Brand Colors */
+    --primary: 79 70 229;
+    --primary-foreground: 255 255 255;
+
+    /* Component Colors */
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 79 70 229;
+
+    /* Muted */
+    --muted: 71 85 105;
+    --muted-foreground: 148 163 184;
+
+    /* Destructive */
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

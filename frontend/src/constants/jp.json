@@ -1,0 +1,86 @@
+{
+    "login": {
+        "brandName": "InternHub",
+        "brandSubtitle": "インターンシップ管理システム",
+        "heading": "ログイン",
+        "email": "メールアドレス",
+        "password": "パスワード",
+        "loginButton": "ログイン",
+        "signingIn": "ログイン中...",
+        "forgotPassword": "パスワードをお忘れですか？",
+        "validation": {
+            "emailRequired": "メールアドレスは必須です",
+            "emailInvalid": "メールアドレスの形式が正しくありません",
+            "passwordRequired": "パスワードは必須です",
+            "passwordMinLength": "パスワードは8文字以上である必要があります"
+        },
+        "error": {
+            "loginFailed": "ログインに失敗しました。もう一度お試しください。"
+        }
+    },
+    "language": {
+        "en": "English",
+        "jp": "日本語"
+    },
+    "sidebar": {
+        "dashboard": "ダッシュボード",
+        "interns": "インターン",
+        "mentors": "メンター",
+        "systemConfig": "システム設定",
+        "auditLog": "監査ログ",
+        "myInterns": "担当インターン",
+        "reports": "レポート",
+        "settings": "設定"
+    },
+    "header": {
+        "profile": "プロフィール",
+        "logout": "ログアウト",
+        "greeting": "こんにちは"
+    },
+    "dashboard": {
+        "title": "ダッシュボード概要",
+        "totalInterns": "インターン総数",
+        "internsActive": "アクティブ",
+        "internsWarning": "警告",
+        "totalMentors": "メンター総数",
+        "internsByStatus": "ステータス別インターン",
+        "recentActivities": "最近の活動",
+        "timeAgo": {
+            "minutesAgo": "{n}分前",
+            "hourAgo": "1時間前",
+            "yesterday": "昨日",
+            "daysAgo": "{n}日前"
+        },
+        "activities": {
+            "newIntern": "が追加されました",
+            "mentorCompleted": "メンター{mentor}が{intern}の週次評価を完了しました",
+            "statusWarning": "{name}のステータスが警告に変更されました",
+            "systemUpdate": "管理者がシステム設定を更新しました",
+            "completed": "{name}がインターンシッププログラムを完了しました"
+        }
+    },
+    "mentorDashboard": {
+        "title": "メンターダッシュボード",
+        "internsNeedEvaluation": "今週評価が必要なインターン",
+        "position": "ポジション",
+        "deadline": "期限",
+        "week": "週",
+        "submitReport": "レポート提出",
+        "evaluationProgress": "評価進捗概要",
+        "reportsCompleted": "{completed}/{total}件の週次レポートが完了しました",
+        "internsUnderSupervision": "担当インターン一覧",
+        "table": {
+            "fullName": "氏名",
+            "position": "ポジション",
+            "status": "ステータス",
+            "internshipDuration": "インターン期間",
+            "actions": "アクション",
+            "viewDetails": "詳細を見る"
+        },
+        "status": {
+            "active": "アクティブ",
+            "warning": "警告",
+            "completed": "完了"
+        }
+    }
+}
