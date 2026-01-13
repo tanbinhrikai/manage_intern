@@ -77,7 +77,7 @@ public class TokenService implements ITokenService {
                 .issueTime(new Date())
                 .expirationTime(new Date(Instant.now().plus(ACCESS_TOKEN_EXPIRY, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", "ROLE_" + user.getRole())
+                .claim("scope", "ROLE_" + user.getRole().getRoleName())
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
         JWSObject jwsObject = new JWSObject(header, payload);
