@@ -4,7 +4,7 @@ import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportCreateDTO;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportUpdateDTO;
-import com.rikai.backend.dto.response.PageResponse;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.response.weeklyreport.WeeklyReportResponse;
 import com.rikai.backend.service.weeklyreport.IWeeklyReportService;
 import jakarta.validation.Valid;

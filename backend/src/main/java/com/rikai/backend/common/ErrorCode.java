@@ -33,13 +33,13 @@ public enum ErrorCode {
     DEPARTMENT_NOT_EXISTED("Department not found", HttpStatus.NOT_FOUND),
     POSITION_NOT_EXISTED("Position not found", HttpStatus.NOT_FOUND),
     MENTOR_NOT_EXISTED("Mentor not found", HttpStatus.NOT_FOUND),
+    ROLE_NOT_EXISTED("Role not found", HttpStatus.NOT_FOUND),
     INVALID_DATE_RANGE("End date must be after start date", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED),
     USERNAME_OR_PASSWORD_INCORRECT("Incorrect username or password.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
     // Weekly Report errors
-
     WEEKLY_REPORT_NOT_EXISTED("Weekly report not found", HttpStatus.NOT_FOUND),
     WEEKLY_REPORT_DUPLICATE("Weekly report already exists for this intern and week", HttpStatus.BAD_REQUEST),
     INTERN_ID_REQUIRED("Intern ID is required", HttpStatus.BAD_REQUEST),

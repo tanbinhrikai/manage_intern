@@ -1,9 +1,8 @@
 package com.rikai.backend.service.user;
 
 import com.rikai.backend.common.ErrorCode;
-import com.rikai.backend.dto.request.user.UserCreateDTO;
-import com.rikai.backend.dto.request.user.UserUpdateDTO;
-import com.rikai.backend.dto.response.PageResponse;
+import com.rikai.backend.dto.request.user.UserCreationRequest;
+import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
@@ -22,49 +21,34 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UserService implements IUserService {
+public class UsersService implements IUserService {
     UsersRepository usersRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
-    private final RolesRepository rolesRepository;
-    private final DepartmentRepository departmentRepository;
-
+    RolesRepository rolesRepository;
+    DepartmentRepository departmentRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<UserResponse> getAllMentorUsers(Pageable pageable) {
-        Page<Users> usersPage = usersRepository.findAllMentorUsers(pageable);
-        List<UserResponse> userResponses = usersPage.getContent().stream()
-                .map(UserResponse::fromUser)
-                .toList();
-        return PageResponse.<UserResponse>builder()
-                .items(userResponses)
-                .currentPage(usersPage.getNumber())
-                .totalPages(usersPage.getTotalPages())
-                .totalItems(usersPage.getTotalElements())
-                .pageSize(usersPage.getSize())
-                .build();
+    public Page<UserResponse> getAllMentorUsers(Pageable pageable) {
+        return usersRepository.findAllMentorUsers(pageable)
+                .map(userMapper::toUserResponse);
     }
 
     @Override
     @Transactional
-    public UserResponse createUser(UserCreateDTO userCreateDTO) {
+    public UserResponse createUser(UserCreationRequest userCreateDTO) {
         if (usersRepository.findByEmail(userCreateDTO.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
-        Users user = Users.builder()
-                .email(userCreateDTO.getEmail())
-                .passwordHash(userCreateDTO.getPassword())
-                .fullName(userCreateDTO.getFullName())
-                .dateOfBirth(userCreateDTO.getDateOfBirth())
-                .build();
+        Users user = userMapper.toUser(userCreateDTO);
+        user.setActive(true);
         Optional<Roles> role = rolesRepository.findByRoleName("MENTOR");
         user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
         role.ifPresent(user::setRole);
@@ -73,34 +57,36 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public UserResponse updateUser(UUID id, UserUpdateDTO userUpdateDTO) {
+    public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        if (userUpdateDTO.getEmail() != null) {
-            user.setEmail(userUpdateDTO.getEmail());
-        }
-        if (userUpdateDTO.getFullName() != null) {
-            user.setFullName(userUpdateDTO.getFullName());
-        }
-        if (userUpdateDTO.getDateOfBirth() != null) {
-            user.setDateOfBirth(userUpdateDTO.getDateOfBirth());
-        }
+
+        userMapper.updateUser(user, userUpdateDTO);
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
         }
-        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
-        user.setDepartment(department);
+
+        if (userUpdateDTO.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            user.setDepartment(department);
+        }
+
+        if (userUpdateDTO.getRoleName() != null) {
+            Roles role = rolesRepository.findById(userUpdateDTO.getRoleName())
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+            user.setRole(role);
+        }
+
         Users savedUser = usersRepository.save(user);
-        return UserResponse.fromUser(savedUser);
+        return userMapper.toUserResponse(savedUser);
     }
 
     @Override
-    public UserResponse toggleStatus(UUID id) {
+    public void changeStatus(UUID id, boolean isActive) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        user.setActive(!user.isActive());
-        Users savedUser = usersRepository.save(user);
-        return UserResponse.fromUser(savedUser);
+        user.setActive(isActive);
+        usersRepository.save(user);
     }
 }

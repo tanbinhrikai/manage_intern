@@ -3,7 +3,7 @@ package com.rikai.backend.service.weeklyreport;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportCreateDTO;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportUpdateDTO;
-import com.rikai.backend.dto.response.PageResponse;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.response.weeklyreport.WeeklyReportResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Intern;
