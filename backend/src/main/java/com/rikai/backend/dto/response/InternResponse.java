@@ -1,0 +1,27 @@
+package com.rikai.backend.dto.response;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rikai.backend.common.InternStatus;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.Instant;
+import java.time.LocalDate;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class InternResponse {
+    Long id;
+    String fullName;
+    PositionResponse position;
+    MentorResponse mentor;
+    LocalDate startDate;
+    LocalDate endDate;
+    InternStatus internStatus;
+    Instant createdAt;
+    Instant updatedAt;
+}

@@ -9,16 +9,16 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface IWeeklyReportService {
-    
-    PageResponse<WeeklyReportResponse> getAllReports(Pageable pageable, Integer internId);
-    
+
+    PageResponse<WeeklyReportResponse> getAllReports(Pageable pageable, Long internId);
+
     WeeklyReportResponse getReportById(Integer id);
-    
+
     WeeklyReportResponse createReport(WeeklyReportCreateDTO createDTO);
-    
+
     WeeklyReportResponse updateReport(Integer id, WeeklyReportUpdateDTO updateDTO);
-    
+
     void deleteReport(Integer id);
-    
-    List<WeeklyReportResponse> getReportsByInternId(Integer internId);
+
+    List<WeeklyReportResponse> getReportsByInternId(Long internId);
 }

@@ -1,6 +1,6 @@
 package com.rikai.backend.dto.response.user;
 
-import com.rikai.backend.dto.request.user.DepartmentResponse;
+import com.rikai.backend.dto.response.DepartmentResponse;
 import com.rikai.backend.model.Department;
 import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
@@ -19,6 +19,7 @@ public class UserResponse {
     private String email;
     private String fullName;
     private LocalDate dateOfBirth;
+    @Builder.Default
     private boolean isActive = true;
     private Instant createdAt;
     private Instant updatedAt;
@@ -33,7 +34,7 @@ public class UserResponse {
         if (user.getDepartment() != null) {
             deptResponse = DepartmentResponse.builder()
                     .id(user.getDepartment().getId())
-                    .name(user.getDepartment().getName())
+                    .title(user.getDepartment().getTitle())
                     .build();
         }
         return UserResponse.builder()

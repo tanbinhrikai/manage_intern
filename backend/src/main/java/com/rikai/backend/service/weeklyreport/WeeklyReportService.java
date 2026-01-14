@@ -11,7 +11,7 @@ import com.rikai.backend.model.Users;
 import com.rikai.backend.model.WeeklyReport;
 import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.WeeklyReportRepository;
-import com.rikai.backend.service.AuthenticationService;
+import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class WeeklyReportService implements IWeeklyReportService {
-    
+
     WeeklyReportRepository weeklyReportRepository;
     InternRepository internRepository;
     AuthenticationService authenticationService;
-    
+
     /**
      * Calculate week number from intern start_date
      */
@@ -44,7 +44,7 @@ public class WeeklyReportService implements IWeeklyReportService {
         long daysBetween = ChronoUnit.DAYS.between(internStartDate, weekStartDate);
         return (int) (daysBetween / 7) + 1;
     }
-    
+
     /**
      * Check if current user is admin or mentor of the intern
      */
@@ -56,20 +56,20 @@ public class WeeklyReportService implements IWeeklyReportService {
             return true;
         }
         if ("MENTOR".equals(currentUser.getRole().getRoleName())) {
-            return intern.getMentor() != null && 
-                   intern.getMentor().getId().equals(currentUser.getId());
+            return intern.getMentor() != null &&
+                    intern.getMentor().getId().equals(currentUser.getId());
         }
         return false;
     }
-    
+
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<WeeklyReportResponse> getAllReports(Pageable pageable, Integer internId) {
+    public PageResponse<WeeklyReportResponse> getAllReports(Pageable pageable, Long internId) {
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        
+
         Page<WeeklyReport> reportsPage;
         if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
             if (internId != null) {
@@ -80,36 +80,36 @@ public class WeeklyReportService implements IWeeklyReportService {
         } else {
             if (internId != null) {
                 Intern intern = internRepository.findById(internId)
-                    .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+                        .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
                 if (!hasAccessToIntern(intern, currentUser)) {
                     throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
                 }
                 reportsPage = weeklyReportRepository.findByMentorIdAndInternId(
-                    currentUser.getId(), internId, pageable);
+                        currentUser.getId(), internId, pageable);
             } else {
                 reportsPage = weeklyReportRepository.findByMentorId(currentUser.getId(), pageable);
             }
         }
-        
+
         List<WeeklyReportResponse> responses = reportsPage.getContent().stream()
-            .map(WeeklyReportResponse::fromWeeklyReport)
-            .collect(Collectors.toList());
-        
+                .map(WeeklyReportResponse::fromWeeklyReport)
+                .collect(Collectors.toList());
+
         return PageResponse.<WeeklyReportResponse>builder()
-            .items(responses)
-            .currentPage(reportsPage.getNumber())
-            .totalPages(reportsPage.getTotalPages())
-            .totalItems(reportsPage.getTotalElements())
-            .pageSize(reportsPage.getSize())
-            .build();
+                .items(responses)
+                .currentPage(reportsPage.getNumber())
+                .totalPages(reportsPage.getTotalPages())
+                .totalItems(reportsPage.getTotalElements())
+                .pageSize(reportsPage.getSize())
+                .build();
     }
-    
+
     @Override
     @Transactional(readOnly = true)
     public WeeklyReportResponse getReportById(Integer id) {
         WeeklyReport report = weeklyReportRepository.findById(id)
-            .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
+
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -117,10 +117,10 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (!hasAccessToIntern(report.getIntern(), currentUser)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
-        
+
         return WeeklyReportResponse.fromWeeklyReport(report);
     }
-    
+
     @Override
     @Transactional
     public WeeklyReportResponse createReport(WeeklyReportCreateDTO createDTO) {
@@ -129,41 +129,41 @@ public class WeeklyReportService implements IWeeklyReportService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         Intern intern = internRepository.findById(createDTO.getInternId())
-            .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+
         if (!hasAccessToIntern(intern, currentUser)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
         if (weeklyReportRepository.findByInternIdAndWeekStartDate(
-            createDTO.getInternId(), createDTO.getWeekStartDate()).isPresent()) {
+                createDTO.getInternId(), createDTO.getWeekStartDate()).isPresent()) {
             throw new AppException(ErrorCode.WEEKLY_REPORT_DUPLICATE);
         }
         Integer weekNumber = calculateWeekNumber(createDTO.getWeekStartDate(), intern.getStartDate());
         WeeklyReport report = WeeklyReport.builder()
-            .intern(intern)
-            .mentor(currentUser)
-            .weekNumber(weekNumber)
-            .weekStartDate(createDTO.getWeekStartDate())
-            .tasksAssigned(createDTO.getTasksAssigned())
-            .tasksCompleted(createDTO.getTasksCompleted())
-            .outputQuality(createDTO.getOutputQuality())
-            .proactivityScore(createDTO.getProactivityScore())
-            .progressScore(createDTO.getProgressScore())
-            .issuesRisks(createDTO.getIssuesRisks())
-            .mentorOverallComment(createDTO.getMentorOverallComment())
-            .status("submitted")
-            .build();
-        
+                .intern(intern)
+                .mentor(currentUser)
+                .weekNumber(weekNumber)
+                .weekStartDate(createDTO.getWeekStartDate())
+                .tasksAssigned(createDTO.getTasksAssigned())
+                .tasksCompleted(createDTO.getTasksCompleted())
+                .outputQuality(createDTO.getOutputQuality())
+                .proactivityScore(createDTO.getProactivityScore())
+                .progressScore(createDTO.getProgressScore())
+                .issuesRisks(createDTO.getIssuesRisks())
+                .mentorOverallComment(createDTO.getMentorOverallComment())
+                .status("submitted")
+                .build();
+
         WeeklyReport savedReport = weeklyReportRepository.save(report);
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
     }
-    
+
     @Override
     @Transactional
     public WeeklyReportResponse updateReport(Integer id, WeeklyReportUpdateDTO updateDTO) {
         WeeklyReport report = weeklyReportRepository.findById(id)
-            .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
+
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -174,17 +174,17 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (updateDTO.getWeekStartDate() != null) {
             if (!updateDTO.getWeekStartDate().equals(report.getWeekStartDate())) {
                 if (weeklyReportRepository.findByInternIdAndWeekStartDate(
-                    report.getIntern().getId(), updateDTO.getWeekStartDate()).isPresent()) {
+                        report.getIntern().getId(), updateDTO.getWeekStartDate()).isPresent()) {
                     throw new AppException(ErrorCode.WEEKLY_REPORT_DUPLICATE);
                 }
                 report.setWeekStartDate(updateDTO.getWeekStartDate());
                 // Recalculate week_number
                 Integer weekNumber = calculateWeekNumber(
-                    updateDTO.getWeekStartDate(), report.getIntern().getStartDate());
+                        updateDTO.getWeekStartDate(), report.getIntern().getStartDate());
                 report.setWeekNumber(weekNumber);
             }
         }
-        
+
         if (updateDTO.getTasksAssigned() != null) {
             report.setTasksAssigned(updateDTO.getTasksAssigned());
         }
@@ -209,17 +209,17 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (updateDTO.getStatus() != null) {
             report.setStatus(updateDTO.getStatus());
         }
-        
+
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
-    
+
     @Override
     @Transactional
     public void deleteReport(Integer id) {
         WeeklyReport report = weeklyReportRepository.findById(id)
-            .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
+
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -227,16 +227,16 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (!hasAccessToIntern(report.getIntern(), currentUser)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
-        
+
         weeklyReportRepository.delete(report);
     }
-    
+
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyReportResponse> getReportsByInternId(Integer internId) {
+    public List<WeeklyReportResponse> getReportsByInternId(Long internId) {
         Intern intern = internRepository.findById(internId)
-            .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
-        
+                .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -244,10 +244,10 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (!hasAccessToIntern(intern, currentUser)) {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
-        
+
         List<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId);
         return reports.stream()
-            .map(WeeklyReportResponse::fromWeeklyReport)
-            .collect(Collectors.toList());
+                .map(WeeklyReportResponse::fromWeeklyReport)
+                .collect(Collectors.toList());
     }
 }

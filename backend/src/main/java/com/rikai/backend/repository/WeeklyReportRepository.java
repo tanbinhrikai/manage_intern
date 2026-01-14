@@ -18,64 +18,70 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Inte
 
     /**
      * Find a weekly report by intern_id and week_start_date
+     * 
      * @param internId
      * @param weekStartDate
      * @return
      */
-    Optional<WeeklyReport> findByInternIdAndWeekStartDate(Integer internId, LocalDate weekStartDate);
+    Optional<WeeklyReport> findByInternIdAndWeekStartDate(Long internId, LocalDate weekStartDate);
 
     /**
      * Find all reports by intern_id with pagination
+     * 
      * @param internId
      * @param pageable
      * @return
      */
-    Page<WeeklyReport> findByInternId(Integer internId, Pageable pageable);
+    Page<WeeklyReport> findByInternId(Long internId, Pageable pageable);
 
     /**
      * Find all reports by intern_id ordered by week_start_date descending
+     * 
      * @param internId
      * @return
      */
-    List<WeeklyReport> findByInternIdOrderByWeekStartDateDesc(Integer internId);
-    
+    List<WeeklyReport> findByInternIdOrderByWeekStartDateDesc(Long internId);
+
     /**
      * Find reports by mentor_id with pagination
+     * 
      * @param mentorId
      * @param pageable
      * @return
      */
     Page<WeeklyReport> findByMentorId(UUID mentorId, Pageable pageable);
-    
+
     /**
      * Find reports by mentor_id and intern_id with pagination
+     * 
      * @param mentorId
      * @param internId
      * @param pageable
      * @return
      */
-    Page<WeeklyReport> findByMentorIdAndInternId(UUID mentorId, Integer internId, Pageable pageable);
-    
+    Page<WeeklyReport> findByMentorIdAndInternId(UUID mentorId, Long internId, Pageable pageable);
+
     /**
      * Find reports by intern_id within a date range
+     * 
      * @param internId
      * @param startDate
      * @param endDate
      * @return
      */
     @Query("SELECT wr FROM WeeklyReport wr WHERE wr.intern.id = :internId " +
-           "AND wr.weekStartDate >= :startDate AND wr.weekStartDate <= :endDate " +
-           "ORDER BY wr.weekStartDate DESC")
+            "AND wr.weekStartDate >= :startDate AND wr.weekStartDate <= :endDate " +
+            "ORDER BY wr.weekStartDate DESC")
     List<WeeklyReport> findByInternIdAndDateRange(
-        @Param("internId") Integer internId,
-        @Param("startDate") LocalDate startDate,
-        @Param("endDate") LocalDate endDate
-    );
-    
+            @Param("internId") Long internId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
     /**
      * Count reports by intern_id
+     * 
      * @param internId
      * @return
      */
-    long countByInternId(Integer internId);
+    long countByInternId(Long internId);
 }

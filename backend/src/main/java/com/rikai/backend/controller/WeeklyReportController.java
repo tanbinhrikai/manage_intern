@@ -23,9 +23,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class WeeklyReportController {
-    
+
     IWeeklyReportService weeklyReportService;
-    
+
     /**
      * GET /weekly-reports
      * Get all weekly reports (with pagination and optional intern filter)
@@ -35,15 +35,14 @@ public class WeeklyReportController {
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<WeeklyReportResponse>> getAllReports(
-            @RequestParam(required = false) Integer internId,
+            @RequestParam(required = false) Long internId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(defaultValue = "10") int limit) {
         Pageable pageable = PageRequest.of(page, limit);
         PageResponse<WeeklyReportResponse> result = weeklyReportService.getAllReports(pageable, internId);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
     }
-    
+
     /**
      * GET /weekly-reports/{id}
      * Get weekly report by ID
@@ -54,7 +53,7 @@ public class WeeklyReportController {
         WeeklyReportResponse result = weeklyReportService.getReportById(id);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_WEEKLY_REPORT_SUCCESSFUL);
     }
-    
+
     /**
      * POST /weekly-reports
      * Create new weekly report
@@ -64,12 +63,11 @@ public class WeeklyReportController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<WeeklyReportResponse> createReport(
-            @Valid @RequestBody WeeklyReportCreateDTO createDTO
-    ) {
+            @Valid @RequestBody WeeklyReportCreateDTO createDTO) {
         WeeklyReportResponse result = weeklyReportService.createReport(createDTO);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.CREATE_WEEKLY_REPORT_SUCCESSFUL);
     }
-    
+
     /**
      * PUT /weekly-reports/{id}
      * Update weekly report
@@ -78,12 +76,11 @@ public class WeeklyReportController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<WeeklyReportResponse> updateReport(
             @PathVariable Integer id,
-            @Valid @RequestBody WeeklyReportUpdateDTO updateDTO
-    ) {
+            @Valid @RequestBody WeeklyReportUpdateDTO updateDTO) {
         WeeklyReportResponse result = weeklyReportService.updateReport(id, updateDTO);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.UPDATE_WEEKLY_REPORT_SUCCESSFUL);
     }
-    
+
     /**
      * DELETE /weekly-reports/{id}
      * Delete weekly report
@@ -94,7 +91,7 @@ public class WeeklyReportController {
         weeklyReportService.deleteReport(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_WEEKLY_REPORT_SUCCESSFUL);
     }
-    
+
     /**
      * GET /interns/{internId}/weekly-reports
      * Get all weekly reports for a specific intern
@@ -102,8 +99,7 @@ public class WeeklyReportController {
     @GetMapping("/interns/{internId}/weekly-reports")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<List<WeeklyReportResponse>> getReportsByInternId(
-            @PathVariable Integer internId
-    ) {
+            @PathVariable Long internId) {
         List<WeeklyReportResponse> result = weeklyReportService.getReportsByInternId(internId);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
     }

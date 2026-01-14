@@ -9,7 +9,7 @@ import com.rikai.backend.dto.response.PageResponse;
 import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Users;
-import com.rikai.backend.service.AuthenticationService;
+import com.rikai.backend.service.auth.AuthenticationService;
 import com.rikai.backend.service.user.IUserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -35,8 +35,7 @@ public class UserController {
     public ApiResponse<PageResponse<UserResponse>> getAllUser(
             @RequestParam(defaultValue = "", required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit
-    ) {
+            @RequestParam(defaultValue = "10") int limit) {
         Pageable pageable = PageRequest.of(page, limit);
         PageResponse<UserResponse> result = userService.getAllMentorUsers(pageable);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
@@ -48,18 +47,17 @@ public class UserController {
         UserResponse createdUser = userService.createUser(userCreateDTO);
         return ApiResponse.buildSuccessResponse(
                 createdUser,
-                SuccessCode.CREATE_USER_SUCCESSFUL
-        );
+                SuccessCode.CREATE_USER_SUCCESSFUL);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<UserResponse> updateUser(@PathVariable("id") String id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
+    public ApiResponse<UserResponse> updateUser(@PathVariable("id") String id,
+            @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         UserResponse updatedUser = userService.updateUser(UUID.fromString(id), userUpdateDTO);
         return ApiResponse.buildSuccessResponse(
                 updatedUser,
-                SuccessCode.UPDATE_USER_SUCCESSFUL
-        );
+                SuccessCode.UPDATE_USER_SUCCESSFUL);
     }
 
     @PatchMapping("/status/{id}")
@@ -68,8 +66,7 @@ public class UserController {
         UserResponse response = userService.toggleStatus(id);
         return ApiResponse.buildSuccessResponse(
                 response,
-                SuccessCode.UPDATE_USER_SUCCESSFUL
-        );
+                SuccessCode.UPDATE_USER_SUCCESSFUL);
     }
 
     @GetMapping("/get-my-info")

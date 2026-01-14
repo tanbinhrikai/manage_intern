@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Builder
 public class WeeklyReportResponse {
     private Integer id;
-    private Integer internId;
+    private Long internId;
     private String internName;
     private String mentorId;
     private String mentorName;
@@ -29,12 +29,12 @@ public class WeeklyReportResponse {
     private String status;
     private Instant createdAt;
     private Instant updatedAt;
-    
+
     public static WeeklyReportResponse fromWeeklyReport(WeeklyReport report) {
         if (report == null) {
             return null;
         }
-        
+
         return WeeklyReportResponse.builder()
                 .id(report.getId())
                 .internId(report.getIntern() != null ? report.getIntern().getId() : null)

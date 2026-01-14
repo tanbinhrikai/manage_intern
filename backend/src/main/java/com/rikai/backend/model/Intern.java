@@ -1,7 +1,6 @@
 package com.rikai.backend.model;
 
-import com.rikai.backend.model.Enum.InternStatus;
-import com.rikai.backend.model.Enum.OfferStatus;
+import com.rikai.backend.common.InternStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,54 +16,30 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "interns")
 public class Intern {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @Column(name = "full_name", nullable = false)
     String fullName;
 
-    @Column(name = "email", unique = true)
-    String email;
-
-    @Column(name = "phone")
-    String phone;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
-    JobPosition position;
+    Position position;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "batch_id", referencedColumnName = "id")
-    InternshipBatch batch;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mentor_id", referencedColumnName = "id")
+    @ManyToOne
+    @JoinColumn(name = "mentor_id", referencedColumnName = "id", nullable = false)
     Users mentor;
 
     @Column(name = "start_date", nullable = false)
     LocalDate startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     LocalDate endDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    @Builder.Default
-    InternStatus status = InternStatus.ACTIVE;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "offer_status")
-    @Builder.Default
-    OfferStatus offerStatus = OfferStatus.NONE;
-
-    @Column(name = "offer_date")
-    LocalDate offerDate;
-
-    @Column(name = "offer_notes", columnDefinition = "TEXT")
-    String offerNotes;
+    @Column(name = "intern_status", nullable = false)
+    InternStatus internStatus;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -73,4 +48,11 @@ public class Intern {
     @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
+
+    @PrePersist
+    public void setDefaultStatus() {
+        if (internStatus == null) {
+            internStatus = InternStatus.ACTIVE;
+        }
+    }
 }

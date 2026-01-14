@@ -12,15 +12,12 @@ import java.time.LocalDate;
 public class UserUpdateDTO {
     @Email(message = "INVALID_EMAIL")
     private String email;
-    @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
-            message = "PASSWORD_WEAK"
-    )
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$", message = "PASSWORD_WEAK")
     private String password;
     @NotBlank(message = "INVALID_FULLNAME")
     private String fullName;
     @DobConstraint(min = 18)
     private LocalDate dateOfBirth;
     private boolean isActive;
-    private Integer departmentId;
+    private Long departmentId;
 }

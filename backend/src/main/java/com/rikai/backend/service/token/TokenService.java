@@ -52,6 +52,9 @@ public class TokenService implements ITokenService {
 
     @Override
     public AuthenticationResponse refreshToken(String refreshToken) {
+        if (refreshToken == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
         var tokenInDB = refreshTokenRepository.findByRefreshToken(hashToken(refreshToken))
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
