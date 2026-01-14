@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public interface UserService {
+public interface IUserService {
     UserListResponse getAllUsers();
     UserResponse createUser(UserCreationRequest request);
     UserResponse updateUser(UUID id, UserUpdateRequest request);

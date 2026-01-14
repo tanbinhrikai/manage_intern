@@ -7,12 +7,11 @@ import com.rikai.backend.dto.request.UserUpdateRequest;
 import com.rikai.backend.dto.request.UserStatusUpdateRequest;
 import com.rikai.backend.dto.response.UserListResponse;
 import com.rikai.backend.dto.response.UserResponse;
-import com.rikai.backend.service.user.UserService;
+import com.rikai.backend.service.user.IUserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
@@ -21,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
-    UserService userService;
+    IUserService userService;
 
     @GetMapping
     public ApiResponse<UserListResponse> getAllUsers() {
