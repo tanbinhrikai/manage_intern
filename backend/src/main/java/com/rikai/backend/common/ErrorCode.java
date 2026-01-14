@@ -31,6 +31,7 @@ public enum ErrorCode {
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED),
     USERNAME_OR_PASSWORD_INCORRECT("Incorrect username or password.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
+    DEPARTMENT_NOT_EXISTED("Department not found", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(String message, HttpStatusCode statusCode) {

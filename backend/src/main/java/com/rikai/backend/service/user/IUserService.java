@@ -1,17 +1,18 @@
 package com.rikai.backend.service.user;
 
 import com.rikai.backend.dto.request.UserCreationRequest;
-import com.rikai.backend.dto.request.UserUpdateRequest;
-import com.rikai.backend.dto.request.UserStatusUpdateRequest;
-import com.rikai.backend.dto.response.UserListResponse;
-import com.rikai.backend.dto.response.UserResponse;
-import org.springframework.stereotype.Service;
+import com.rikai.backend.dto.request.user.UserCreateDTO;
+import com.rikai.backend.dto.request.user.UserUpdateDTO;
+import com.rikai.backend.model.Users;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+
 import java.util.UUID;
 
-@Service
 public interface IUserService {
-    UserListResponse getAllUsers();
-    UserResponse createUser(UserCreationRequest request);
-    UserResponse updateUser(UUID id, UserUpdateRequest request);
-    UserResponse changeUserStatus(UserStatusUpdateRequest request);
+    Page<Users> getAllMentorUsers(PageRequest pageRequest);
+    Users createUser(UserCreateDTO userCreateDTO);
+    Users updateUser(UUID id, UserUpdateDTO userUpdateDTO);
+
+    void changeStatus(UUID id, boolean isActive);
 }

@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Các style khác của bạn ở dưới */
 
 :root {
     --auth-grid-color: rgba(99, 102, 241, 0.08);
@@ -35,4 +39,17 @@ body {
     color: rgb(var(--foreground));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+body, #app {
+  background-color: #f3f4f6 !important; /* Màu xám nhạt (bg-gray-100) */
+  color: #1f2937 !important; /* Màu chữ đen xám (text-gray-800) */
+  min-height: 100vh;
+}
+
+/* Fix lỗi input bị mất viền */
+@layer base {
+  input, select, textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
 }

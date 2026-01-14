@@ -1,15 +1,16 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.request.user;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import java.util.List;
+
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserListResponse {
-    List<UserResponse> users;
-    long total;
+public class UserStatusUpdateDTO {
+    UUID id;
+    boolean isActive;
 }

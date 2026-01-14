@@ -1,6 +1,7 @@
 package com.rikai.backend.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rikai.backend.dto.response.user.UserResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

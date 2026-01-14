@@ -2,7 +2,7 @@ package com.rikai.backend.mapper;
 
 import com.rikai.backend.dto.request.UserCreationRequest;
 import com.rikai.backend.dto.request.UserUpdateRequest;
-import com.rikai.backend.dto.response.UserResponse;
+import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.model.Users;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

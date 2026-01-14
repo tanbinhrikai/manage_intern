@@ -23,7 +23,7 @@ public class Users {
     @Column(name = "id", nullable = false, updatable = false)
     UUID id;
 
-    @Column(name = "email", length = 100 , nullable = false)
+    @Column(name = "email", length = 100, nullable = false)
     String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -54,4 +54,12 @@ public class Users {
             nullable = false
     )
     Roles role;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "department_id",
+            referencedColumnName = "id",
+            nullable = true
+    )
+    Department department;
 }
