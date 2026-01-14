@@ -19,5 +19,5 @@ public interface IUserService {
     Users createUser(UserCreateDTO userCreateDTO);
     Users updateUser(UUID id, UserUpdateDTO userUpdateDTO);
 
-    void changeStatus(UUID id, boolean isActive);
+    UserResponse toggleStatus(UUID id);
 }

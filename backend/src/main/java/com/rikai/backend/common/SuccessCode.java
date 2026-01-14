@@ -30,6 +30,8 @@ public enum SuccessCode {
     DELETE_PRODUCT_SUCCESSFUL("Delete product successful", HttpStatus.OK),
 
     CHANGE_PASSWORD_SUCCESSFUL("Change password successful", HttpStatus.OK),
+
+    GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK)
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {

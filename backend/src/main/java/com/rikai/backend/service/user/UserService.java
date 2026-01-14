@@ -95,10 +95,11 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public void changeStatus(UUID id, boolean isActive) {
+    public UserResponse toggleStatus(UUID id) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        user.setActive(isActive);
-        usersRepository.save(user);
+        user.setActive(!user.isActive());
+        Users savedUser = usersRepository.save(user);
+        return UserResponse.fromUser(savedUser);
     }
 }

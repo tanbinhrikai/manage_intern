@@ -9,9 +9,6 @@ export function createMentor(data) {
 export function updateMentor(id, data) {
   return http.put(`/users/${id}`, data);
 }
-// export function lockMentor(id, isActive) {
-//   return http.patch('/users/status', { id, isActive })
-// @PostMapping("/status/{id}/{active}")
-export function lockMentor(id, isActive) {
-  return http.patch(`/users/status/${id}/${isActive}`);
+export function toggleUserStatus(id) {
+  return http.patch(`/users/status/${id}`);
 }

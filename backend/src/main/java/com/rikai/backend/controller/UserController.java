@@ -60,13 +60,12 @@ public class UserController {
         );
     }
 
-    @PostMapping("/status/{id}/{active}")
+    @PatchMapping("/status/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ApiResponse<UserResponse> changeUserStatus(@Valid @PathVariable UUID id,
-                                                      @Valid @PathVariable int active) {
-        userService.changeStatus(java.util.UUID.fromString(String.valueOf(id)), active > 0);
+    public ApiResponse<UserResponse> toggleUserStatus(@PathVariable UUID id) {
+        UserResponse response = userService.toggleStatus(id);
         return ApiResponse.buildSuccessResponse(
-                null,
+                response, // Trả về object đã update để Frontend cập nhật UI ngay
                 SuccessCode.UPDATE_USER_SUCCESSFUL
         );
     }

@@ -4,21 +4,25 @@
       <h2 class="text-2xl font-bold text-gray-800 mb-8 tracking-tight">
         Quản lý Mentor
       </h2>
+      
       <div class="flex justify-between items-center mb-6">
         <div class="flex gap-4 w-1/2">
-          <input
-            v-model="searchName"
-            class="w-full border border-gray-300 rounded px-4 py-2 text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
-            placeholder=" " />
-          <input
-            v-model="searchTeam"
-            class="w-full border border-gray-300 rounded px-4 py-2 text-gray-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
-            placeholder=" " />
+          <input 
+            v-model="searchName" 
+            class="w-full border border-gray-300 rounded px-4 py-2 text-gray-700 focus:outline-none focus:border-blue-500 placeholder-gray-400" 
+            placeholder="Tìm theo tên..." 
+          />
+          <input 
+            v-model="searchTeam" 
+            class="w-full border border-gray-300 rounded px-4 py-2 text-gray-700 focus:outline-none focus:border-blue-500 placeholder-gray-400" 
+            placeholder="Tìm theo phòng ban..." 
+          />
         </div>
-
-        <button
-          @click="openAddMentor"
-          class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium transition-colors duration-200 shadow-sm">
+        
+        <button 
+          @click="openAddMentor" 
+          class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium transition-colors duration-200 shadow-sm"
+        >
           Thêm Mentor mới
         </button>
       </div>
@@ -29,19 +33,13 @@
         :total-pages="totalPages"
         @edit="openEditMentor"
         @detail="openDetailMentor"
-        @page-change="changePage" />
+        @toggle-status="handleToggleStatus" 
+        @page-change="changePage"
+      />
     </div>
 
-    <MentorFormModal
-      v-if="showMentorForm"
-      :mentor="selectedMentor"
-      @close="closeMentorForm"
-      @saved="handleSaveMentor" />
-
-    <MentorDetailModal
-      v-if="showMentorDetail"
-      :mentor="selectedMentor"
-      @close="closeMentorDetail" />
+    <MentorFormModal v-if="showMentorForm" :mentor="selectedMentor" @close="closeMentorForm" @saved="handleSaveMentor" />
+    <MentorDetailModal v-if="showMentorDetail" :mentor="selectedMentor" @close="closeMentorDetail" />
   </div>
 </template>
 
@@ -49,7 +47,7 @@
 import { ref, computed, onMounted } from "vue";
 import MentorLayout from "@/layouts/mentor/MentorLayout.vue";
 
-import { getMentors, createMentor, updateMentor } from '@/api/user'
+import { getMentors, createMentor, updateMentor, toggleUserStatus } from '@/api/user'
 import MentorFormModal from "../../components/mentor/MentorFormModal.vue";
 import MentorDetailModal from "../../components/mentor/MentorDetailModal.vue";
 import MentorTable from "../../components/mentor/MentorTable.vue";
@@ -65,23 +63,20 @@ const showMentorDetail = ref(false);
 const selectedMentor = ref(null);
 
 const filteredMentors = computed(() => {
-  let result = mentors.value;
+  let result = mentors.value
   if (searchName.value) {
-    result = result.filter((m) =>
-      m.fullName.toLowerCase().includes(searchName.value.toLowerCase())
-    );
+    result = result.filter(m => m.fullName.toLowerCase().includes(searchName.value.toLowerCase()))
   }
+
   if (searchTeam.value) {
-    result = result.filter(
-      (m) =>
-        m.team && m.team.toLowerCase().includes(searchTeam.value.toLowerCase())
-    );
+    result = result.filter(m => 
+      m.department && 
+      m.department.name.toLowerCase().includes(searchTeam.value.toLowerCase())
+    )
   }
-  return result.slice(
-    (currentPage.value - 1) * pageSize,
-    currentPage.value * pageSize
-  );
-});
+  
+  return result.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize)
+})
 
 function fetchMentors() {
   getMentors().then((res) => {
@@ -121,6 +116,33 @@ async function handleSaveMentor(formData) {
     } else {
        alert('Có lỗi xảy ra, vui lòng thử lại.');
     }
+  }
+}
+async function handleToggleStatus(mentor) {
+  // Hỏi xác nhận trước khi đổi (UX tốt hơn)
+  const action = mentor.active ? 'khóa' : 'mở khóa';
+  if (!confirm(`Bạn có chắc muốn ${action} tài khoản ${mentor.fullName}?`)) return;
+
+  try {
+    // Gọi API (chỉ cần ID)
+    const res = await toggleUserStatus(mentor.id);
+    
+    // Cập nhật giao diện ngay lập tức mà không cần load lại trang
+    // Cách 1: Gán trực tiếp giá trị mới trả về từ API (Chuẩn nhất)
+    if(res.data && res.data.data) {
+        // Tìm và update trong list gốc
+        const index = mentors.value.findIndex(m => m.id === mentor.id);
+        if(index !== -1) {
+            mentors.value[index] = res.data.data;
+        }
+    }
+    
+    // Hoặc Cách 2 (Nhanh): Tự đảo ngược nếu API không trả data
+    // mentor.active = !mentor.active;
+
+  } catch (error) {
+    console.error("Lỗi toggle status:", error);
+    alert("Không thể thay đổi trạng thái user!");
   }
 }
 function openAddMentor() {

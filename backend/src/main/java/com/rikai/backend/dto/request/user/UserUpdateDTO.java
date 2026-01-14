@@ -11,6 +11,5 @@ public class UserUpdateDTO {
     private String fullName;
     private LocalDate dateOfBirth;
     private boolean isActive;
-    private Integer roleId;
     private Integer departmentId;
 }
