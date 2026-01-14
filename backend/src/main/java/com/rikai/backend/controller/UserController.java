@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,25 +35,9 @@ public class UserController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        PageRequest pageRequest = PageRequest.of(
-                page, limit
-        );
-
-        Page<UserResponse> userPage = userService.getAllMentorUsers(pageRequest)
-                .map(UserResponse::fromUser);
-
-        UserListResponse userListResponse = UserListResponse.builder()
-                .users(userPage.getContent())
-                .totalPages(userPage.getTotalPages())
-                .build();
-        PageResponse<UserResponse> pageResponse = PageResponse.<UserResponse>builder()
-                .items(userPage.getContent())
-                .currentPage(userPage.getNumber())
-                .totalPages(userPage.getTotalPages())
-                .totalItems(userPage.getTotalElements())
-                .pageSize(userPage.getSize())
-                .build();
-        return ApiResponse.buildSuccessResponse(pageResponse, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
+        Pageable pageable = PageRequest.of(page, limit);
+        PageResponse<UserResponse> result = userService.getAllMentorUsers(pageable);
+        return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
     }
 
     @PostMapping
@@ -68,7 +53,7 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ApiResponse<UserResponse> updateUser(@PathVariable("id") String id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
-        Users updatedUser = userService.updateUser(java.util.UUID.fromString(id), userUpdateDTO);
+        Users updatedUser = userService.updateUser(UUID.fromString(id), userUpdateDTO);
         return ApiResponse.buildSuccessResponse(
                 UserResponse.fromUser(updatedUser),
                 SuccessCode.UPDATE_USER_SUCCESSFUL

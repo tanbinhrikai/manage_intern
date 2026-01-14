@@ -3,6 +3,8 @@ package com.rikai.backend.service.user;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.dto.request.user.UserCreateDTO;
 import com.rikai.backend.dto.request.user.UserUpdateDTO;
+import com.rikai.backend.dto.response.PageResponse;
+import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
 import com.rikai.backend.model.Department;
@@ -16,27 +18,40 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class UserServiceImpl implements IUserService {
+public class UserService implements IUserService {
     UsersRepository usersRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     private final RolesRepository rolesRepository;
     private final DepartmentRepository departmentRepository;
 
+
     @Override
     @Transactional(readOnly = true)
-    public Page<Users> getAllMentorUsers(PageRequest pageRequest) {
-        return usersRepository.findAllMentorUsers(pageRequest);
+    public PageResponse<UserResponse> getAllMentorUsers(Pageable pageable) {
+        Page<Users> usersPage = usersRepository.findAllMentorUsers(pageable);
+        List<UserResponse> userResponses = usersPage.getContent().stream()
+                .map(UserResponse::fromUser)
+                .toList();
+        return PageResponse.<UserResponse>builder()
+                .items(userResponses)
+                .currentPage(usersPage.getNumber())
+                .totalPages(usersPage.getTotalPages())
+                .totalItems(usersPage.getTotalElements())
+                .pageSize(usersPage.getSize())
+                .build();
     }
 
     @Override

@@ -32,12 +32,12 @@ const routes = [
     component: () => import("@/views/mentor/MentorListView.vue"), // Có thể tách riêng EditView nếu muốn
     meta: { requiresAuth: true, role: "ADMIN" },
   },
-//   {
-//     path: "/admin/mentors/:id/lock",
-//     name: "MentorLock",
-//     component: () => import("@/views/mentor/MentorListView.vue"), // Có thể tách riêng LockView nếu muốn
-//     meta: { requiresAuth: true, role: "ADMIN" },
-//   },
+  {
+    path: "/admin/mentors/:id/lock",
+    name: "MentorLock",
+    component: () => import("@/views/mentor/MentorListView.vue"), // Có thể tách riêng LockView nếu muốn
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
   {
     path: "/",
     redirect: "/login",
