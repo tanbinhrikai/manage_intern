@@ -6,7 +6,6 @@ import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.user.UserCreateDTO;
 import com.rikai.backend.dto.request.user.UserUpdateDTO;
 import com.rikai.backend.dto.response.PageResponse;
-import com.rikai.backend.dto.response.user.UserListResponse;
 import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Users;
@@ -16,7 +15,6 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -33,7 +31,7 @@ public class UserController {
     private final IUserService userService;
 
     @GetMapping("")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<PageResponse<UserResponse>> getAllUser(
             @RequestParam(defaultValue = "", required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -45,7 +43,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> createUser(@Valid @RequestBody UserCreateDTO userCreateDTO) {
         UserResponse createdUser = userService.createUser(userCreateDTO);
         return ApiResponse.buildSuccessResponse(
@@ -55,7 +53,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> updateUser(@PathVariable("id") String id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         UserResponse updatedUser = userService.updateUser(UUID.fromString(id), userUpdateDTO);
         return ApiResponse.buildSuccessResponse(
@@ -65,7 +63,7 @@ public class UserController {
     }
 
     @PatchMapping("/status/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<UserResponse> toggleUserStatus(@PathVariable UUID id) {
         UserResponse response = userService.toggleStatus(id);
         return ApiResponse.buildSuccessResponse(
@@ -77,9 +75,6 @@ public class UserController {
     @GetMapping("/get-my-info")
     public ApiResponse<UserResponse> getMyInfo() {
         Users result = authenticationService.getCurrentUser();
-        if (result == null) {
-            throw new AppException(ErrorCode.USER_NOT_EXISTED);
-        }
         UserResponse userResponse = UserResponse.fromUser(result);
         return ApiResponse.buildSuccessResponse(userResponse, SuccessCode.GET_MY_INFO_SUCCESSFUL);
     }

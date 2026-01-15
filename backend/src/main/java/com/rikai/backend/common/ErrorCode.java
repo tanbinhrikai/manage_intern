@@ -32,6 +32,15 @@ public enum ErrorCode {
     USERNAME_OR_PASSWORD_INCORRECT("Incorrect username or password.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
     DEPARTMENT_NOT_EXISTED("Department not found", HttpStatus.NOT_FOUND),
+    
+    // Weekly Report errors
+    INTERN_NOT_EXISTED("Intern not found", HttpStatus.NOT_FOUND),
+    WEEKLY_REPORT_NOT_EXISTED("Weekly report not found", HttpStatus.NOT_FOUND),
+    WEEKLY_REPORT_DUPLICATE("Weekly report already exists for this intern and week", HttpStatus.BAD_REQUEST),
+    INTERN_ID_REQUIRED("Intern ID is required", HttpStatus.BAD_REQUEST),
+    WEEK_START_DATE_REQUIRED("Week start date is required", HttpStatus.BAD_REQUEST),
+    INVALID_SCORE("Score must be between 1 and 10", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED_INTERN_ACCESS("You do not have permission to access this intern", HttpStatus.FORBIDDEN),
     ;
 
     ErrorCode(String message, HttpStatusCode statusCode) {

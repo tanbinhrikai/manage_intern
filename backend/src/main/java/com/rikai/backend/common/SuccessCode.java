@@ -32,7 +32,18 @@ public enum SuccessCode {
 
     CHANGE_PASSWORD_SUCCESSFUL("Change password successful", HttpStatus.OK),
 
-    GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK)
+    GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK),
+    
+    // Weekly Report success codes
+    CREATE_WEEKLY_REPORT_SUCCESSFUL("Create weekly report successful", HttpStatus.CREATED),
+    GET_WEEKLY_REPORT_SUCCESSFUL("Get weekly report successful", HttpStatus.OK),
+    GET_ALL_WEEKLY_REPORTS_SUCCESSFUL("Get all weekly reports successful", HttpStatus.OK),
+    UPDATE_WEEKLY_REPORT_SUCCESSFUL("Update weekly report successful", HttpStatus.OK),
+    DELETE_WEEKLY_REPORT_SUCCESSFUL("Delete weekly report successful", HttpStatus.OK),
+    
+    // Intern success codes
+    GET_ALL_INTERNS_SUCCESSFUL("Get all interns successful", HttpStatus.OK),
+    GET_INTERN_SUCCESSFUL("Get intern successful", HttpStatus.OK)
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {
