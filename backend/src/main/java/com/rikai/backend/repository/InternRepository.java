@@ -16,4 +16,6 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
     Page<Intern> findByPosition_Id(Long positionId, Pageable pageable);
 
     Page<Intern> findByInternStatus(InternStatus status, Pageable pageable);
+
+    long countByInternStatus(InternStatus status);
 }

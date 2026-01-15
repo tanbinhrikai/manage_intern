@@ -6,6 +6,7 @@ import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.InternCreationRequest;
 import com.rikai.backend.dto.request.InternUpdateRequest;
+import com.rikai.backend.dto.response.InternAnalysisResponse;
 import com.rikai.backend.dto.response.InternResponse;
 import com.rikai.backend.service.intern.IInternService;
 import jakarta.validation.Valid;
@@ -89,5 +90,11 @@ public class InternController {
     public ApiResponse<PageResponse<InternResponse>> getMyIntern(Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
+    }
+
+    @GetMapping("/analyze")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<InternAnalysisResponse> getAnalysis() {
+        return ApiResponse.buildSuccessResponse(internService.getAnalysis(), SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 }

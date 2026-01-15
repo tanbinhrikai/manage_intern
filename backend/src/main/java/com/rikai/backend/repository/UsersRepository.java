@@ -1,6 +1,5 @@
 package com.rikai.backend.repository;
 
-
 import com.rikai.backend.model.Users;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +15,8 @@ import java.util.UUID;
 public interface UsersRepository extends JpaRepository<Users, UUID> {
     @Query("SELECT u FROM Users u WHERE u.role.roleName = 'MENTOR'")
     Page<Users> findAllMentorUsers(Pageable pageable);
+
+    long countByRole_RoleName(String roleName);
 
     Optional<Users> findByEmailAndIsActive(String email, boolean isActive);
 

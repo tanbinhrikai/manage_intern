@@ -4,6 +4,7 @@ import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.InternCreationRequest;
 import com.rikai.backend.dto.request.InternUpdateRequest;
+import com.rikai.backend.dto.response.InternAnalysisResponse;
 import com.rikai.backend.dto.response.InternResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,6 @@ public interface IInternService {
     PageResponse<InternResponse> getInternsByPositionId(Long positionId, Pageable pageable);
 
     PageResponse<InternResponse> getMyIntern(Pageable pageable);
+
+    InternAnalysisResponse getAnalysis();
 }

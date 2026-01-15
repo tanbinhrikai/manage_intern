@@ -1,27 +1,48 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
 import StatCard from '@/components/dashboard/StatCard.vue'
 import DonutChart from '@/components/dashboard/DonutChart.vue'
 import ActivityList from '@/components/dashboard/ActivityList.vue'
+import { getInternsAnalysis } from '@/api/intern'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
-const stats = [
-  { key: 'totalInterns', value: 150, icon: 'users', color: 'blue' },
-  { key: 'internsActive', value: 120, icon: 'active', color: 'green' },
-  { key: 'internsWarning', value: 10, icon: 'warning', color: 'yellow' },
-  { key: 'totalMentors', value: 30, icon: 'mentor', color: 'purple' }
-]
+const analysisData = ref({
+  totalInterns: 0,
+  totalMentors: 0,
+  activeInterns: 0,
+  warningInterns: 0,
+  droppedInterns: 0,
+  completedInterns: 0
+})
 
-const chartData = [
-  { label: 'Active', value: 120, color: '#3b82f6' },
-  { label: 'Probation', value: 10, color: '#84cc16' },
-  { label: 'Warning', value: 15, color: '#f59e0b' },
-  { label: 'Completed', value: 5, color: '#22c55e' }
-]
+const stats = computed(() => [
+  { key: 'totalInterns', value: analysisData.value.totalInterns, icon: 'users', color: 'blue' },
+  { key: 'internsActive', value: analysisData.value.activeInterns, icon: 'active', color: 'green' },
+  { key: 'internsWarning', value: analysisData.value.warningInterns, icon: 'warning', color: 'yellow' },
+  { key: 'totalMentors', value: analysisData.value.totalMentors, icon: 'mentor', color: 'purple' }
+])
+
+const chartData = computed(() => [
+  { label: t.value('internManagement.status.ACTIVE'), value: analysisData.value.activeInterns, color: '#3b82f6' },
+  { label: t.value('internManagement.status.WARNING'), value: analysisData.value.warningInterns, color: '#f59e0b' },
+  { label: t.value('internManagement.status.DROPPED'), value: analysisData.value.droppedInterns, color: '#ef4444' },
+  { label: t.value('internManagement.status.COMPLETE'), value: analysisData.value.completedInterns, color: '#22c55e' }
+])
+
+async function fetchAnalysis() {
+  try {
+    const res = await getInternsAnalysis()
+    if (res.data && res.data.data) {
+      analysisData.value = res.data.data
+    }
+  } catch (error) {
+    console.error("Failed to load dashboard analysis:", error)
+  }
+}
 
 const activities = computed(() => [
   {
@@ -50,6 +71,10 @@ const activities = computed(() => [
     time: t.value('dashboard.timeAgo.daysAgo').replace('{n}', '2')
   }
 ])
+
+onMounted(() => {
+  fetchAnalysis()
+})
 </script>
 
 <template>

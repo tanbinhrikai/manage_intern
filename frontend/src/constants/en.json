@@ -163,11 +163,6 @@
             "department": "Department",
             "internCount": "Interns Supervised",
             "close": "Close"
-        },
-        "messages": {
-            "loadError": "Failed to load info",
-            "updateSuccess": "Info updated",
-            "saveError": "Failed to save info"
         }
     },
     "internDetail": {

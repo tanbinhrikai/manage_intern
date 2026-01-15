@@ -119,6 +119,8 @@
             "active": "アクティブ",
             "locked": "ロック済み"
         },
+        "allStatus": "すべてのステータス",
+        "allDepartments": "すべての部署",
         "messages": {
             "loadError": "メンター一覧の読み込みに失敗しました",
             "updateSuccess": "更新しました！",
@@ -161,11 +163,6 @@
             "department": "部署",
             "internCount": "担当インターン数",
             "close": "閉じる"
-        },
-        "messages": {
-            "loadError": "情報の読み込みに失敗しました",
-            "updateSuccess": "情報を更新しました",
-            "saveError": "情報の保存に失敗しました"
         }
     },
     "internDetail": {

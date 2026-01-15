@@ -5,6 +5,7 @@ import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.InternCreationRequest;
 import com.rikai.backend.dto.request.InternUpdateRequest;
+import com.rikai.backend.dto.response.InternAnalysisResponse;
 import com.rikai.backend.dto.response.InternResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.InternMapper;
@@ -126,8 +127,9 @@ public class InternService implements IInternService {
 
     @Override
     public PageResponse<InternResponse> getMyIntern(Pageable pageable) {
-        Users  users = authenticationService.getCurrentUser();
-        if(users.getId() == null) throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        Users users = authenticationService.getCurrentUser();
+        if (users.getId() == null)
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         var mentorId = users.getId();
         if (!usersRepository.existsById(mentorId)) {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
@@ -143,6 +145,26 @@ public class InternService implements IInternService {
         Page<Intern> internPage = internRepository.findByInternStatus(status, pageable);
 
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public InternAnalysisResponse getAnalysis() {
+        long totalInterns = internRepository.count();
+        long totalMentors = usersRepository.countByRole_RoleName("MENTOR");
+        long activeInterns = internRepository.countByInternStatus(InternStatus.ACTIVE);
+        long warningInterns = internRepository.countByInternStatus(InternStatus.WARNING);
+        long droppedInterns = internRepository.countByInternStatus(InternStatus.DROPPED);
+        long completedInterns = internRepository.countByInternStatus(InternStatus.COMPLETE);
+
+        return InternAnalysisResponse.builder()
+                .totalInterns(totalInterns)
+                .totalMentors(totalMentors)
+                .activeInterns(activeInterns)
+                .warningInterns(warningInterns)
+                .droppedInterns(droppedInterns)
+                .completedInterns(completedInterns)
+                .build();
     }
 
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
