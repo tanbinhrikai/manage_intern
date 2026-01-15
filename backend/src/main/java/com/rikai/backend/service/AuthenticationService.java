@@ -5,6 +5,7 @@ import com.rikai.backend.dto.request.AuthenticationRequest;
 import com.rikai.backend.dto.response.AuthenticationResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
+import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.RefreshTokenRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.token.ITokenService;
@@ -16,9 +17,13 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.UUID;
 
@@ -112,5 +117,28 @@ public class AuthenticationService {
     public void setCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         setAccessCookie(response, accessToken);
         setRefreshCookie(response, refreshToken);
+    }
+
+    public Users getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        Object principal = authentication.getPrincipal();
+        String userIdentifier = null;
+        if (principal instanceof Jwt jwt) {
+            userIdentifier = jwt.getSubject();
+        }
+        else if (principal instanceof UserDetails) {
+            userIdentifier = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            userIdentifier = (String) principal;
+        }
+        if (userIdentifier != null) {
+            return userRepository.findByEmail(userIdentifier)
+                    .filter(Users::isActive)
+                    .orElse(null);
+        }
+        return null;
     }
 }

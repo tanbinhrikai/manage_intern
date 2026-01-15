@@ -26,6 +26,9 @@ public class UserResponse {
     private DepartmentResponse department;
 
     public static UserResponse fromUser(Users user) {
+        if (user == null) {
+            return null;
+        }
         DepartmentResponse deptResponse = null;
         if (user.getDepartment() != null) {
             deptResponse = DepartmentResponse.builder()

@@ -16,8 +16,8 @@ import java.util.UUID;
 public interface IUserService {
     PageResponse<UserResponse> getAllMentorUsers(Pageable pageable);
 
-    Users createUser(UserCreateDTO userCreateDTO);
-    Users updateUser(UUID id, UserUpdateDTO userUpdateDTO);
+    UserResponse createUser(UserCreateDTO userCreateDTO);
+    UserResponse updateUser(UUID id, UserUpdateDTO userUpdateDTO);
 
     UserResponse toggleStatus(UUID id);
 }

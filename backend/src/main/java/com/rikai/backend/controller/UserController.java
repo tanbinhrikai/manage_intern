@@ -1,13 +1,16 @@
 package com.rikai.backend.controller;
 
 import com.rikai.backend.common.ApiResponse;
+import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.user.UserCreateDTO;
 import com.rikai.backend.dto.request.user.UserUpdateDTO;
 import com.rikai.backend.dto.response.PageResponse;
 import com.rikai.backend.dto.response.user.UserListResponse;
 import com.rikai.backend.dto.response.user.UserResponse;
+import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Users;
+import com.rikai.backend.service.AuthenticationService;
 import com.rikai.backend.service.user.IUserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -26,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
+    AuthenticationService authenticationService;
     private final IUserService userService;
 
     @GetMapping("")
@@ -43,9 +47,9 @@ public class UserController {
     @PostMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ApiResponse<UserResponse> createUser(@Valid @RequestBody UserCreateDTO userCreateDTO) {
-        Users createdUser = userService.createUser(userCreateDTO);
+        UserResponse createdUser = userService.createUser(userCreateDTO);
         return ApiResponse.buildSuccessResponse(
-                UserResponse.fromUser(createdUser),
+                createdUser,
                 SuccessCode.CREATE_USER_SUCCESSFUL
         );
     }
@@ -53,9 +57,9 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ApiResponse<UserResponse> updateUser(@PathVariable("id") String id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
-        Users updatedUser = userService.updateUser(UUID.fromString(id), userUpdateDTO);
+        UserResponse updatedUser = userService.updateUser(UUID.fromString(id), userUpdateDTO);
         return ApiResponse.buildSuccessResponse(
-                UserResponse.fromUser(updatedUser),
+                updatedUser,
                 SuccessCode.UPDATE_USER_SUCCESSFUL
         );
     }
@@ -65,8 +69,18 @@ public class UserController {
     public ApiResponse<UserResponse> toggleUserStatus(@PathVariable UUID id) {
         UserResponse response = userService.toggleStatus(id);
         return ApiResponse.buildSuccessResponse(
-                response, // Trả về object đã update để Frontend cập nhật UI ngay
+                response,
                 SuccessCode.UPDATE_USER_SUCCESSFUL
         );
+    }
+
+    @GetMapping("/get-my-info")
+    public ApiResponse<UserResponse> getMyInfo() {
+        Users result = authenticationService.getCurrentUser();
+        if (result == null) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+        UserResponse userResponse = UserResponse.fromUser(result);
+        return ApiResponse.buildSuccessResponse(userResponse, SuccessCode.GET_MY_INFO_SUCCESSFUL);
     }
 }

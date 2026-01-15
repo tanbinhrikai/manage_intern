@@ -56,7 +56,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public Users createUser(UserCreateDTO userCreateDTO) {
+    public UserResponse createUser(UserCreateDTO userCreateDTO) {
         if (usersRepository.findByEmail(userCreateDTO.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
@@ -69,11 +69,12 @@ public class UserService implements IUserService {
         Optional<Roles> role = rolesRepository.findByRoleName("MENTOR");
         user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
         role.ifPresent(user::setRole);
-        return usersRepository.save(user);
+        Users savedUser = usersRepository.save(user);
+        return userMapper.toUserResponse(savedUser);
     }
 
     @Override
-    public Users updateUser(UUID id, UserUpdateDTO userUpdateDTO) {
+    public UserResponse updateUser(UUID id, UserUpdateDTO userUpdateDTO) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         if (userUpdateDTO.getEmail() != null) {
@@ -91,7 +92,8 @@ public class UserService implements IUserService {
         Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
                 .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
         user.setDepartment(department);
-        return usersRepository.save(user);
+        Users savedUser = usersRepository.save(user);
+        return UserResponse.fromUser(savedUser);
     }
 
     @Override

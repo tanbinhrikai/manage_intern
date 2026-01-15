@@ -9,13 +9,11 @@ import com.rikai.backend.exception.AppException;
 import com.rikai.backend.service.AuthenticationService;
 import com.rikai.backend.service.token.ITokenService;
 import jakarta.servlet.http.HttpServletResponse;
-
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.*;
-
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")

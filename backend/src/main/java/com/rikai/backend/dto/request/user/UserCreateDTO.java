@@ -2,6 +2,7 @@ package com.rikai.backend.dto.request.user;
 
 import com.rikai.backend.validation.DobConstraint;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class UserCreateDTO {
             message = "PASSWORD_WEAK"
     )
     private String password;
+    @NotBlank(message = "INVALID_FULLNAME")
     private String fullName;
     @DobConstraint(min = 18)
     private LocalDate dateOfBirth;

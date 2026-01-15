@@ -10,6 +10,7 @@ public enum SuccessCode {
     LOGIN_SUCCESSFUL("Login successful", HttpStatus.OK),
     REFRESH_TOKEN_SUCCESSFUL("Refresh Token successful", HttpStatus.ACCEPTED),
     LOGOUT_SUCCESSFUL("Logout successful", HttpStatus.OK),
+    GET_MY_INFO_SUCCESSFUL("Get my information successful", HttpStatus.OK),
 
     CREATE_USER_SUCCESSFUL("Create user successful", HttpStatus.CREATED),
     GET_USER_SUCCESSFUL("Get user successful", HttpStatus.OK),
