@@ -83,4 +83,11 @@ public class InternController {
         return ApiResponse.buildSuccessResponse(internService.getInternsByPositionId(positionId, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
+
+    @GetMapping("/my-intern")
+    @PreAuthorize("hasRole('MENTOR')")
+    public ApiResponse<PageResponse<InternResponse>> getMyIntern(Pageable pageable) {
+        return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable),
+                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
+    }
 }

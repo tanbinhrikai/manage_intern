@@ -6,30 +6,33 @@ import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
 import { getMentors, createMentor, updateMentor, toggleUserStatus } from '@/api/user'
+import { getDepartments } from '@/api/department'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
 const mentors = ref([])
+const departments = ref([])
 const currentPage = ref(1)
 const pageSize = 8
 const searchName = ref("")
-const searchTeam = ref("")
+const filterStatus = ref("")
+const filterDepartment = ref("")
 const showMentorForm = ref(false)
 const showMentorDetail = ref(false)
 const selectedMentor = ref(null)
 const loading = ref(false)
-
 const filteredMentors = computed(() => {
   let result = mentors.value
   if (searchName.value) {
     result = result.filter(m => m.fullName.toLowerCase().includes(searchName.value.toLowerCase()))
   }
-  if (searchTeam.value) {
-    result = result.filter(m => 
-      m.department && 
-      m.department.name.toLowerCase().includes(searchTeam.value.toLowerCase())
-    )
+  if (filterStatus.value !== "") {
+    const isActive = filterStatus.value === 'ACTIVE'
+    result = result.filter(m => m.active === isActive)
+  }
+  if (filterDepartment.value) {
+    result = result.filter(m => m.department?.id === filterDepartment.value)
   }
   return result.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize)
 })
@@ -43,6 +46,15 @@ async function fetchMentors() {
     ElMessage.error(t.value('mentorManagement.messages.loadError'))
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchDepartments() {
+  try {
+    const res = await getDepartments()
+    departments.value = res.data?.data || []
+  } catch (error) {
+    console.error("Failed to load departments:", error)
   }
 }
 
@@ -119,7 +131,10 @@ async function handleToggleStatus(mentor) {
   }
 }
 
-onMounted(fetchMentors)
+onMounted(() => {
+  fetchMentors()
+  fetchDepartments()
+})
 </script>
 
 <template>
@@ -141,13 +156,30 @@ onMounted(fetchMentors)
               clearable
               class="search-input"
             />
-            <el-input 
-              v-model="searchTeam" 
-              :placeholder="t('mentorManagement.searchByDepartment')"
-              :prefix-icon="OfficeBuilding"
+            <el-select 
+              v-model="filterStatus" 
+              :placeholder="t('mentorManagement.allStatus')"
               clearable
-              class="search-input"
-            />
+              class="filter-select"
+            >
+              <el-option :label="t('mentorManagement.allStatus')" value="" />
+              <el-option :label="t('mentorManagement.status.active')" value="ACTIVE" />
+              <el-option :label="t('mentorManagement.status.locked')" value="LOCKED" />
+            </el-select>
+            <el-select 
+              v-model="filterDepartment" 
+              :placeholder="t('mentorManagement.allDepartments')"
+              clearable
+              class="filter-select"
+            >
+              <el-option :label="t('mentorManagement.allDepartments')" value="" />
+              <el-option
+                v-for="dept in departments"
+                :key="dept.id"
+                :label="dept.title"
+                :value="dept.id"
+              />
+            </el-select>
           </div>
           
           <el-button 
@@ -332,7 +364,11 @@ onMounted(fetchMentors)
 }
 
 .search-input {
-  width: 100%;
+  width: 200px;
+}
+
+.filter-select {
+  width: 160px;
 }
 
 .text-muted {

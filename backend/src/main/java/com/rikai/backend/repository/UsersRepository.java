@@ -17,7 +17,9 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
     @Query("SELECT u FROM Users u WHERE u.role.roleName = 'MENTOR'")
     Page<Users> findAllMentorUsers(Pageable pageable);
 
-    Optional<Users> findByEmail(String email);
+    Optional<Users> findByEmailAndIsActive(String email, boolean isActive);
 
     List<Users> findByIsActive(boolean isActive);
+
+    Optional<Users> findByEmail(String email);
 }

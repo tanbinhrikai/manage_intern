@@ -12,6 +12,10 @@ const props = defineProps({
   intern: {
     type: Object,
     default: null
+  },
+  hideMentor: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -41,7 +45,7 @@ const formData = reactive({
 const formRules = computed(() => ({
   fullName: [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'blur' }],
   positionId: [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }],
-  mentorId: [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }],
+  mentorId: props.hideMentor ? [] : [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }],
   startDate: [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }],
   endDate: [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }],
   internStatus: isEdit.value ? [{ required: true, message: t.value('internManagement.messages.validationError'), trigger: 'change' }] : []
@@ -123,6 +127,8 @@ async function fetchPositions() {
 }
 
 async function fetchMentors() {
+  if (props.hideMentor) return
+
   try {
     const res = await getMentors()
     const users = res.data?.data?.items || []
@@ -177,7 +183,7 @@ onMounted(() => {
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
+        <el-col :span="12" v-if="!hideMentor">
           <el-form-item :label="t('internManagement.form.mentor')" prop="mentorId">
             <el-select 
               v-model="formData.mentorId" 

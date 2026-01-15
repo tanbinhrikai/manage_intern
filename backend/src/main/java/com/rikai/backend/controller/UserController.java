@@ -10,6 +10,7 @@ import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.service.auth.AuthenticationService;
+import com.rikai.backend.service.auth.IAuthenticationService;
 import com.rikai.backend.service.user.IUserService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -27,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
-        AuthenticationService authenticationService;
+        IAuthenticationService authenticationService;
         IUserService userService;
 
         @GetMapping("")

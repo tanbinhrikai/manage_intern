@@ -18,6 +18,9 @@
             "loginFailed": "Login failed. Please try again."
         }
     },
+    "common": {
+        "weeks": "weeks"
+    },
     "language": {
         "en": "English",
         "jp": "日本語"
@@ -26,6 +29,8 @@
         "dashboard": "Dashboard",
         "interns": "Interns",
         "mentors": "Mentors",
+        "departments": "Departments",
+        "positions": "Positions",
         "systemConfig": "System Config",
         "auditLog": "Audit Log",
         "myInterns": "My Interns",
@@ -41,6 +46,11 @@
         "loginSuccess": "Login successful!",
         "logoutSuccess": "Logout successful!",
         "error": "An error occurred"
+    },
+    "notFound": {
+        "title": "Page Not Found",
+        "description": "The page you are looking for does not exist or has been moved.",
+        "backHome": "Back to Home"
     },
     "dashboard": {
         "title": "Dashboard Overview",
@@ -109,6 +119,8 @@
             "active": "Active",
             "locked": "Locked"
         },
+        "allStatus": "All Status",
+        "allDepartments": "All Departments",
         "messages": {
             "loadError": "Failed to load mentor list",
             "updateSuccess": "Updated successfully!",
@@ -142,7 +154,8 @@
             "passwordValidation": "Password must be at least 8 characters with uppercase, lowercase and number.",
             "save": "Save",
             "create": "Create",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "ageRestriction": "Mentor must be at least 18 years old."
         },
         "detail": {
             "title": "Mentor Details",
@@ -150,6 +163,46 @@
             "department": "Department",
             "internCount": "Interns Supervised",
             "close": "Close"
+        },
+        "messages": {
+            "loadError": "Failed to load info",
+            "updateSuccess": "Info updated",
+            "saveError": "Failed to save info"
+        }
+    },
+    "internDetail": {
+        "profileTitle": "Intern Profile",
+        "editInfo": "Update Info",
+        "sections": {
+            "basicInfo": "Basic Information",
+            "internshipInfo": "Internship Information",
+            "reportsAndEval": "Reports & Evaluations",
+            "quickActions": "Quick Actions"
+        },
+        "fields": {
+            "fullName": "Full Name",
+            "email": "Email",
+            "position": "Position",
+            "mentor": "Mentor",
+            "duration": "Duration",
+            "status": "Current Status",
+            "startDate": "Start Date",
+            "endDate": "Expected End Date"
+        },
+        "actions": {
+            "viewReports": "View Weekly Reports",
+            "viewEval": "View Performance Review",
+            "viewBMM": "BMM Index (if any)",
+            "recommendDrop": "Recommend Drop Intern",
+            "recommendOffer": "Recommend Offer"
+        },
+        "description": "Perform important actions related to this intern.",
+        "saveChanges": "Save Changes",
+        "tabs": {
+            "general": "General Information",
+            "reports": "Weekly Reports",
+            "performance": "Performance Review",
+            "history": "Status History"
         }
     },
     "internManagement": {
@@ -218,6 +271,73 @@
             "createdAt": "Created At",
             "updatedAt": "Updated At",
             "close": "Close"
+        }
+    },
+    "profile": {
+        "title": "My Profile",
+        "personalInfo": "Personal Information",
+        "fullName": "Full Name",
+        "email": "Email",
+        "dateOfBirth": "Date of Birth",
+        "department": "Department",
+        "role": "Role",
+        "status": "Status",
+        "active": "Active",
+        "inactive": "Inactive",
+        "accountInfo": "Account Information",
+        "createdAt": "Account Created",
+        "updatedAt": "Last Updated",
+        "loading": "Loading profile...",
+        "error": "Failed to load profile"
+    },
+    "departmentManagement": {
+        "title": "Department Management",
+        "searchByName": "Search by name...",
+        "addNew": "Add Department",
+        "table": {
+            "id": "ID",
+            "name": "Department Name",
+            "actions": "Actions"
+        },
+        "messages": {
+            "loadError": "Failed to load departments",
+            "createSuccess": "Department created successfully!",
+            "updateSuccess": "Department updated successfully!",
+            "saveError": "An error occurred, please try again."
+        },
+        "form": {
+            "addTitle": "Add New Department",
+            "editTitle": "Edit Department",
+            "name": "Department Name",
+            "namePlaceholder": "Enter department name",
+            "save": "Save",
+            "create": "Create",
+            "cancel": "Cancel"
+        }
+    },
+    "positionManagement": {
+        "title": "Position Management",
+        "searchByName": "Search by name...",
+        "addNew": "Add Position",
+        "table": {
+            "id": "ID",
+            "title": "Position Title",
+            "actions": "Actions"
+        },
+        "messages": {
+            "loadError": "Failed to load positions",
+            "createSuccess": "Position created successfully!",
+            "updateSuccess": "Position updated successfully!",
+            "saveError": "An error occurred, please try again."
+        },
+        "form": {
+            "addTitle": "Add New Position",
+            "editTitle": "Edit Position",
+            "title": "Position Title",
+            "titlePlaceholder": "Enter position title",
+            "save": "Save",
+            "create": "Create",
+            "cancel": "Cancel"
         }
     }
 }

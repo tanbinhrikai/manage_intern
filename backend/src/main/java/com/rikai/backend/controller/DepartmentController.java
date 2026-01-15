@@ -1,7 +1,6 @@
 package com.rikai.backend.controller;
 
 import com.rikai.backend.common.ApiResponse;
-import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.DepartmentCreationRequest;
 import com.rikai.backend.dto.request.DepartmentUpdateRequest;
@@ -11,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 

@@ -26,4 +26,6 @@ public interface IInternService {
     PageResponse<InternResponse> getInternsByStatus(InternStatus status, Pageable pageable);
 
     PageResponse<InternResponse> getInternsByPositionId(Long positionId, Pageable pageable);
+
+    PageResponse<InternResponse> getMyIntern(Pageable pageable);
 }

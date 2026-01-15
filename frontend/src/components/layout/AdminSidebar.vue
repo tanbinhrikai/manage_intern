@@ -11,6 +11,8 @@ const menuItems = [
   { key: 'dashboard', path: '/admin/dashboard', icon: 'dashboard' },
   { key: 'interns', path: '/admin/interns', icon: 'interns' },
   { key: 'mentors', path: '/admin/mentors', icon: 'mentors' },
+  { key: 'departments', path: '/admin/departments', icon: 'department' },
+  { key: 'positions', path: '/admin/positions', icon: 'position' },
   { key: 'systemConfig', path: '/admin/system-config', icon: 'config' },
   { key: 'auditLog', path: '/admin/audit-log', icon: 'audit' }
 ]
@@ -45,6 +47,20 @@ const isActive = (path) => route.path === path
         <svg v-else-if="item.icon === 'mentors'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <svg v-else-if="item.icon === 'department'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18"/>
+          <path d="M9 8h1"/>
+          <path d="M9 12h1"/>
+          <path d="M9 16h1"/>
+          <path d="M14 8h1"/>
+          <path d="M14 12h1"/>
+          <path d="M14 16h1"/>
+          <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+        </svg>
+        <svg v-else-if="item.icon === 'position'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
         <svg v-else-if="item.icon === 'config'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>

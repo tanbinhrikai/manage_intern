@@ -61,13 +61,7 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('Login error:', error)
-    if (error.response?.data?.message) {
-      apiError.value = error.response.data.message
-    } else if (error.message) {
-      apiError.value = error.message
-    } else {
-      apiError.value = t.value('login.error.loginFailed')
-    }
+    apiError.value = t.value('login.error.loginFailed')
   } finally {
     isLoading.value = false
   }

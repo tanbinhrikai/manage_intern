@@ -42,11 +42,71 @@ const routes = [
     path: "/admin/interns",
     name: "InternList",
     component: () => import("@/views/intern-management/InternListView.vue"),
+    component: () => import("@/views/intern-management/InternListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/interns/:id",
+    name: "AdminInternDetail",
+    component: () => import("@/views/intern-management/InternDetailView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/interns/:id/edit",
+    name: "AdminInternEdit",
+    component: () => import("@/views/intern-management/InternEditView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/profile",
+    name: "AdminProfile",
+    component: () => import("@/views/profile/ProfileView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/mentor/profile",
+    name: "MentorProfile",
+    component: () => import("@/views/profile/ProfileView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
+    path: "/mentor/my-interns",
+    name: "MentorInternList",
+    component: () => import("@/views/my-interns/MyInternListView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
+    path: "/mentor/my-interns/:id",
+    name: "MentorInternDetail",
+    component: () => import("@/views/intern-management/InternDetailView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
+    path: "/mentor/my-interns/:id/edit",
+    name: "MentorInternEdit",
+    component: () => import("@/views/intern-management/InternEditView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
+    path: "/admin/departments",
+    name: "DepartmentList",
+    component: () => import("@/views/system-config/DepartmentListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/positions",
+    name: "PositionList",
+    component: () => import("@/views/system-config/PositionListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/",
     redirect: "/login",
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: () => import("@/views/NotFoundView.vue"),
   },
 ];
 

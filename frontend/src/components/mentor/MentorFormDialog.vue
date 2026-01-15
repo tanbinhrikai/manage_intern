@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import { getDepartment } from '@/api/department'
+import { getDepartments } from '@/api/department'
 
 const props = defineProps({
   visible: {
@@ -46,10 +46,16 @@ const formRules = computed(() => ({
 }))
 
 const disabledDate = (time) => {
-  const eighteenYearsAgo = new Date()
-  eighteenYearsAgo.setFullYear(eighteenYearsAgo.getFullYear() - 18)
-  return time.getTime() > eighteenYearsAgo.getTime()
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 18)
+  return time.getTime() > date.getTime()
 }
+
+const defaultDate = computed(() => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 18)
+  return date
+})
 
 function resetForm() {
   formData.fullName = ''
@@ -119,7 +125,7 @@ async function handleSubmit() {
 
 async function fetchDepartments() {
   try {
-    const res = await getDepartment()
+    const res = await getDepartments()
     departments.value = res.data?.data || []
   } catch (error) {
     console.error("Failed to load departments:", error)
@@ -167,7 +173,9 @@ onMounted(fetchDepartments)
           value-format="YYYY-MM-DD"
           style="width: 100%"
           :disabled-date="disabledDate"
+          :default-value="defaultDate"
         />
+        <div class="form-help-text">{{ t('mentorManagement.form.ageRestriction') }}</div>
       </el-form-item>
 
       <el-form-item :label="t('mentorManagement.form.department')" prop="departmentId">
@@ -179,7 +187,7 @@ onMounted(fetchDepartments)
           <el-option
             v-for="dept in departments"
             :key="dept.id"
-            :label="dept.name"
+            :label="dept.title"
             :value="dept.id"
           />
         </el-select>

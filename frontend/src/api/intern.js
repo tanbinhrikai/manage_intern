@@ -31,3 +31,7 @@ export function getInternsByPosition(positionId, params = {}) {
 export function getInternsByMentor(mentorId, params = {}) {
     return http.get(`/interns/mentor/${mentorId}`, { params })
 }
+
+export function getMyIntern(params = {}) {
+    return http.get("/interns/my-intern", { params })
+}

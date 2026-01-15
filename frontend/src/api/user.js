@@ -1,11 +1,15 @@
 import http from "./http";
 
-export function getMentors() {
-  return http.get("/users");
+export function getMentors(params) {
+  return http.get("/users", { params });
 }
 
 export function getMentorsForSelect() {
   return http.get("/users");
+}
+
+export function getMyInfo() {
+  return http.get("/users/get-my-info");
 }
 
 export function createMentor(data) {
@@ -17,6 +21,7 @@ export function updateMentor(id, data) {
 }
 
 export function toggleUserStatus(id) {
-  return http.post(`/users/status/${id}`);
+  return http.patch(`/users/status/${id}`);
 }
+
 

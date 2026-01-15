@@ -55,7 +55,7 @@ public class DepartmentService implements IDepartmentService {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
 
-//        department.setTitle(request.getTitle());
+        department.setName(request.getTitle());
 
         Department saved = departmentRepository.save(department);
         return departmentMapper.toDepartmentResponse(saved);

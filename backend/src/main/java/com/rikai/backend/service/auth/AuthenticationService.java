@@ -30,14 +30,14 @@ public class AuthenticationService implements IAuthenticationService {
     UsersRepository userRepository;
     RefreshTokenRepository refreshTokenRepository;
 
-    private final ITokenService tokenService;
+    ITokenService tokenService;
 
     PasswordEncoder passwordEncoder;
     UserMapper userMapper;
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        var user = userRepository.findByEmail(request.getEmail())
+        var user = userRepository.findByEmailAndIsActive(request.getEmail() , true)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
@@ -62,10 +62,11 @@ public class AuthenticationService implements IAuthenticationService {
         tokenInDB.ifPresent(refreshTokenRepository::delete);
     }
 
+    @Override
     public Users getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
         Object principal = authentication.getPrincipal();
         String userIdentifier = null;
@@ -77,7 +78,7 @@ public class AuthenticationService implements IAuthenticationService {
             userIdentifier = (String) principal;
         }
         if (userIdentifier != null) {
-            return userRepository.findByEmail(userIdentifier)
+            return userRepository.findByEmailAndIsActive(userIdentifier , true)
                     .filter(Users::isActive)
                     .orElse(null);
         }

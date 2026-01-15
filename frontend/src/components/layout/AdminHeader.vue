@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLocaleStore } from '@/locales/locale'
 import { useToastStore } from '@/stores/toast'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -36,7 +37,7 @@ const closeDropdowns = () => {
 
 const goToProfile = () => {
   showUserDropdown.value = false
-  router.push('/profile')
+  router.push('/admin/profile')
 }
 
 const handleLogout = () => {
@@ -50,30 +51,9 @@ const handleLogout = () => {
   <header class="header" @click="closeDropdowns">
     <div class="header-content">
       <div class="header-right" @click.stop>
-        <div class="language-switcher">
-          <button class="language-btn" @click="toggleLanguageDropdown">
-            <svg class="globe-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M2 12h20"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-            <span>{{ t('language.' + localeStore.currentLocale) }}</span>
-            <svg class="chevron-icon" :class="{ rotate: showLanguageDropdown }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </button>
-          <div v-if="showLanguageDropdown" class="dropdown language-dropdown">
-            <button
-              v-for="locale in localeStore.availableLocales"
-              :key="locale"
-              @click="changeLanguage(locale)"
-              :class="['dropdown-item', { active: locale === localeStore.currentLocale }]"
-            >
-              {{ t('language.' + locale) }}
-            </button>
-          </div>
+        <div class="language-wrapper">
+          <LanguageSwitcher />
         </div>
-
         <div class="user-menu">
           <button class="user-btn" @click="toggleUserDropdown">
             <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

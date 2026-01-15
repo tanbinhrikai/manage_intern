@@ -14,6 +14,7 @@ import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.repository.UsersRepository;
+import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -33,6 +34,7 @@ public class InternService implements IInternService {
     PositionRepository positionRepository;
     UsersRepository usersRepository;
     InternMapper internMapper;
+    AuthenticationService authenticationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -119,6 +121,18 @@ public class InternService implements IInternService {
 
         Page<Intern> internPage = internRepository.findByPosition_Id(positionId, pageable);
 
+        return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
+    }
+
+    @Override
+    public PageResponse<InternResponse> getMyIntern(Pageable pageable) {
+        Users  users = authenticationService.getCurrentUser();
+        if(users.getId() == null) throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+        var mentorId = users.getId();
+        if (!usersRepository.existsById(mentorId)) {
+            throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
+        }
+        Page<Intern> internPage = internRepository.findByUsers_Id(mentorId, pageable);
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
