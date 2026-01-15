@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import MentorLayout from '@/layouts/mentor/MentorLayout.vue'
+import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
@@ -28,6 +28,23 @@ const internsUnderSupervision = [
   { name: 'Pham Thi E', position: 'Marketing Specialist', status: 'active', week: 3, totalWeeks: 8 },
   { name: 'Hoang Minh F', position: 'Data Analyst', status: 'active', week: 2, totalWeeks: 10 }
 ]
+
+const getStatusType = (status) => {
+  const statusMap = {
+    active: 'success',
+    warning: 'warning',
+    completed: 'primary'
+  }
+  return statusMap[status] || 'info'
+}
+
+const handleSubmitReport = (intern) => {
+  console.log('Submit report for:', intern.name)
+}
+
+const handleViewDetails = (intern) => {
+  console.log('View details for:', intern.name)
+}
 </script>
 
 <template>
@@ -37,62 +54,110 @@ const internsUnderSupervision = [
 
       <section class="section">
         <h2 class="section-title">{{ t('mentorDashboard.internsNeedEvaluation') }}</h2>
-        <div class="intern-cards">
-          <div v-for="intern in internsNeedEvaluation" :key="intern.name" class="intern-card">
-            <h3 class="intern-name">{{ intern.name }}</h3>
-            <p class="intern-position">
-              {{ t('mentorDashboard.position') }}: <span class="position-value">{{ intern.position }}</span>
-            </p>
-            <p class="intern-deadline">
-              {{ t('mentorDashboard.deadline') }}: {{ t('mentorDashboard.week') }} {{ intern.deadline }}
-            </p>
-            <button class="submit-btn">{{ t('mentorDashboard.submitReport') }}</button>
-          </div>
-        </div>
+        <el-row :gutter="16">
+          <el-col 
+            v-for="intern in internsNeedEvaluation" 
+            :key="intern.name" 
+            :xs="24" 
+            :sm="12" 
+            :md="8" 
+            :lg="6"
+          >
+            <el-card class="intern-card" shadow="hover">
+              <template #header>
+                <span class="intern-name">{{ intern.name }}</span>
+              </template>
+              <el-descriptions :column="1" size="small">
+                <el-descriptions-item :label="t('mentorDashboard.position')">
+                  <el-tag type="success" size="small">{{ intern.position }}</el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item :label="t('mentorDashboard.deadline')">
+                  {{ t('mentorDashboard.week') }} {{ intern.deadline }}
+                </el-descriptions-item>
+              </el-descriptions>
+              <el-button 
+                type="success" 
+                class="submit-btn"
+                @click="handleSubmitReport(intern)"
+              >
+                {{ t('mentorDashboard.submitReport') }}
+              </el-button>
+            </el-card>
+          </el-col>
+        </el-row>
       </section>
 
       <section class="section">
         <h2 class="section-title">{{ t('mentorDashboard.evaluationProgress') }}</h2>
-        <div class="progress-card">
+        <el-card shadow="hover">
           <div class="progress-info">
             {{ t('mentorDashboard.reportsCompleted').replace('{completed}', evaluationProgress.completed).replace('{total}', evaluationProgress.total) }}
           </div>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
-          </div>
-        </div>
+          <el-progress 
+            :percentage="progressPercentage" 
+            :stroke-width="16"
+            color="#2ecc71"
+            :format="() => `${evaluationProgress.completed}/${evaluationProgress.total}`"
+          />
+        </el-card>
       </section>
 
       <section class="section">
         <h2 class="section-title">{{ t('mentorDashboard.internsUnderSupervision') }}</h2>
-        <div class="table-card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t('mentorDashboard.table.fullName') }}</th>
-                <th>{{ t('mentorDashboard.table.position') }}</th>
-                <th>{{ t('mentorDashboard.table.status') }}</th>
-                <th>{{ t('mentorDashboard.table.internshipDuration') }}</th>
-                <th>{{ t('mentorDashboard.table.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="intern in internsUnderSupervision" :key="intern.name">
-                <td>{{ intern.name }}</td>
-                <td>{{ intern.position }}</td>
-                <td>
-                  <span :class="['status-badge', `status-${intern.status}`]">
-                    {{ t('mentorDashboard.status.' + intern.status) }}
-                  </span>
-                </td>
-                <td>{{ t('mentorDashboard.week') }} {{ intern.week }} / {{ intern.totalWeeks }}</td>
-                <td>
-                  <button class="action-btn">{{ t('mentorDashboard.table.viewDetails') }}</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <el-card shadow="hover">
+          <el-table :data="internsUnderSupervision" stripe style="width: 100%">
+            <el-table-column 
+              prop="name" 
+              :label="t('mentorDashboard.table.fullName')" 
+              min-width="150"
+            />
+            <el-table-column 
+              prop="position" 
+              :label="t('mentorDashboard.table.position')" 
+              min-width="180"
+            />
+            <el-table-column 
+              :label="t('mentorDashboard.table.status')" 
+              min-width="120"
+            >
+              <template #default="scope">
+                <el-tag :type="getStatusType(scope.row.status)">
+                  {{ t('mentorDashboard.status.' + scope.row.status) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('mentorDashboard.table.internshipDuration')" 
+              min-width="150"
+            >
+              <template #default="scope">
+                <el-progress 
+                  :percentage="(scope.row.week / scope.row.totalWeeks) * 100" 
+                  :stroke-width="10"
+                  :show-text="false"
+                  color="#2ecc71"
+                  style="width: 80px; display: inline-block; margin-right: 8px;"
+                />
+                <span>{{ t('mentorDashboard.week') }} {{ scope.row.week }} / {{ scope.row.totalWeeks }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('mentorDashboard.table.actions')" 
+              min-width="120"
+              fixed="right"
+            >
+              <template #default="scope">
+                <el-button 
+                  type="primary" 
+                  size="small"
+                  @click="handleViewDetails(scope.row)"
+                >
+                  {{ t('mentorDashboard.table.viewDetails') }}
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
       </section>
     </div>
   </MentorLayout>
@@ -121,77 +186,24 @@ const internsUnderSupervision = [
   margin: 0 0 16px 0;
 }
 
-.intern-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 1200px) {
-  .intern-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .intern-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
 .intern-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.intern-card :deep(.el-card__header) {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .intern-name {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.intern-position {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 4px 0;
-}
-
-.position-value {
-  color: #2ecc71;
-  font-weight: 500;
-}
-
-.intern-deadline {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 16px 0;
 }
 
 .submit-btn {
   width: 100%;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #ffffff;
-  background: #2ecc71;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.submit-btn:hover {
-  background: #27ae60;
-}
-
-.progress-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
+  margin-top: 16px;
 }
 
 .progress-info {
@@ -200,92 +212,17 @@ const internsUnderSupervision = [
   margin-bottom: 12px;
 }
 
-.progress-bar {
-  height: 12px;
-  background: #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #2ecc71;
-  border-radius: 6px;
-  transition: width 0.3s;
-}
-
-.table-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+:deep(.el-table) {
   border-radius: 8px;
-  overflow: hidden;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th,
-.data-table td {
-  padding: 14px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.data-table th {
-  background: #f9fafb;
-  font-size: 13px;
+:deep(.el-table th) {
+  background: #f9fafb !important;
   font-weight: 600;
   color: #6b7280;
 }
 
-.data-table td {
-  font-size: 14px;
-  color: #374151;
-}
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 4px;
-}
-
-.status-active {
-  background: #2ecc71;
-  color: #ffffff;
-}
-
-.status-warning {
-  background: #f59e0b;
-  color: #ffffff;
-}
-
-.status-completed {
-  background: #3b82f6;
-  color: #ffffff;
-}
-
-.action-btn {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
-  background: #2c3e50;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.action-btn:hover {
-  background: #34495e;
+:deep(.el-card__body) {
+  padding: 20px;
 }
 </style>

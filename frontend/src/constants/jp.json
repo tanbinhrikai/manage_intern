@@ -87,5 +87,137 @@
             "warning": "警告",
             "completed": "完了"
         }
+    },
+    "mentorLayout": {
+        "home": "ホーム",
+        "evaluations": "評価",
+        "schedule": "スケジュール"
+    },
+    "mentorManagement": {
+        "title": "メンター管理",
+        "searchByName": "名前で検索...",
+        "searchByDepartment": "部署で検索...",
+        "addNew": "新規メンター追加",
+        "table": {
+            "fullName": "氏名",
+            "email": "メール",
+            "department": "部署",
+            "status": "ステータス",
+            "actions": "アクション"
+        },
+        "status": {
+            "active": "アクティブ",
+            "locked": "ロック済み"
+        },
+        "messages": {
+            "loadError": "メンター一覧の読み込みに失敗しました",
+            "updateSuccess": "更新しました！",
+            "createSuccess": "作成しました！",
+            "saveError": "エラーが発生しました。もう一度お試しください。",
+            "toggleSuccess": "アカウントのステータスを変更しました！",
+            "toggleError": "ユーザーのステータスを変更できません！",
+            "validationError": "必須項目をすべて入力してください！"
+        },
+        "confirm": {
+            "title": "確認",
+            "lockAccount": "{name}のアカウントをロックしてもよろしいですか？",
+            "unlockAccount": "{name}のアカウントのロックを解除してもよろしいですか？",
+            "ok": "確認",
+            "cancel": "キャンセル"
+        },
+        "form": {
+            "addTitle": "新規メンター追加",
+            "editTitle": "メンター更新",
+            "fullName": "氏名",
+            "fullNamePlaceholder": "山田太郎",
+            "email": "メール",
+            "emailPlaceholder": "example@company.com",
+            "dateOfBirth": "生年月日",
+            "department": "部署",
+            "selectDepartment": "部署を選択",
+            "isActive": "アクティブ",
+            "password": "パスワード",
+            "passwordHint": "（変更しない場合は空白のまま）",
+            "passwordPlaceholder": "********",
+            "passwordValidation": "パスワードは8文字以上で、大文字、小文字、数字を含む必要があります。",
+            "save": "保存",
+            "create": "作成",
+            "cancel": "キャンセル"
+        },
+        "detail": {
+            "title": "メンター詳細",
+            "mentorName": "メンター名",
+            "department": "部署",
+            "internCount": "担当インターン数",
+            "close": "閉じる"
+        }
+    },
+    "internManagement": {
+        "title": "インターン管理",
+        "searchByName": "名前で検索...",
+        "filterByStatus": "ステータスで絞り込み",
+        "filterByPosition": "ポジションで絞り込み",
+        "filterByMentor": "メンターで絞り込み",
+        "allStatus": "すべてのステータス",
+        "allPositions": "すべてのポジション",
+        "allMentors": "すべてのメンター",
+        "addNew": "新規インターン追加",
+        "table": {
+            "fullName": "氏名",
+            "position": "ポジション",
+            "mentor": "メンター",
+            "startDate": "開始日",
+            "endDate": "終了日",
+            "status": "ステータス",
+            "actions": "アクション"
+        },
+        "status": {
+            "ACTIVE": "アクティブ",
+            "WARNING": "警告",
+            "COMPLETE": "完了",
+            "DROPPED": "中断"
+        },
+        "messages": {
+            "loadError": "インターン一覧の読み込みに失敗しました",
+            "updateSuccess": "更新しました！",
+            "createSuccess": "作成しました！",
+            "deleteSuccess": "削除しました！",
+            "saveError": "エラーが発生しました。もう一度お試しください。",
+            "validationError": "必須項目をすべて入力してください！"
+        },
+        "confirm": {
+            "title": "確認",
+            "delete": "インターン {name} を削除してもよろしいですか？",
+            "ok": "確認",
+            "cancel": "キャンセル"
+        },
+        "form": {
+            "addTitle": "新規インターン追加",
+            "editTitle": "インターン更新",
+            "fullName": "氏名",
+            "fullNamePlaceholder": "山田太郎",
+            "position": "ポジション",
+            "selectPosition": "ポジションを選択",
+            "mentor": "メンター",
+            "selectMentor": "メンターを選択",
+            "startDate": "開始日",
+            "endDate": "終了日",
+            "status": "ステータス",
+            "selectStatus": "ステータスを選択",
+            "save": "保存",
+            "create": "作成",
+            "cancel": "キャンセル"
+        },
+        "detail": {
+            "title": "インターン詳細",
+            "internName": "インターン名",
+            "position": "ポジション",
+            "mentor": "メンター",
+            "period": "インターン期間",
+            "status": "ステータス",
+            "createdAt": "作成日",
+            "updatedAt": "更新日",
+            "close": "閉じる"
+        }
     }
 }

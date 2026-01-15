@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -62,5 +63,6 @@ public class UserResponse {
                 .department(deptResponse)
                 .role(roleResponse)
                 .build();
-    }
-}
+    }}
+
+    

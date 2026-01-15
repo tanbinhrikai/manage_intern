@@ -87,5 +87,137 @@
             "warning": "WARNING",
             "completed": "COMPLETED"
         }
+    },
+    "mentorLayout": {
+        "home": "Home",
+        "evaluations": "Evaluations",
+        "schedule": "Schedule"
+    },
+    "mentorManagement": {
+        "title": "Mentor Management",
+        "searchByName": "Search by name...",
+        "searchByDepartment": "Search by department...",
+        "addNew": "Add New Mentor",
+        "table": {
+            "fullName": "Full Name",
+            "email": "Email",
+            "department": "Department",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "status": {
+            "active": "Active",
+            "locked": "Locked"
+        },
+        "messages": {
+            "loadError": "Failed to load mentor list",
+            "updateSuccess": "Updated successfully!",
+            "createSuccess": "Created successfully!",
+            "saveError": "An error occurred, please try again.",
+            "toggleSuccess": "Account status changed successfully!",
+            "toggleError": "Cannot change user status!",
+            "validationError": "Please fill in all required fields!"
+        },
+        "confirm": {
+            "title": "Confirm",
+            "lockAccount": "Are you sure you want to lock account {name}?",
+            "unlockAccount": "Are you sure you want to unlock account {name}?",
+            "ok": "Confirm",
+            "cancel": "Cancel"
+        },
+        "form": {
+            "addTitle": "Add New Mentor",
+            "editTitle": "Update Mentor",
+            "fullName": "Full Name",
+            "fullNamePlaceholder": "John Doe",
+            "email": "Email",
+            "emailPlaceholder": "example@company.com",
+            "dateOfBirth": "Date of Birth",
+            "department": "Department",
+            "selectDepartment": "Select department",
+            "isActive": "Active",
+            "password": "Password",
+            "passwordHint": "(Leave blank to keep current)",
+            "passwordPlaceholder": "********",
+            "passwordValidation": "Password must be at least 8 characters with uppercase, lowercase and number.",
+            "save": "Save",
+            "create": "Create",
+            "cancel": "Cancel"
+        },
+        "detail": {
+            "title": "Mentor Details",
+            "mentorName": "Mentor Name",
+            "department": "Department",
+            "internCount": "Interns Supervised",
+            "close": "Close"
+        }
+    },
+    "internManagement": {
+        "title": "Intern Management",
+        "searchByName": "Search by name...",
+        "filterByStatus": "Filter by status",
+        "filterByPosition": "Filter by position",
+        "filterByMentor": "Filter by mentor",
+        "allStatus": "All Status",
+        "allPositions": "All Positions",
+        "allMentors": "All Mentors",
+        "addNew": "Add New Intern",
+        "table": {
+            "fullName": "Full Name",
+            "position": "Position",
+            "mentor": "Mentor",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "status": {
+            "ACTIVE": "Active",
+            "WARNING": "Warning",
+            "COMPLETE": "Completed",
+            "DROPPED": "Dropped"
+        },
+        "messages": {
+            "loadError": "Failed to load intern list",
+            "updateSuccess": "Updated successfully!",
+            "createSuccess": "Created successfully!",
+            "deleteSuccess": "Deleted successfully!",
+            "saveError": "An error occurred, please try again.",
+            "validationError": "Please fill in all required fields!"
+        },
+        "confirm": {
+            "title": "Confirm",
+            "delete": "Are you sure you want to delete intern {name}?",
+            "ok": "Confirm",
+            "cancel": "Cancel"
+        },
+        "form": {
+            "addTitle": "Add New Intern",
+            "editTitle": "Update Intern",
+            "fullName": "Full Name",
+            "fullNamePlaceholder": "John Doe",
+            "position": "Position",
+            "selectPosition": "Select position",
+            "mentor": "Mentor",
+            "selectMentor": "Select mentor",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "status": "Status",
+            "selectStatus": "Select status",
+            "save": "Save",
+            "create": "Create",
+            "cancel": "Cancel"
+        },
+        "detail": {
+            "title": "Intern Details",
+            "internName": "Intern Name",
+            "position": "Position",
+            "mentor": "Mentor",
+            "period": "Internship Period",
+            "status": "Status",
+            "createdAt": "Created At",
+            "updatedAt": "Updated At",
+            "close": "Close"
+        }
     }
 }

@@ -1,38 +1,51 @@
-import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { ElNotification } from 'element-plus'
 
 export const useToastStore = defineStore('toast', () => {
-    const toasts = ref([])
-    let toastId = 0
-
-    const addToast = (message, type = 'success', duration = 3000) => {
-        const id = ++toastId
-        toasts.value.push({ id, message, type })
-
-        setTimeout(() => {
-            removeToast(id)
-        }, duration)
-
-        return id
+    const success = (message, duration = 3000) => {
+        ElNotification({
+            title: 'Success',
+            message,
+            type: 'success',
+            duration,
+            position: 'bottom-right'
+        })
     }
 
-    const removeToast = (id) => {
-        const index = toasts.value.findIndex(t => t.id === id)
-        if (index > -1) {
-            toasts.value.splice(index, 1)
-        }
+    const error = (message, duration = 3000) => {
+        ElNotification({
+            title: 'Error',
+            message,
+            type: 'error',
+            duration,
+            position: 'bottom-right'
+        })
     }
 
-    const success = (message, duration) => addToast(message, 'success', duration)
-    const error = (message, duration) => addToast(message, 'error', duration)
-    const info = (message, duration) => addToast(message, 'info', duration)
+    const info = (message, duration = 3000) => {
+        ElNotification({
+            title: 'Info',
+            message,
+            type: 'info',
+            duration,
+            position: 'bottom-right'
+        })
+    }
+
+    const warning = (message, duration = 3000) => {
+        ElNotification({
+            title: 'Warning',
+            message,
+            type: 'warning',
+            duration,
+            position: 'bottom-right'
+        })
+    }
 
     return {
-        toasts,
-        addToast,
-        removeToast,
         success,
         error,
-        info
+        info,
+        warning
     }
 })

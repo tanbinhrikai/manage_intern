@@ -9,13 +9,13 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
-    path: "/admin",
+    path: "/admin/dashboard",
     name: "AdminDashboard",
     component: () => import("@/views/dashboard/AdminDashboardView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
-    path: "/mentor",
+    path: "/mentor/dashboard",
     name: "MentorDashboard",
     component: () => import("@/views/dashboard/MentorDashboardView.vue"),
     meta: { requiresAuth: true, role: "MENTOR" },
@@ -23,19 +23,25 @@ const routes = [
   {
     path: "/admin/mentors",
     name: "MentorList",
-    component: () => import("@/views/mentor/MentorListView.vue"),
+    component: () => import("@/views/mentor-management/MentorListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/mentors/:id/edit",
     name: "MentorEdit",
-    component: () => import("@/views/mentor/MentorListView.vue"), // Có thể tách riêng EditView nếu muốn
+    component: () => import("@/views/mentor-management/MentorListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/mentors/:id/lock",
     name: "MentorLock",
-    component: () => import("@/views/mentor/MentorListView.vue"), // Có thể tách riêng LockView nếu muốn
+    component: () => import("@/views/mentor-management/MentorListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/interns",
+    name: "InternList",
+    component: () => import("@/views/intern-management/InternListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
