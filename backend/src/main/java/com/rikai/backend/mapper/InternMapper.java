@@ -24,6 +24,7 @@ public interface InternMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "position", ignore = true)
     @Mapping(target = "mentor", ignore = true)
+
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "internStatus", ignore = true)

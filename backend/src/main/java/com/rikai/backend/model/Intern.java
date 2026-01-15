@@ -25,6 +25,7 @@ public class Intern {
     String fullName;
 
     @ManyToOne
+
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
     Position position;
 
@@ -54,5 +55,4 @@ public class Intern {
         if (internStatus == null) {
             internStatus = InternStatus.ACTIVE;
         }
-    }
 }

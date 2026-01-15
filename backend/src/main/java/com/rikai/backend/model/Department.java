@@ -17,7 +17,7 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Column(name = "title" , nullable = false)
+    @Column(name = "title", nullable = false)
     String title;
 
     @OneToMany(mappedBy = "department")
