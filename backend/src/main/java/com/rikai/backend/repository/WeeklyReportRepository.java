@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -16,72 +17,36 @@ import java.util.UUID;
 @Repository
 public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Integer> {
 
-    /**
-     * Find a weekly report by intern_id and week_start_date
-     * 
-     * @param internId
-     * @param weekStartDate
-     * @return
-     */
-    Optional<WeeklyReport> findByInternIdAndWeekStartDate(Long internId, LocalDate weekStartDate);
+        @Query("SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId AND wr.weekStartDate = :weekStartDate")
+        Optional<WeeklyReport> findByInternIdAndWeekStartDate(@Param("internId") Long internId,
+                        @Param("weekStartDate") LocalDate weekStartDate);
 
-    /**
-     * Find all reports by intern_id with pagination
-     * 
-     * @param internId
-     * @param pageable
-     * @return
-     */
-    Page<WeeklyReport> findByInternId(Long internId, Pageable pageable);
+        @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr WHERE wr.intern.id = :internId")
+        Page<WeeklyReport> findByInternId(@Param("internId") Long internId, Pageable pageable);
 
-    /**
-     * Find all reports by intern_id ordered by week_start_date descending
-     * 
-     * @param internId
-     * @return
-     */
-    List<WeeklyReport> findByInternIdOrderByWeekStartDateDesc(Long internId);
+        @Query("SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId ORDER BY wr.weekStartDate DESC")
+        List<WeeklyReport> findByInternIdOrderByWeekStartDateDesc(@Param("internId") Long internId);
 
-    /**
-     * Find reports by mentor_id with pagination
-     * 
-     * @param mentorId
-     * @param pageable
-     * @return
-     */
-    Page<WeeklyReport> findByMentorId(UUID mentorId, Pageable pageable);
+        @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.mentor.id = :mentorId", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr WHERE wr.mentor.id = :mentorId")
+        Page<WeeklyReport> findByMentorId(@Param("mentorId") UUID mentorId, Pageable pageable);
 
-    /**
-     * Find reports by mentor_id and intern_id with pagination
-     * 
-     * @param mentorId
-     * @param internId
-     * @param pageable
-     * @return
-     */
-    Page<WeeklyReport> findByMentorIdAndInternId(UUID mentorId, Long internId, Pageable pageable);
+        @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.mentor.id = :mentorId AND wr.intern.id = :internId", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr WHERE wr.mentor.id = :mentorId AND wr.intern.id = :internId")
+        Page<WeeklyReport> findByMentorIdAndInternId(@Param("mentorId") UUID mentorId, @Param("internId") Long internId,
+                        Pageable pageable);
 
-    /**
-     * Find reports by intern_id within a date range
-     * 
-     * @param internId
-     * @param startDate
-     * @param endDate
-     * @return
-     */
-    @Query("SELECT wr FROM WeeklyReport wr WHERE wr.intern.id = :internId " +
-            "AND wr.weekStartDate >= :startDate AND wr.weekStartDate <= :endDate " +
-            "ORDER BY wr.weekStartDate DESC")
-    List<WeeklyReport> findByInternIdAndDateRange(
-            @Param("internId") Long internId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate);
+        @Query("SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId "
+                        +
+                        "AND wr.weekStartDate >= :startDate AND wr.weekStartDate <= :endDate " +
+                        "ORDER BY wr.weekStartDate DESC")
+        List<WeeklyReport> findByInternIdAndDateRange(
+                        @Param("internId") Long internId,
+                        @Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate);
 
-    /**
-     * Count reports by intern_id
-     * 
-     * @param internId
-     * @return
-     */
-    long countByInternId(Long internId);
+        long countByInternId(Long internId);
+
+        @Override
+        @NonNull
+        @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr")
+        Page<WeeklyReport> findAll(@NonNull Pageable pageable);
 }

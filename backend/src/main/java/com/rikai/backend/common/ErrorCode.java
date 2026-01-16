@@ -46,6 +46,9 @@ public enum ErrorCode {
     WEEK_START_DATE_REQUIRED("Week start date is required", HttpStatus.BAD_REQUEST),
     INVALID_SCORE("Score must be between 1 and 10", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED_INTERN_ACCESS("You do not have permission to access this intern", HttpStatus.FORBIDDEN),
+
+    EVALUATION_CRITERIA_NOT_EXISTED("Evaluation criteria not found", HttpStatus.NOT_FOUND),
+    CRITERIA_SCORE_DEFINITION_NOT_EXISTED("Criteria score definition not found", HttpStatus.NOT_FOUND),
     ;
 
     ErrorCode(String message, HttpStatusCode statusCode) {

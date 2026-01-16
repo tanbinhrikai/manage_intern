@@ -100,6 +100,24 @@ const routes = [
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
+    path: "/admin/evaluation-criteria",
+    name: "EvaluationCriteriaList",
+    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/evaluation-criteria/create",
+    name: "EvaluationCriteriaCreate",
+    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/evaluation-criteria/:id",
+    name: "EvaluationCriteriaDetail",
+    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
     path: "/",
     redirect: "/login",
   },

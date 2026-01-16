@@ -93,10 +93,10 @@ public class WeeklyReportController {
     }
 
     /**
-     * GET /interns/{internId}/weekly-reports
+     * GET /intern/{internId}
      * Get all weekly reports for a specific intern
      */
-    @GetMapping("/interns/{internId}/weekly-reports")
+    @GetMapping("/intern/{internId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<List<WeeklyReportResponse>> getReportsByInternId(
             @PathVariable Long internId) {

@@ -39,14 +39,14 @@ public enum SuccessCode {
     CHANGE_PASSWORD_SUCCESSFUL("Change password successful", HttpStatus.OK),
 
     GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK),
-    
+
     // Weekly Report success codes
     CREATE_WEEKLY_REPORT_SUCCESSFUL("Create weekly report successful", HttpStatus.CREATED),
     GET_WEEKLY_REPORT_SUCCESSFUL("Get weekly report successful", HttpStatus.OK),
     GET_ALL_WEEKLY_REPORTS_SUCCESSFUL("Get all weekly reports successful", HttpStatus.OK),
     UPDATE_WEEKLY_REPORT_SUCCESSFUL("Update weekly report successful", HttpStatus.OK),
     DELETE_WEEKLY_REPORT_SUCCESSFUL("Delete weekly report successful", HttpStatus.OK),
-    
+
     // Intern success codes
     CREATE_DEPARTMENT_SUCCESSFUL("Create department successful", HttpStatus.CREATED),
     GET_DEPARTMENT_SUCCESSFUL("Get department successful", HttpStatus.OK),
@@ -56,6 +56,18 @@ public enum SuccessCode {
     GET_POSITION_SUCCESSFUL("Get position successful", HttpStatus.OK),
     GET_ALL_POSITIONS_SUCCESSFUL("Get all positions successful", HttpStatus.OK),
     UPDATE_POSITION_SUCCESSFUL("Update position successful", HttpStatus.OK),
+
+    CREATE_EVALUATION_CRITERIA_SUCCESSFUL("Create evaluation criteria successful", HttpStatus.CREATED),
+    GET_EVALUATION_CRITERIA_SUCCESSFUL("Get evaluation criteria successful", HttpStatus.OK),
+    GET_ALL_EVALUATION_CRITERIA_SUCCESSFUL("Get all evaluation criteria successful", HttpStatus.OK),
+    UPDATE_EVALUATION_CRITERIA_SUCCESSFUL("Update evaluation criteria successful", HttpStatus.OK),
+    DELETE_EVALUATION_CRITERIA_SUCCESSFUL("Delete evaluation criteria successful", HttpStatus.OK),
+
+    CREATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Create criteria score definition successful", HttpStatus.CREATED),
+    GET_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Get criteria score definition successful", HttpStatus.OK),
+    GET_ALL_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Get all criteria score definitions successful", HttpStatus.OK),
+    UPDATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Update criteria score definition successful", HttpStatus.OK),
+    DELETE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Delete criteria score definition successful", HttpStatus.OK),
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {

@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Entity
 @Data
@@ -33,11 +34,6 @@ public class EvaluationCriteria {
     @Builder.Default
     BigDecimal weight = BigDecimal.ONE;
 
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    Boolean isActive = true;
-
-    @Column(name = "display_order")
-    @Builder.Default
-    Integer displayOrder = 0;
+    @OneToMany(mappedBy = "criteria")
+    Set<CriteriaScoreDefinition> scoreDefinitions;
 }

@@ -6,8 +6,11 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Entity
 @Data
@@ -41,14 +44,9 @@ public class WeeklyReport {
     @Column(name = "tasks_completed", columnDefinition = "TEXT")
     String tasksCompleted;
 
-    @Column(name = "output_quality", columnDefinition = "TEXT")
-    String outputQuality;
-
-    @Column(name = "proactivity_score")
-    Byte proactivityScore;
-
-    @Column(name = "progress_score")
-    Byte progressScore;
+    @Column(name = "average_score", precision = 4, scale = 2)
+    @Builder.Default
+    BigDecimal averageScore = BigDecimal.ZERO;
 
     @Column(name = "issues_risks", columnDefinition = "TEXT")
     String issuesRisks;
@@ -60,6 +58,9 @@ public class WeeklyReport {
     @Builder.Default
     String status = "submitted";
 
+    @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    Set<WeeklyReportDetail> details;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;
@@ -67,4 +68,21 @@ public class WeeklyReport {
     @UpdateTimestamp
     @Column(name = "updated_at")
     Instant updatedAt;
+
+    @PrePersist
+    @PreUpdate
+    public void updateAverageScore() {
+        if (this.details == null || this.details.isEmpty()) {
+            this.averageScore = BigDecimal.ZERO;
+            return;
+        }
+
+        double average = this.details.stream()
+                .filter(detail -> detail.getScore() != null)
+                .mapToInt(detail -> detail.getScore().intValue())
+                .average()
+                .orElse(0.0);
+
+        this.averageScore = BigDecimal.valueOf(average).setScale(2, RoundingMode.HALF_UP);
+    }
 }

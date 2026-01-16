@@ -31,6 +31,7 @@
         "mentors": "メンター",
         "departments": "部署",
         "positions": "ポジション",
+        "evaluationCriteria": "評価基準",
         "systemConfig": "システム設定",
         "auditLog": "監査ログ",
         "myInterns": "担当インターン",
@@ -333,6 +334,65 @@
             "save": "保存",
             "create": "作成",
             "cancel": "キャンセル"
+        }
+    },
+    "evaluationCriteria": {
+        "title": "評価基準",
+        "addNew": "基準を追加",
+        "table": {
+            "id": "ID",
+            "category": "カテゴリー",
+            "name": "基準名",
+            "weight": "重み",
+            "isActive": "アクティブ",
+            "order": "順序",
+            "actions": "アクション"
+        },
+        "messages": {
+            "loadError": "基準の読み込みに失敗しました",
+            "createSuccess": "基準を作成しました！",
+            "updateSuccess": "基準を更新しました！",
+            "deleteSuccess": "基準を削除しました！",
+            "saveError": "エラーが発生しました。もう一度お試しください。"
+        },
+        "form": {
+            "createTitle": "評価基準を作成",
+            "editTitle": "評価基準を編集",
+            "category": "カテゴリー (専門知識, マインドセット, スキル)",
+            "name": "名前",
+            "description": "説明",
+            "weight": "重み",
+            "displayOrder": "表示順",
+            "isActive": "アクティブ状態",
+            "save": "変更を保存",
+            "create": "基準を作成",
+            "cancel": "キャンセル"
+        },
+        "scoreDefinitions": {
+            "title": "スコア定義",
+            "add": "定義を追加",
+            "scoreLabel": "スコアラベル",
+            "minScore": "最小スコア",
+            "maxScore": "最大スコア",
+            "description": "説明",
+            "actions": "アクション",
+            "labels": {
+                "Excellent": "優秀",
+                "Good": "良い",
+                "Average": "普通",
+                "Weak": "苦手"
+            },
+            "form": {
+                "addTitle": "スコア定義を追加",
+                "editTitle": "スコア定義を編集",
+                "save": "保存",
+                "cancel": "キャンセル"
+            },
+            "messages": {
+                "createSuccess": "定義を作成しました！",
+                "updateSuccess": "定義を更新しました！",
+                "deleteSuccess": "定義を削除しました！"
+            }
         }
     }
 }

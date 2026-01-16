@@ -90,8 +90,10 @@ async function handleSaveMentor(payload, done) {
     showMentorForm.value = false
   } catch (error) {
     console.error("Save error:", error)
-    if (error.response && error.response.data) {
-      ElMessage.error('Error: ' + JSON.stringify(error.response.data))
+    if (error.response?.data?.message) {
+      ElMessage.error(error.response.data.message)
+    } else if (error.response?.data) {
+      ElMessage.error(t.value('mentorManagement.messages.saveError'))
     } else {
       ElMessage.error(t.value('mentorManagement.messages.saveError'))
     }
@@ -213,7 +215,7 @@ onMounted(() => {
           >
             <template #default="scope">
               <el-tag type="info" v-if="scope.row.department">
-                {{ scope.row.department.name }}
+                {{ scope.row.department.title }}
               </el-tag>
               <span v-else class="text-muted">-</span>
             </template>
@@ -292,7 +294,7 @@ onMounted(() => {
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.detail.department')">
             <el-tag type="info" v-if="selectedMentor?.department">
-              {{ selectedMentor.department.name }}
+              {{ selectedMentor.department.title }}
             </el-tag>
             <span v-else>-</span>
           </el-descriptions-item>

@@ -101,7 +101,7 @@ onMounted(fetchProfile)
                     </div>
                   </template>
                   <el-tag v-if="profile.department" type="info">
-                    {{ profile.department.name }}
+                    {{ profile.department.title }}
                   </el-tag>
                   <span v-else>-</span>
                 </el-descriptions-item>

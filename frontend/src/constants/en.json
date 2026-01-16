@@ -31,6 +31,7 @@
         "mentors": "Mentors",
         "departments": "Departments",
         "positions": "Positions",
+        "evaluationCriteria": "Evaluation Criteria",
         "systemConfig": "System Config",
         "auditLog": "Audit Log",
         "myInterns": "My Interns",
@@ -333,6 +334,65 @@
             "save": "Save",
             "create": "Create",
             "cancel": "Cancel"
+        }
+    },
+    "evaluationCriteria": {
+        "title": "Evaluation Criteria",
+        "addNew": "Add Criteria",
+        "table": {
+            "id": "ID",
+            "category": "Category",
+            "name": "Criteria Name",
+            "weight": "Weight",
+            "isActive": "Active",
+            "order": "Order",
+            "actions": "Actions"
+        },
+        "messages": {
+            "loadError": "Failed to load criteria",
+            "createSuccess": "Criteria created successfully!",
+            "updateSuccess": "Criteria updated successfully!",
+            "deleteSuccess": "Criteria deleted successfully!",
+            "saveError": "An error occurred, please try again."
+        },
+        "form": {
+            "createTitle": "Create Evaluation Criteria",
+            "editTitle": "Edit Evaluation Criteria",
+            "category": "Category (EXPERTISE, MINDSET, SKILLS)",
+            "name": "Name",
+            "description": "Description",
+            "weight": "Weight",
+            "displayOrder": "Display Order",
+            "isActive": "Active Status",
+            "save": "Save Changes",
+            "create": "Create Criteria",
+            "cancel": "Cancel"
+        },
+        "scoreDefinitions": {
+            "title": "Score Definitions",
+            "add": "Add Definition",
+            "scoreLabel": "Score Label",
+            "minScore": "Min Score",
+            "maxScore": "Max Score",
+            "description": "Description",
+            "actions": "Actions",
+            "labels": {
+                "Excellent": "Excellent",
+                "Good": "Good",
+                "Average": "Average",
+                "Weak": "Weak"
+            },
+            "form": {
+                "addTitle": "Add Score Definition",
+                "editTitle": "Edit Score Definition",
+                "save": "Save",
+                "cancel": "Cancel"
+            },
+            "messages": {
+                "createSuccess": "Definition created successfully!",
+                "updateSuccess": "Definition updated successfully!",
+                "deleteSuccess": "Definition deleted successfully!"
+            }
         }
     }
 }

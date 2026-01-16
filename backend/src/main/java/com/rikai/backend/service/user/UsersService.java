@@ -52,6 +52,11 @@ public class UsersService implements IUserService {
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
         user.setRole(role);
+        if (userCreateDTO.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(userCreateDTO.getDepartmentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            user.setDepartment(department);
+        }
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }

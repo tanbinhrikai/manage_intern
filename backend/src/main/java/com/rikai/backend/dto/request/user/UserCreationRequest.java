@@ -2,10 +2,7 @@ package com.rikai.backend.dto.request.user;
 
 
 import com.rikai.backend.validation.DobConstraint;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -30,4 +27,7 @@ public class UserCreationRequest {
 
     @DobConstraint(min = 10)
     LocalDate dateOfBirth;
+
+    @NotNull(message = "DEPARTMENT_REQUIRED")
+    Long departmentId;
 }

@@ -248,7 +248,7 @@ onMounted(() => {
               </div>
 
               <div class="actions">
-                <el-button type="success" class="save-btn" @click="handleSave" :loading="saving">
+                <el-button type="primary" @click="handleSave" :loading="saving">
                   {{ t('internDetail.saveChanges') }}
                 </el-button>
               </div>
@@ -304,11 +304,11 @@ onMounted(() => {
 }
 
 .detail-tabs :deep(.el-tabs__item.is-active) {
-  color: #00b894;
+  color: #6466dd;
 }
 
 .detail-tabs :deep(.el-tabs__active-bar) {
-  background-color: #00b894;
+  background-color: #6466dd;
 }
 
 .detail-card {
@@ -354,14 +354,6 @@ onMounted(() => {
 }
 .ml-2 {
     margin-left: 8px;
-}
-
-.save-btn {
-  background-color: #00b894;
-  border-color: #00b894;
-  font-weight: 600;
-  padding: 10px 24px;
-  min-width: 140px;
 }
 
 .placeholder-content {

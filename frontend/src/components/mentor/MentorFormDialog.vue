@@ -192,13 +192,6 @@ onMounted(fetchDepartments)
           />
         </el-select>
       </el-form-item>
-
-      <el-form-item v-if="isEdit">
-        <el-checkbox v-model="formData.isActive">
-          {{ t('mentorManagement.form.isActive') }}
-        </el-checkbox>
-      </el-form-item>
-
       <el-form-item 
         :label="t('mentorManagement.form.password') + (isEdit ? ' ' + t('mentorManagement.form.passwordHint') : '')" 
         prop="password"

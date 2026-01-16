@@ -1,3 +1,5 @@
+create database  if not exists  mydb;
+Use mydb;
 -- =====================================================
 -- 1. ROLES TABLE
 -- =====================================================
@@ -143,7 +145,7 @@ CREATE TABLE IF NOT EXISTS evaluation_criteria (
     display_order INT DEFAULT 0,
     INDEX idx_criteria_category (category),
     INDEX idx_criteria_active (is_active),
-    CONSTRAINT chk_criteria_category CHECK (category IN ('CHUYEN_MON', 'TU_DUY', 'KY_NANG'))
+    CONSTRAINT chk_criteria_category CHECK (category IN ('EXPERTISE', 'MINDSET', 'SKILLS'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -416,3 +418,129 @@ VALUES
 -- '38', 'Nguyễn Thị Quỳnh', 'quynh.nguyen@rikai.technology', '0905000006', '3', '5', 'f9ba0e01-8ca0-426b-ac17-3e92b698a1ea', '2025-05-01', '2025-10-31', 'ACTIVE', 'ACCEPTED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'
 -- '39', 'Lại Văn Sang', 'sang.lai@rikai.technology', '0905000007', '4', '5', 'e9fc1dde-6bc5-450f-ab83-82bc10178a93', '2025-05-01', '2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'
 -- '40', 'Trần Thị Thảo', 'thao.tran@rikai.technology', '0905000008', '4', '5', 'e9fc1dde-6bc5-450f-ab83-82bc10178a93', '2025-05-01', '2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'
+
+-- =====================================================
+-- UPDATE EVALUATION CRITERIA CONSTRAINT
+-- =====================================================
+ALTER TABLE evaluation_criteria DROP CONSTRAINT chk_criteria_category;
+
+ALTER TABLE weekly_reports
+    DROP COLUMN output_quality,
+    DROP COLUMN proactivity_score,
+    DROP COLUMN progress_score;
+
+ALTER TABLE weekly_reports
+    ADD COLUMN average_score DECIMAL(4,2) DEFAULT 0 AFTER status;
+
+ALTER TABLE evaluation_criteria ADD CONSTRAINT chk_criteria_category CHECK (category IN ('EXPERTISE', 'SKILLS', 'MINDSET'));
+
+-- =====================================================
+-- CRITERIA SCORE DEFINITIONS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS criteria_score_definitions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    criteria_id INT NOT NULL,
+    score_label VARCHAR(50),
+    min_score TINYINT NOT NULL,
+    max_score TINYINT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE,
+    INDEX idx_def_criteria (criteria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- WEEKLY REPORT DETAILS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS weekly_report_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    weekly_report_id INT NOT NULL,
+    criteria_id INT NOT NULL,
+    score TINYINT,
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (weekly_report_id) REFERENCES weekly_reports(id) ON DELETE CASCADE,
+    FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(id) ON DELETE RESTRICT,
+    UNIQUE KEY uk_report_criteria (weekly_report_id, criteria_id),
+    CONSTRAINT chk_detail_score CHECK (score >= 0 AND score <= 10)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
+-- INSERT EVALUATION CRITERIA DATA
+-- =====================================================
+INSERT INTO evaluation_criteria (id, category, name, weight, display_order , is_active) VALUES
+(1, 'EXPERTISE', 'Professional Competence & Execution Quality', 1.00, 1 , true),
+(2, 'EXPERTISE', 'Proactivity & Task Management (Outcome)', 1.00, 2 , true),
+(3, 'SKILLS', 'Work Attitude & Collaborative Spirit', 1.00, 3, true),
+(4, 'SKILLS', 'Communication & Job Reporting', 1.00, 4, true),
+(5, 'SKILLS', 'Teamwork & Group Communication', 1.00, 5, true),
+(6, 'SKILLS', 'Contribution Level & Team Impact', 1.00, 6, true),
+(7, 'SKILLS', 'Deadline Compliance & Task Management (Skill)', 1.00, 7, true),
+(8, 'SKILLS', 'Responsibility & Work Commitment', 1.00, 8, true),
+(9, 'MINDSET', 'Problem Analysis & Solution Proposal', 1.00, 9, true),
+(10, 'MINDSET', 'Solution Implementation & Result Improvement', 1.00, 10, true)
+ON DUPLICATE KEY UPDATE name = VALUES(name), category = VALUES(category);
+
+-- =====================================================
+-- INSERT CRITERIA SCORE DEFINITIONS DATA
+-- =====================================================
+INSERT INTO criteria_score_definitions (criteria_id, score_label, min_score, max_score, description) VALUES
+(1, 'Excellent', 9, 10, 'Understands requirements correctly from the start, independently designs and implements complete solutions; high-quality product, stable, few bugs, clear code/documentation.'),
+(1, 'Good', 7, 8, 'Understands requirements reasonably well, implements quite independently; product meets requirements, minor bugs but fixed quickly.'),
+(1, 'Average', 5, 6, 'Understands requirements at a basic level, implementation needs guidance; results work but have many bugs, requiring significant review and editing.'),
+(1, 'Weak', 0, 4, 'Frequently misunderstands requirements, poor implementation; product quality is low, heavily dependent on mentor or not completed.'),
+
+(2, 'Excellent', 9, 10, 'Proactively seeks information, self-manages progress, completes on time or early, minimal dependence on mentor.'),
+(2, 'Good', 7, 8, 'Works relatively independently, only needs minor suggestions from mentor.'),
+(2, 'Average', 5, 6, 'Can do the work but needs step-by-step guidance from mentor.'),
+(2, 'Weak', 0, 4, 'Can only do very basic parts, main parts require mentor support; sometimes cannot complete tasks.'),
+
+(3, 'Excellent', 9, 10, 'Always maintains a positive, professional attitude; respects others, listens and accepts feedback quickly; good cooperative spirit, positive contribution to the team.'),
+(3, 'Good', 7, 8, 'Serious attitude, eager to learn; listens and adjusts when receiving feedback; stable work spirit.'),
+(3, 'Average', 5, 6, 'Attitude generally stable, complies with rules but not truly positive; participates in work just enough.'),
+(3, 'Weak', 0, 4, 'Passive, lacks seriousness; shows negative signs (doing personal work, lack of focus, complaining); affects team spirit.'),
+
+(4, 'Excellent', 9, 10, 'Proactive, clear communication; asks focused questions; reports progress fully and timely, proactively informs about issues.'),
+(4, 'Good', 7, 8, 'Communication relatively clear; exchanges and reports fully, sometimes needs reminders from mentor.'),
+(4, 'Average', 5, 6, 'Communication still shy, not coherent; rarely proactively reports, usually only responds when asked.'),
+(4, 'Weak', 0, 4, 'Poor communication, vague feedback or avoiding exchange; frequently reports late or missing, affecting work progress.'),
+
+(5, 'Excellent', 9, 10, 'Integrates quickly, proactively coordinates; clear, coherent communication; creates an open exchange environment, supports team to work effectively.'),
+(5, 'Good', 7, 8, ' cooperates well, communication quite clear; ready to participate and coordinate when the team needs, sometimes still reserved.'),
+(5, 'Average', 5, 6, 'Coordinates at a basic level; communication infrequent or unclear, mainly focuses on individual work.'),
+(5, 'Weak', 0, 4, 'Little exchange, poor communication; does not proactively coordinate, updates information late, causing delays to general progress.'),
+
+(6, 'Excellent', 9, 10, 'Frequently contributes valuable opinions, shares knowledge; creates positive influence, helps bond and improve team performance.'),
+(6, 'Good', 7, 8, 'Actively participates in discussions, has useful contributions; supports teammates when requested, contributes to achieving common goals.'),
+(6, 'Average', 5, 6, 'Contribution still limited; rarely proactively shares, influence on the team not yet distinct.'),
+(6, 'Weak', 0, 4, 'Little or no participation in discussion; lacks information sharing, sometimes causing difficulties or negative influence on the team.'),
+
+(7, 'Excellent', 9, 10, 'Always completes on time or before deadline; knows how to prioritize, manages time scientifically; handles multiple parallel tasks effectively, no need for reminders.'),
+(7, 'Good', 7, 8, 'Mostly completes on time; manages time quite well, sometimes slightly slow but notifies in advance.'),
+(7, 'Average', 5, 6, 'Completes work but often needs reminders about deadlines; time management not effective when workload increases.'),
+(7, 'Weak', 0, 4, 'Frequently misses deadlines, does not notify in advance; poor work arrangement, easy to miss tasks, needs mentor to follow closely.'),
+
+(8, 'Excellent', 9, 10, 'Demonstrates high sense of responsibility; proactively accepts additional work when team needs; always ensures output quality.'),
+(8, 'Good', 7, 8, 'Responsible for assigned work; rarely needs reminders; fulfills commitments properly.'),
+(8, 'Average', 5, 6, 'Responsible at a basic level but unstable; sometimes hesitant or lacks decisiveness.'),
+(8, 'Weak', 0, 4, 'Shows signs of avoiding difficult work, pushing responsibility; affects progress and general efficiency of the team.'),
+
+(9, 'Excellent', 9, 10, 'Quickly identifies the true nature of problems; analyzes causes - consequences clearly; proposes many feasible solutions, weighs pros - cons.'),
+(9, 'Good', 7, 8, 'Identifies most problems correctly; proposes suitable solutions, sometimes needs mentor feedback to optimize.'),
+(9, 'Average', 5, 6, 'Understands problems at a basic level; solutions are monotonous, lack feasibility, dependent on mentor.'),
+(9, 'Weak', 0, 4, 'Frequently misunderstands problems; rarely proposes clear solutions, waits for mentor instructions.'),
+
+(10, 'Excellent', 9, 10, 'Implements logically, adjusts flexibly; resolves problems thoroughly, draws experience and shares with the group.'),
+(10, 'Good', 7, 8, 'Performs quite well; problems are handled, draws experience but not systematically.'),
+(10, 'Average', 5, 6, 'Needs significant mentor guidance; handling is temporary, problems easily recur.'),
+(10, 'Weak', 0, 4, 'Passive, easily gives up; problems not solved or handled incorrectly, repeating old errors.');
+
+-- =====================================================
+-- UPDATE CRITERIA SCORE DEFINITIONS CONSTRAINT
+-- =====================================================
+ALTER TABLE criteria_score_definitions ADD CONSTRAINT chk_score_label CHECK (score_label IN ('Excellent', 'Good', 'Average', 'Weak'));
+
+ALTER table evaluation_criteria drop column display_order;
+
+ALTER table evaluation_criteria drop column is_active;

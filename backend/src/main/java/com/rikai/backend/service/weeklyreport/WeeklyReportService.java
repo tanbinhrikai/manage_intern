@@ -11,6 +11,9 @@ import com.rikai.backend.model.Users;
 import com.rikai.backend.model.WeeklyReport;
 import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.WeeklyReportRepository;
+import com.rikai.backend.repository.EvaluationCriteriaRepository;
+import com.rikai.backend.model.EvaluationCriteria;
+import com.rikai.backend.model.WeeklyReportDetail;
 import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,34 +38,7 @@ public class WeeklyReportService implements IWeeklyReportService {
     WeeklyReportRepository weeklyReportRepository;
     InternRepository internRepository;
     AuthenticationService authenticationService;
-
-    /**
-     * Calculate week number from intern start_date
-     */
-    private Integer calculateWeekNumber(LocalDate weekStartDate, LocalDate internStartDate) {
-        if (weekStartDate.isBefore(internStartDate)) {
-            return 0;
-        }
-        long daysBetween = ChronoUnit.DAYS.between(internStartDate, weekStartDate);
-        return (int) (daysBetween / 7) + 1;
-    }
-
-    /**
-     * Check if current user is admin or mentor of the intern
-     */
-    private boolean hasAccessToIntern(Intern intern, Users currentUser) {
-        if (currentUser == null) {
-            return false;
-        }
-        if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
-            return true;
-        }
-        if ("MENTOR".equals(currentUser.getRole().getRoleName())) {
-            return intern.getMentor() != null &&
-                    intern.getMentor().getId().equals(currentUser.getId());
-        }
-        return false;
-    }
+    EvaluationCriteriaRepository evaluationCriteriaRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -146,13 +124,23 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .weekStartDate(createDTO.getWeekStartDate())
                 .tasksAssigned(createDTO.getTasksAssigned())
                 .tasksCompleted(createDTO.getTasksCompleted())
-                .outputQuality(createDTO.getOutputQuality())
-                .proactivityScore(createDTO.getProactivityScore())
-                .progressScore(createDTO.getProgressScore())
-                .issuesRisks(createDTO.getIssuesRisks())
                 .mentorOverallComment(createDTO.getMentorOverallComment())
                 .status("submitted")
                 .build();
+
+        if (createDTO.getDetails() != null) {
+            Set<WeeklyReportDetail> details = createDTO.getDetails().stream().map(detailReq -> {
+                EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
+                        .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+                return WeeklyReportDetail.builder()
+                        .weeklyReport(report)
+                        .criteria(criteria)
+                        .score(detailReq.getScore())
+                        .comment(detailReq.getComment())
+                        .build();
+            }).collect(Collectors.toSet());
+            report.setDetails(details);
+        }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
@@ -178,7 +166,6 @@ public class WeeklyReportService implements IWeeklyReportService {
                     throw new AppException(ErrorCode.WEEKLY_REPORT_DUPLICATE);
                 }
                 report.setWeekStartDate(updateDTO.getWeekStartDate());
-                // Recalculate week_number
                 Integer weekNumber = calculateWeekNumber(
                         updateDTO.getWeekStartDate(), report.getIntern().getStartDate());
                 report.setWeekNumber(weekNumber);
@@ -191,14 +178,23 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (updateDTO.getTasksCompleted() != null) {
             report.setTasksCompleted(updateDTO.getTasksCompleted());
         }
-        if (updateDTO.getOutputQuality() != null) {
-            report.setOutputQuality(updateDTO.getOutputQuality());
-        }
-        if (updateDTO.getProactivityScore() != null) {
-            report.setProactivityScore(updateDTO.getProactivityScore());
-        }
-        if (updateDTO.getProgressScore() != null) {
-            report.setProgressScore(updateDTO.getProgressScore());
+        if (updateDTO.getDetails() != null) {
+            if (report.getDetails() == null) {
+                report.setDetails(new HashSet<>());
+            }
+            report.getDetails().clear();
+
+            Set<WeeklyReportDetail> newDetails = updateDTO.getDetails().stream().map(detailReq -> {
+                EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
+                        .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+                return WeeklyReportDetail.builder()
+                        .weeklyReport(report)
+                        .criteria(criteria)
+                        .score(detailReq.getScore())
+                        .comment(detailReq.getComment())
+                        .build();
+            }).collect(Collectors.toSet());
+            report.getDetails().addAll(newDetails);
         }
         if (updateDTO.getIssuesRisks() != null) {
             report.setIssuesRisks(updateDTO.getIssuesRisks());
@@ -249,5 +245,27 @@ public class WeeklyReportService implements IWeeklyReportService {
         return reports.stream()
                 .map(WeeklyReportResponse::fromWeeklyReport)
                 .collect(Collectors.toList());
+    }
+
+    private Integer calculateWeekNumber(LocalDate weekStartDate, LocalDate internStartDate) {
+        if (weekStartDate.isBefore(internStartDate)) {
+            return 0;
+        }
+        long daysBetween = ChronoUnit.DAYS.between(internStartDate, weekStartDate);
+        return (int) (daysBetween / 7) + 1;
+    }
+
+    private boolean hasAccessToIntern(Intern intern, Users currentUser) {
+        if (currentUser == null) {
+            return false;
+        }
+        if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
+            return true;
+        }
+        if ("MENTOR".equals(currentUser.getRole().getRoleName())) {
+            return intern.getMentor() != null &&
+                    intern.getMentor().getId().equals(currentUser.getId());
+        }
+        return false;
     }
 }
