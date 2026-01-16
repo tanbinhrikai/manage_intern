@@ -394,5 +394,56 @@
                 "deleteSuccess": "Definition deleted successfully!"
             }
         }
+    },
+    "weeklyReport": {
+        "title": "Weekly Evaluation Report",
+        "selectWeek": "Select Week",
+        "weekStartDate": "Week Start Date",
+        "weekNumber": "Week",
+        "createNew": "Create New Report",
+        "noReports": "No reports found for this intern.",
+        "category": {
+            "EXPERTISE": "Work Performance & Outcomes",
+            "MINDSET": "Problem Solving & Thinking",
+            "SKILLS": "Soft Skills & Attitudes"
+        },
+        "table": {
+            "criteria": "Criteria",
+            "excellent": "Excellent (9-10)",
+            "good": "Good (7-8)",
+            "average": "Average (5-6)",
+            "weak": "Weak (0-4)",
+            "score": "Score",
+            "comment": "Comment",
+            "averageScore": "Average Score"
+        },
+        "form": {
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "tasksAssigned": "Tasks Assigned",
+            "tasksCompleted": "Tasks Completed",
+            "issuesRisks": "Issues/Risks",
+            "mentorComment": "Mentor Overall Comment",
+            "scorePlaceholder": "0-10",
+            "commentPlaceholder": "Enter comment..."
+        },
+        "actions": {
+            "save": "Save Draft",
+            "submit": "Submit Report",
+            "cancel": "Cancel",
+            "edit": "Edit",
+            "view": "View Details"
+        },
+        "status": {
+            "DRAFT": "Draft",
+            "SUBMITTED": "Submitted",
+            "APPROVED": "Approved"
+        },
+        "messages": {
+            "loadError": "Failed to load reports",
+            "createSuccess": "Report created successfully!",
+            "updateSuccess": "Report updated successfully!",
+            "saveError": "Failed to save report. Please try again."
+        }
     }
 }

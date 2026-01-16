@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -59,7 +60,7 @@ public class WeeklyReport {
     String status = "submitted";
 
     @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
-    Set<WeeklyReportDetail> details;
+    List<WeeklyReportDetail> details;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

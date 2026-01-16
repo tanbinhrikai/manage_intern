@@ -394,5 +394,56 @@
                 "deleteSuccess": "定義を削除しました！"
             }
         }
+    },
+    "weeklyReport": {
+        "title": "週次評価報告書",
+        "selectWeek": "週を選択",
+        "weekStartDate": "週開始日",
+        "weekNumber": "週",
+        "createNew": "新規レポート作成",
+        "noReports": "このインターンのレポートはありません。",
+        "category": {
+            "EXPERTISE": "業務成果・実行力",
+            "MINDSET": "問題解決・思考力",
+            "SKILLS": "ソフトスキル・姿勢"
+        },
+        "table": {
+            "criteria": "評価基準",
+            "excellent": "優秀 (9-10)",
+            "good": "良好 (7-8)",
+            "average": "普通 (5-6)",
+            "weak": "要改善 (0-4)",
+            "score": "点数",
+            "comment": "コメント",
+            "averageScore": "平均点"
+        },
+        "form": {
+            "startDate": "開始日",
+            "endDate": "終了日",
+            "tasksAssigned": "割り当てタスク",
+            "tasksCompleted": "完了タスク",
+            "issuesRisks": "課題・リスク",
+            "mentorComment": "メンター総合コメント",
+            "scorePlaceholder": "0-10",
+            "commentPlaceholder": "コメントを入力..."
+        },
+        "actions": {
+            "save": "下書き保存",
+            "submit": "レポート提出",
+            "cancel": "キャンセル",
+            "edit": "編集",
+            "view": "詳細を見る"
+        },
+        "status": {
+            "DRAFT": "下書き",
+            "SUBMITTED": "提出済み",
+            "APPROVED": "承認済み"
+        },
+        "messages": {
+            "loadError": "レポートの読み込みに失敗しました",
+            "createSuccess": "レポートを作成しました！",
+            "updateSuccess": "レポートを更新しました！",
+            "saveError": "レポートの保存に失敗しました。もう一度お試しください。"
+        }
     }
 }

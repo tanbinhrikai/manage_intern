@@ -234,9 +234,6 @@ onMounted(() => {
         </div>
       </el-card>
 
-
-
-
     </div>
   </MentorLayout>
 </template>

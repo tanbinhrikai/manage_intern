@@ -25,9 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -129,7 +128,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .build();
 
         if (createDTO.getDetails() != null) {
-            Set<WeeklyReportDetail> details = createDTO.getDetails().stream().map(detailReq -> {
+            List<WeeklyReportDetail> details = createDTO.getDetails().stream().map(detailReq -> {
                 EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
                         .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
                 return WeeklyReportDetail.builder()
@@ -138,7 +137,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                         .score(detailReq.getScore())
                         .comment(detailReq.getComment())
                         .build();
-            }).collect(Collectors.toSet());
+            }).collect(Collectors.toList());
             report.setDetails(details);
         }
 
@@ -180,11 +179,11 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
         if (updateDTO.getDetails() != null) {
             if (report.getDetails() == null) {
-                report.setDetails(new HashSet<>());
+                report.setDetails(new ArrayList<>());
             }
             report.getDetails().clear();
 
-            Set<WeeklyReportDetail> newDetails = updateDTO.getDetails().stream().map(detailReq -> {
+            List<WeeklyReportDetail> newDetails = updateDTO.getDetails().stream().map(detailReq -> {
                 EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
                         .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
                 return WeeklyReportDetail.builder()
@@ -193,7 +192,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                         .score(detailReq.getScore())
                         .comment(detailReq.getComment())
                         .build();
-            }).collect(Collectors.toSet());
+            }).toList();
             report.getDetails().addAll(newDetails);
         }
         if (updateDTO.getIssuesRisks() != null) {

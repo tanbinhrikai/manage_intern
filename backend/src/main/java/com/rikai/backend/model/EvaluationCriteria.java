@@ -6,7 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.Set;
+import java.util.List;
 
 @Entity
 @Data
@@ -35,5 +35,5 @@ public class EvaluationCriteria {
     BigDecimal weight = BigDecimal.ONE;
 
     @OneToMany(mappedBy = "criteria")
-    Set<CriteriaScoreDefinition> scoreDefinitions;
+    List<CriteriaScoreDefinition> scoreDefinitions;
 }

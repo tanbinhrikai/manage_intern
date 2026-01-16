@@ -301,6 +301,11 @@ onMounted(() => {
   justify-content: center;
 }
 
+.quick-actions :deep(.el-button),
+.action-list :deep(.el-button) {
+  margin-left: 0;
+}
+
 :deep(.el-card__header) {
   padding: 16px 20px;
   border-bottom: 1px solid #ebeef5;
