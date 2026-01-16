@@ -37,7 +37,7 @@ public class AuthenticationService implements IAuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        var user = userRepository.findByEmailAndIsActive(request.getEmail() , true)
+        var user = userRepository.findByEmailAndIsActive(request.getEmail(), true)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
@@ -66,7 +66,7 @@ public class AuthenticationService implements IAuthenticationService {
     public Users getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         Object principal = authentication.getPrincipal();
         String userIdentifier = null;
@@ -77,11 +77,11 @@ public class AuthenticationService implements IAuthenticationService {
         } else if (principal instanceof String) {
             userIdentifier = (String) principal;
         }
-        if (userIdentifier != null) {
-            return userRepository.findByEmailAndIsActive(userIdentifier , true)
-                    .filter(Users::isActive)
-                    .orElse(null);
+        if (userIdentifier == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        return null;
+        return userRepository.findByEmailAndIsActive(userIdentifier, true)
+                .filter(Users::isActive)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 }

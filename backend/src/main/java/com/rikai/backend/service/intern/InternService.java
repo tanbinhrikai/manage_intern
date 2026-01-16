@@ -126,15 +126,14 @@ public class InternService implements IInternService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<InternResponse> getMyIntern(Pageable pageable) {
         Users users = authenticationService.getCurrentUser();
-        if (users.getId() == null)
-            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         var mentorId = users.getId();
         if (!usersRepository.existsById(mentorId)) {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
         }
-        Page<Intern> internPage = internRepository.findByUsers_Id(mentorId, pageable);
+        Page<Intern> internPage = internRepository.findByMentor_Id(mentorId, pageable);
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 

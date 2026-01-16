@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -49,14 +48,16 @@ public class UsersService implements IUserService {
         }
         Users user = userMapper.toUser(userCreateDTO);
         user.setActive(true);
-        Optional<Roles> role = rolesRepository.findByRoleName("MENTOR");
+        Roles role = rolesRepository.findByRoleName("MENTOR")
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
-        role.ifPresent(user::setRole);
+        user.setRole(role);
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
 
     @Override
+    @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -83,6 +84,7 @@ public class UsersService implements IUserService {
     }
 
     @Override
+    @Transactional
     public void changeStatus(UUID id, boolean isActive) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

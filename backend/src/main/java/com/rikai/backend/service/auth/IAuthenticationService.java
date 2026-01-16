@@ -8,6 +8,6 @@ public interface IAuthenticationService {
     AuthenticationResponse authenticate(AuthenticationRequest request);
 
     void logout(String refreshToken);
-<<<<<<< HEAD
+
     Users getCurrentUser();
 }

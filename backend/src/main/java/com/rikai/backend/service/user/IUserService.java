@@ -15,5 +15,5 @@ public interface IUserService {
 
     UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO);
 
-    void toggleStatus(UUID id);
+    void changeStatus(UUID id, boolean isActive);
 }

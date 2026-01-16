@@ -9,11 +9,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface DepartmentMapper {
 
-    @Mapping(source = "name", target = "title")
     DepartmentResponse toDepartmentResponse(Department department);
 
     @Mapping(target = "id", ignore = true)
-<<<<<<< HEAD
+
     @Mapping(target = "users", ignore = true)
     Department toDepartment(DepartmentCreationRequest request);
 }

@@ -55,4 +55,5 @@ public class Intern {
         if (internStatus == null) {
             internStatus = InternStatus.ACTIVE;
         }
+    }
 }
