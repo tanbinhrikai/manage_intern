@@ -13,7 +13,8 @@ public enum ErrorCode {
     USER_EXISTED("User already exists", HttpStatus.BAD_REQUEST),
     INVALID_USERNAME("Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD("Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
-    PASSWORD_WEAK("Password must be at least 8 characters long and include uppercase, lowercase, and numbers.", HttpStatus.BAD_REQUEST),
+    PASSWORD_WEAK("Password must be at least 8 characters long and include uppercase, lowercase, and numbers.",
+            HttpStatus.BAD_REQUEST),
     INVALID_DOB("Your age must be at least {min}", HttpStatus.BAD_REQUEST),
     INVALID_EMAIL("Invalid email format", HttpStatus.BAD_REQUEST),
     INVALID_FIRSTNAME("First name cannot be empty", HttpStatus.BAD_REQUEST),
@@ -27,10 +28,24 @@ public enum ErrorCode {
     CATEGORY_NOT_EXISTED("Category not found", HttpStatus.NOT_FOUND),
     PRODUCT_NOT_EXISTED("Product not found", HttpStatus.NOT_FOUND),
     RESOURCE_NOT_FOUND("Resource not found", HttpStatus.NOT_FOUND),
+    INTERN_NOT_EXISTED("Intern not found", HttpStatus.NOT_FOUND),
+    JOB_POSITION_NOT_EXISTED("Job position not found", HttpStatus.NOT_FOUND),
+    DEPARTMENT_NOT_EXISTED("Department not found", HttpStatus.NOT_FOUND),
+    POSITION_NOT_EXISTED("Position not found", HttpStatus.NOT_FOUND),
+    MENTOR_NOT_EXISTED("Mentor not found", HttpStatus.NOT_FOUND),
+    ROLE_NOT_EXISTED("Role not found", HttpStatus.NOT_FOUND),
+    INVALID_DATE_RANGE("End date must be after start date", HttpStatus.BAD_REQUEST),
 
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED),
     USERNAME_OR_PASSWORD_INCORRECT("Incorrect username or password.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
+    // Weekly Report errors
+    WEEKLY_REPORT_NOT_EXISTED("Weekly report not found", HttpStatus.NOT_FOUND),
+    WEEKLY_REPORT_DUPLICATE("Weekly report already exists for this intern and week", HttpStatus.BAD_REQUEST),
+    INTERN_ID_REQUIRED("Intern ID is required", HttpStatus.BAD_REQUEST),
+    WEEK_START_DATE_REQUIRED("Week start date is required", HttpStatus.BAD_REQUEST),
+    INVALID_SCORE("Score must be between 1 and 10", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED_INTERN_ACCESS("You do not have permission to access this intern", HttpStatus.FORBIDDEN),
     ;
 
     ErrorCode(String message, HttpStatusCode statusCode) {

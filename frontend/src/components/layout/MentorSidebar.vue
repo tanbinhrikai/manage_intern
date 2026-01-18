@@ -8,10 +8,10 @@ const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
 const menuItems = [
-  { key: 'dashboard', path: '/dashboard', icon: 'dashboard' },
-  { key: 'myInterns', path: '/my-interns', icon: 'interns' },
-  { key: 'reports', path: '/reports', icon: 'reports' },
-  { key: 'settings', path: '/settings', icon: 'settings' }
+  { key: 'dashboard', path: '/mentor/dashboard', icon: 'dashboard' },
+  { key: 'myInterns', path: '/mentor/my-interns', icon: 'interns' },
+  { key: 'reports', path: '/mentor/reports', icon: 'reports' },
+  { key: 'settings', path: '/mentor/settings', icon: 'settings' }
 ]
 
 const isActive = (path) => route.path === path

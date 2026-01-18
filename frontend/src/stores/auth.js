@@ -27,19 +27,23 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             await authApi.refreshToken()
         } catch (error) {
-            logout()
+            clearAuth()
             throw error
         }
+    }
+
+    const clearAuth = () => {
+        user.value = null
+        localStorage.removeItem(USER_KEY)
     }
 
     const logout = async () => {
         try {
             await authApi.logout()
         } catch (error) {
-            console.error(error)
+            console.error('Logout error:', error)
         } finally {
-            user.value = null
-            localStorage.removeItem(USER_KEY)
+            clearAuth()
             router.push('/login')
         }
     }
@@ -50,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
         userRole,
         login,
         logout,
-        refreshToken
+        refreshToken,
+        clearAuth
     }
 })

@@ -9,6 +9,7 @@ import com.rikai.backend.common.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -28,6 +29,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = AccessDeniedException.class)
     public ApiResponse<?> handlingAccessDeniedException(HttpServletResponse response) {
         return buildResponse(ErrorCode.UNAUTHORIZED, null, response);
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ApiResponse<?> handlingHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_KEY, null, response);
     }
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     public ApiResponse<?> handlingValidation(MethodArgumentNotValidException exception, HttpServletResponse response) {

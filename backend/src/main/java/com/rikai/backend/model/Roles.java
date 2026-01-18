@@ -7,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Entity
 @Data
@@ -22,7 +21,4 @@ public class Roles {
 
     @Column(name = "description")
     String description;
-
-    @OneToMany(mappedBy = "role")
-    Set<Users> users;
 }

@@ -10,6 +10,7 @@ public enum SuccessCode {
     LOGIN_SUCCESSFUL("Login successful", HttpStatus.OK),
     REFRESH_TOKEN_SUCCESSFUL("Refresh Token successful", HttpStatus.ACCEPTED),
     LOGOUT_SUCCESSFUL("Logout successful", HttpStatus.OK),
+    GET_MY_INFO_SUCCESSFUL("Get my information successful", HttpStatus.OK),
 
     CREATE_USER_SUCCESSFUL("Create user successful", HttpStatus.CREATED),
     GET_USER_SUCCESSFUL("Get user successful", HttpStatus.OK),
@@ -29,7 +30,32 @@ public enum SuccessCode {
     UPDATE_PRODUCT_SUCCESSFUL("Update product successful", HttpStatus.OK),
     DELETE_PRODUCT_SUCCESSFUL("Delete product successful", HttpStatus.OK),
 
+    CREATE_INTERN_SUCCESSFUL("Create intern successful", HttpStatus.CREATED),
+    GET_INTERN_SUCCESSFUL("Get intern successful", HttpStatus.OK),
+    GET_ALL_INTERNS_SUCCESSFUL("Get all interns successful", HttpStatus.OK),
+    UPDATE_INTERN_SUCCESSFUL("Update intern successful", HttpStatus.OK),
+    DELETE_INTERN_SUCCESSFUL("Delete intern successful", HttpStatus.OK),
+
     CHANGE_PASSWORD_SUCCESSFUL("Change password successful", HttpStatus.OK),
+
+    GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK),
+    
+    // Weekly Report success codes
+    CREATE_WEEKLY_REPORT_SUCCESSFUL("Create weekly report successful", HttpStatus.CREATED),
+    GET_WEEKLY_REPORT_SUCCESSFUL("Get weekly report successful", HttpStatus.OK),
+    GET_ALL_WEEKLY_REPORTS_SUCCESSFUL("Get all weekly reports successful", HttpStatus.OK),
+    UPDATE_WEEKLY_REPORT_SUCCESSFUL("Update weekly report successful", HttpStatus.OK),
+    DELETE_WEEKLY_REPORT_SUCCESSFUL("Delete weekly report successful", HttpStatus.OK),
+    
+    // Intern success codes
+    CREATE_DEPARTMENT_SUCCESSFUL("Create department successful", HttpStatus.CREATED),
+    GET_DEPARTMENT_SUCCESSFUL("Get department successful", HttpStatus.OK),
+    UPDATE_DEPARTMENT_SUCCESSFUL("Update department successful", HttpStatus.OK),
+
+    CREATE_POSITION_SUCCESSFUL("Create position successful", HttpStatus.CREATED),
+    GET_POSITION_SUCCESSFUL("Get position successful", HttpStatus.OK),
+    GET_ALL_POSITIONS_SUCCESSFUL("Get all positions successful", HttpStatus.OK),
+    UPDATE_POSITION_SUCCESSFUL("Update position successful", HttpStatus.OK),
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {
