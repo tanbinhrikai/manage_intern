@@ -19,12 +19,16 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
             SELECT i FROM Intern i
             WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(i.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
             AND (:internStatus IS NULL OR i.internStatus = :internStatus)
+            AND (:startDate IS NULL OR i.startDate >= :startDate)
+            AND (:endDate IS NULL OR i.startDate <= :endDate)
             AND (:positionId IS NULL OR i.position.id = :positionId)
             AND (:mentorId IS NULL OR i.mentor.id = :mentorId)
              """)
     Page<Intern> getAllInternByKeyword(Pageable pageable,
                                        @Param("keyword") String keyword,
                                        @Param("internStatus") InternStatus internStatus,
+                                       @Param("startDate") LocalDate startDate,
+                                       @Param("endDate") LocalDate endDate,
                                        @Param("positionId") Long positionId,
                                        @Param("mentorId") UUID mentorId);
 
@@ -58,8 +62,8 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
             ORDER BY i.fullName ASC
             """)
     Page<Intern> findInternsNotEvaluatedThisWeekByMentor(@Param("mentorId") UUID mentorId,
-                                                          @Param("weekStartDate") LocalDate weekStartDate,
-                                                          Pageable pageable);
+                                                         @Param("weekStartDate") LocalDate weekStartDate,
+                                                         Pageable pageable);
 
     @Query("""
             SELECT i FROM Intern i
@@ -73,5 +77,5 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
             ORDER BY i.fullName ASC
             """)
     Page<Intern> findAllInternsNotEvaluatedThisWeek(@Param("weekStartDate") LocalDate weekStartDate,
-                                                      Pageable pageable);
+                                                    Pageable pageable);
 }

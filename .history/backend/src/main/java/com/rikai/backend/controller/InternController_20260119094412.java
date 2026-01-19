@@ -16,9 +16,10 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.util.Locale;
 import java.util.UUID;
 
 @RestController
@@ -30,22 +31,24 @@ public class InternController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<PageResponse<InternResponse>> getAllInterns(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false, name = "keyword") String keyword,
-            @RequestParam(required = false, name = "status") String status,
-            @RequestParam(required = false, name = "start_date") LocalDate startDate,
-            @RequestParam(required = false, name = "end_date") LocalDate endDate,
-            @RequestParam(required = false, name = "position_id") Long positionId,
-            @RequestParam(required = false, name = "mentor_id") UUID mentorId) {
-        PageRequest pageable = PageRequest.of(page, limit);
+    public ApiResponse<PageResponse<InternResponse>> getAllInterns(PageRequest pageable,
+                                                                   @RequestParam(defaultValue = "", name = "keyword") String keyword,
+                                                                   @RequestParam(defaultValue = "", name = "status") String status,
+                                                                   @RequestParam(defaultValue = "", name = "mentor_id") String mentorId,
+                                                                   @RequestParam(defaultValue = "", name = "position_id") String positionId) {
+        String keywordValue = StringUtils.hasText(keyword) ? keyword.trim() : null;
+        InternStatus statusValue = StringUtils.hasText(status)
+                ? InternStatus.valueOf(status.trim().toUpperCase(Locale.ROOT))
+                : null;
+        UUID mentorUuid = StringUtils.hasText(mentorId) ? UUID.fromString(mentorId.trim()) : null;
+        Long positionIdValue = StringUtils.hasText(positionId) ? Long.valueOf(positionId.trim()) : null;
+
         return ApiResponse.buildSuccessResponse(
-                internService.getAllInterns(pageable, keyword, status, startDate, endDate, positionId, mentorId),
+                internService.getAllInterns(pageable, keywordValue, statusValue, mentorUuid, positionIdValue),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
-    @GetMapping("/my-interns")
+    @GetMapping({"/my-intern", "/my-interns"})
     @PreAuthorize("hasRole('MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getMyIntern(
             @RequestParam(defaultValue = "0") int page,
@@ -53,17 +56,6 @@ public class InternController {
             @RequestParam(required = false) String keyword) {
         Pageable pageable = PageRequest.of(page, limit);
         return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable, keyword),
-                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
-    }
-
-    @GetMapping("/not-evaluated-this-week")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<PageResponse<InternResponse>> getInternsNotEvaluatedThisWeek(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit) {
-        Pageable pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(
-                internService.getInternsNotEvaluatedThisWeek(pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
@@ -97,6 +89,8 @@ public class InternController {
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
+    // Endpoint generic /{id} phải đặt CUỐI CÙNG
+    // Chỉ match số để tránh nhầm với các path chữ
     @GetMapping("/{id:\\d+}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> getInternById(@PathVariable Long id) {

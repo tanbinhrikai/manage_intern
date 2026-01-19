@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -30,40 +29,22 @@ public class InternController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<PageResponse<InternResponse>> getAllInterns(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false, name = "keyword") String keyword,
-            @RequestParam(required = false, name = "status") String status,
-            @RequestParam(required = false, name = "start_date") LocalDate startDate,
-            @RequestParam(required = false, name = "end_date") LocalDate endDate,
-            @RequestParam(required = false, name = "position_id") Long positionId,
-            @RequestParam(required = false, name = "mentor_id") UUID mentorId) {
-        PageRequest pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(
-                internService.getAllInterns(pageable, keyword, status, startDate, endDate, positionId, mentorId),
+    public ApiResponse<PageResponse<InternResponse>> getAllInterns(PageRequest pageable,
+                                                                   @RequestParam(required = false, name = "keyword") String keyword,
+                                                                   @RequestParam(required = false, name = "status") InternStatus status,
+                                                                   @RequestParam(required = false, name = "mentor_id") UUID mentorId,
+                                                                   @RequestParam(required = false, name = "position_id") Long positionId) {
+        return ApiResponse.buildSuccessResponse(internService.getAllInterns(pageable, keyword, status, mentorId, positionId),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
-    @GetMapping("/my-interns")
+    @GetMapping("/my-intern")
     @PreAuthorize("hasRole('MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getMyIntern(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String keyword) {
-        Pageable pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable, keyword),
-                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
-    }
-
-    @GetMapping("/not-evaluated-this-week")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<PageResponse<InternResponse>> getInternsNotEvaluatedThisWeek(
-            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
         Pageable pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(
-                internService.getInternsNotEvaluatedThisWeek(pageable),
+        return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
@@ -97,7 +78,8 @@ public class InternController {
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
-    @GetMapping("/{id:\\d+}")
+    // Endpoint generic /{id} phải đặt CUỐI CÙNG
+    @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> getInternById(@PathVariable Long id) {
         return ApiResponse.buildSuccessResponse(internService.getInternById(id), SuccessCode.GET_INTERN_SUCCESSFUL);
@@ -110,7 +92,7 @@ public class InternController {
                 SuccessCode.CREATE_INTERN_SUCCESSFUL);
     }
 
-    @PutMapping("/{id:\\d+}")
+    @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> updateIntern(@PathVariable Long id,
                                                     @Valid @RequestBody InternUpdateRequest request) {
@@ -118,7 +100,7 @@ public class InternController {
                 SuccessCode.UPDATE_INTERN_SUCCESSFUL);
     }
 
-    @DeleteMapping("/{id:\\d+}")
+    @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<Void> deleteIntern(@PathVariable Long id) {
         internService.deleteIntern(id);

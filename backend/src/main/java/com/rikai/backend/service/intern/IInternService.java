@@ -9,10 +9,19 @@ import com.rikai.backend.dto.response.InternResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
+import java.util.Locale;
 import java.util.UUID;
 
 public interface IInternService {
-    PageResponse<InternResponse> getAllInterns(PageRequest pageRequest, String keyword, String status, Long positionId, UUID mentorId);
+    PageResponse<InternResponse> getAllInterns(
+            PageRequest pageRequest,
+            String keyword,
+            String status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long positionId,
+            UUID mentorId);
 
     InternResponse getInternById(Long id);
 

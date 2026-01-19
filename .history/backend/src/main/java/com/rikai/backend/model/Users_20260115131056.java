@@ -1,5 +1,6 @@
 package com.rikai.backend.model;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -42,7 +43,7 @@ public class Users {
 
     @Builder.Default
     @Column(name = "is_active")
-    Boolean isActive = true;
+    boolean isActive = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -53,10 +54,18 @@ public class Users {
     Instant updatedAt;
 
     @ManyToOne
-    @JoinColumn(name = "role_name", referencedColumnName = "role_name", nullable = false)
+    @JoinColumn(
+            name = "role_name",
+            referencedColumnName = "role_name",
+            nullable = false
+    )
     Roles role;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id", referencedColumnName = "id", nullable = true)
+    @JoinColumn(
+            name = "department_id",
+            referencedColumnName = "id",
+            nullable = true
+    )
     Department department;
 }

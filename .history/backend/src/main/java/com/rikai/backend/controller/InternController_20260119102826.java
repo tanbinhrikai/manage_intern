@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -35,17 +34,26 @@ public class InternController {
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(required = false, name = "keyword") String keyword,
             @RequestParam(required = false, name = "status") String status,
-            @RequestParam(required = false, name = "start_date") LocalDate startDate,
-            @RequestParam(required = false, name = "end_date") LocalDate endDate,
             @RequestParam(required = false, name = "position_id") Long positionId,
             @RequestParam(required = false, name = "mentor_id") UUID mentorId) {
         PageRequest pageable = PageRequest.of(page, limit);
+        
+        // Parse status string to enum
+        InternStatus internStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Invalid status value, will be ignored
+            }
+        }
+        
         return ApiResponse.buildSuccessResponse(
-                internService.getAllInterns(pageable, keyword, status, startDate, endDate, positionId, mentorId),
+                internService.getAllInterns(pageable, keyword, internStatus, positionId, mentorId),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
-    @GetMapping("/my-interns")
+    @GetMapping({"/my-intern", "/my-interns"})
     @PreAuthorize("hasRole('MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getMyIntern(
             @RequestParam(defaultValue = "0") int page,
@@ -53,17 +61,6 @@ public class InternController {
             @RequestParam(required = false) String keyword) {
         Pageable pageable = PageRequest.of(page, limit);
         return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable, keyword),
-                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
-    }
-
-    @GetMapping("/not-evaluated-this-week")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<PageResponse<InternResponse>> getInternsNotEvaluatedThisWeek(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit) {
-        Pageable pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(
-                internService.getInternsNotEvaluatedThisWeek(pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 

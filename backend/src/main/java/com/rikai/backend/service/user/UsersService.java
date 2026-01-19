@@ -18,11 +18,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,8 +41,20 @@ public class UsersService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<UserResponse> getAllMentorUsers(Pageable pageable) {
-        Page<Users> usersPage = usersRepository.findAllMentorUsers(pageable);
+    public PageResponse<UserResponse> getAllMentorUsers(
+            PageRequest pageRequest,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId) {
+        Page<Users> usersPage = usersRepository.findAllMentorUsers(
+                pageRequest,
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                startDate,
+                endDate,
+                isActive,
+                departmentId);
         List<UserResponse> userResponses = usersPage.getContent().stream()
                 .map(UserResponse::fromUser)
                 .toList();
@@ -60,7 +74,7 @@ public class UsersService implements IUserService {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         Users user = userMapper.toUser(userCreateDTO);
-        user.setActive(true);
+        user.setIsActive(true);
         Roles role = rolesRepository.findByRoleName("MENTOR")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
@@ -119,7 +133,7 @@ public class UsersService implements IUserService {
     public UserResponse toggleStatus(UUID id) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        user.setActive(!user.isActive());
+        user.setIsActive(!user.getIsActive());
         Users savedUser = usersRepository.save(user);
         return UserResponse.fromUser(savedUser);
     }

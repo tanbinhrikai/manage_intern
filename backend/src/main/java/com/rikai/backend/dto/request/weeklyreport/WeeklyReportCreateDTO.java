@@ -15,7 +15,7 @@ public class WeeklyReportCreateDTO {
     private Long internId;
 
     @NotNull(message = "WEEK_START_DATE_REQUIRED")
-    private LocalDate weekStartDate;
+    private LocalDate weekStartDate = LocalDate.now();
 
     private String tasksAssigned;
 

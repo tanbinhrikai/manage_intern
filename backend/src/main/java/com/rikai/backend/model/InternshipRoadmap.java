@@ -22,7 +22,7 @@ public class InternshipRoadmap {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
-    JobPosition position;
+    Position position;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "stage_name", nullable = false)

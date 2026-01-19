@@ -1,0 +1,460 @@
+{
+  "info": {
+    "_postman_id": "weekly-report-api-collection",
+    "name": "Weekly Report API",
+    "description": "API collection for Weekly Report management - Mentor nhập tiến độ hàng tuần",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login (Get Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.accessToken) {",
+                  "        pm.environment.set(\"access_token\", jsonData.data.accessToken);",
+                  "        console.log(\"Token saved:\", jsonData.data.accessToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@rikai.com\",\n    \"password\": \"Admin123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login để lấy access token. Token sẽ tự động lưu vào environment variable."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Weekly Reports - CRUD",
+      "item": [
+        {
+          "name": "Get All Weekly Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weekly-reports?page=0&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number (default: 0)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                },
+                {
+                  "key": "internId",
+                  "value": "",
+                  "description": "Optional: Filter by intern ID",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lấy danh sách weekly reports với pagination.\n- Admin: xem tất cả\n- Mentor: chỉ xem reports của intern được assign"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weekly Reports by Intern ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weekly-reports/interns/{{intern_id}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": [
+                "weekly-reports",
+                "interns",
+                "{{intern_id}}",
+                "weekly-reports"
+              ]
+            },
+            "description": "Lấy tất cả weekly reports của 1 intern cụ thể (không phân trang)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weekly Report by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weekly-reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports", "{{report_id}}"]
+            },
+            "description": "Lấy chi tiết 1 weekly report theo ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Weekly Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.id) {",
+                  "        pm.environment.set(\"report_id\", jsonData.data.id);",
+                  "        console.log(\"Report ID saved:\", jsonData.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 1,\n    \"weekStartDate\": \"2026-01-06\",\n    \"tasksAssigned\": \"- Task 1: Implement user authentication API\\n- Task 2: Create database schema for users\\n- Task 3: Write unit tests for authentication service\",\n    \"tasksCompleted\": \"- Task 1: Completed\\n- Task 2: Completed\\n- Task 3: In progress (80%)\",\n    \"outputQuality\": \"Code quality tốt, tuân thủ coding standards. Có comment đầy đủ. Unit tests coverage đạt 85%.\",\n    \"proactivityScore\": 8,\n    \"progressScore\": 7,\n    \"issuesRisks\": \"- Cần hỗ trợ thêm về JWT token refresh mechanism\\n- Một số edge cases chưa được handle đầy đủ\",\n    \"mentorOverallComment\": \"Intern làm việc tích cực, có tiến độ tốt. Cần cải thiện về xử lý edge cases và error handling. Nên tham khảo thêm best practices về security.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Tạo weekly report mới.\n**Required fields:**\n- internId: ID của intern\n- weekStartDate: Ngày bắt đầu tuần (YYYY-MM-DD)\n\n**Optional fields:**\n- tasksAssigned: Công việc đã giao\n- tasksCompleted: Công việc đã hoàn thành\n- outputQuality: Chất lượng output\n- proactivityScore: Điểm chủ động (1-10)\n- progressScore: Điểm tiến độ (1-10)\n- issuesRisks: Vấn đề/rủi ro\n- mentorOverallComment: Nhận xét tổng thể của mentor"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Weekly Report (Minimal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 1,\n    \"weekStartDate\": \"2026-01-13\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Tạo weekly report với chỉ required fields (minimal data)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Weekly Report",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"tasksCompleted\": \"- Task 1: Completed\\n- Task 2: Completed\\n- Task 3: Completed (100%)\",\n    \"outputQuality\": \"Code quality tốt, đã fix các edge cases. Unit tests coverage đạt 90%. Đã implement JWT refresh mechanism.\",\n    \"proactivityScore\": 9,\n    \"progressScore\": 8,\n    \"issuesRisks\": \"Đã giải quyết các vấn đề trước đó. Không có rủi ro mới.\",\n    \"mentorOverallComment\": \"Tiến độ tốt, đã cải thiện đáng kể. Code quality và testing đã tốt hơn. Tiếp tục phát huy.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports", "{{report_id}}"]
+            },
+            "description": "Cập nhật weekly report. Tất cả fields đều optional, chỉ update những field được gửi lên."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Weekly Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weekly-reports/{{report_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports", "{{report_id}}"]
+            },
+            "description": "Xóa weekly report"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Intern Management",
+      "item": [
+        {
+          "name": "Get My Interns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/interns/my-interns",
+              "host": ["{{base_url}}"],
+              "path": ["interns", "my-interns"]
+            },
+            "description": "Lấy danh sách intern được assign cho mentor hiện tại.\n- Mentor: chỉ thấy intern được assign\n- Admin: thấy tất cả intern"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Interns (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/interns?page=0&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["interns"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Page number (default: 0)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10)"
+                }
+              ]
+            },
+            "description": "Lấy danh sách intern với pagination.\n- Mentor: chỉ thấy intern được assign\n- Admin: thấy tất cả intern"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Test Cases",
+      "item": [
+        {
+          "name": "Test - Duplicate Report (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 1,\n    \"weekStartDate\": \"2026-01-06\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Test case: Tạo report trùng với intern_id và week_start_date đã tồn tại. Expected: Error 400 - WEEKLY_REPORT_DUPLICATE"
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Invalid Score (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 1,\n    \"weekStartDate\": \"2026-01-20\",\n    \"proactivityScore\": 15,\n    \"progressScore\": -1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Test case: Score ngoài range 1-10. Expected: Error 400 - INVALID_SCORE"
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Missing Required Fields (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Test case: Thiếu weekStartDate. Expected: Error 400 - WEEK_START_DATE_REQUIRED"
+          },
+          "response": []
+        },
+        {
+          "name": "Test - Unauthorized Intern Access (Should Fail)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"internId\": 999,\n    \"weekStartDate\": \"2026-01-27\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/weekly-reports",
+              "host": ["{{base_url}}"],
+              "path": ["weekly-reports"]
+            },
+            "description": "Test case: Mentor tạo report cho intern không được assign. Expected: Error 403 - UNAUTHORIZED_INTERN_ACCESS hoặc 404 - INTERN_NOT_EXISTED"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "intern_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "report_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

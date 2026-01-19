@@ -20,7 +20,7 @@ public class EvaluationTemplate {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
-    JobPosition position;
+    Position position;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "criteria_id", referencedColumnName = "id", nullable = false)

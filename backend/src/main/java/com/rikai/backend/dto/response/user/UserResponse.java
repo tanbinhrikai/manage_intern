@@ -57,7 +57,7 @@ public class UserResponse {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .dateOfBirth(user.getDateOfBirth())
-                .isActive(user.isActive())
+                .isActive(user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .department(deptResponse)

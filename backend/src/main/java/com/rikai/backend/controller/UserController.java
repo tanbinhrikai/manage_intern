@@ -14,10 +14,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -32,11 +32,15 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<PageResponse<UserResponse>> getAllUser(
             @RequestParam(defaultValue = "", required = false) String keyword,
+            @RequestParam(required = false, name = "start_date") LocalDate startDate,
+            @RequestParam(required = false, name = "end_date") LocalDate endDate,
+            @RequestParam(required = false, name = "department_id") Long departmentId,
+            @RequestParam(required = false, name = "is_active") Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        Pageable pageable = PageRequest.of(page, limit);
-        PageResponse<UserResponse> result = userService.getAllMentorUsers(pageable);
+        PageRequest pageable = PageRequest.of(page, limit);
+        PageResponse<UserResponse> result = userService.getAllMentorUsers(pageable, keyword, startDate, endDate, isActive, departmentId);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
     }
 

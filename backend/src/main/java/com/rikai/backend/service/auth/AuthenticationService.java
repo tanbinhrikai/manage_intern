@@ -81,7 +81,7 @@ public class AuthenticationService implements IAuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         return userRepository.findByEmailAndIsActive(userIdentifier, true)
-                .filter(Users::isActive)
+                .filter(Users::getIsActive)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 }

@@ -11,7 +11,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = { DepartmentMapper.class })
 public interface UserMapper {
 
-    @Mapping(target = "isActive", source = "active")
+    @Mapping(target = "isActive", source = "isActive")
     UserResponse toUserResponse(Users users);
 
     @Mapping(target = "id", ignore = true)

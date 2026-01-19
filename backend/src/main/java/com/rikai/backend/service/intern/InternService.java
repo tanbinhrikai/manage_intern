@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 
 @Service
@@ -41,7 +42,15 @@ public class InternService implements IInternService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<InternResponse> getAllInterns(PageRequest pageRequest, String keyword, String status, Long positionId, UUID mentorId) {
+    public PageResponse<InternResponse> getAllInterns(
+            PageRequest pageRequest,
+            String keyword,
+            String status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long positionId,
+            UUID mentorId
+    ) {
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         InternStatus internStatus = null;
         if (status != null && !status.trim().isEmpty()) {
@@ -51,11 +60,9 @@ public class InternService implements IInternService {
                 throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
             }
         }
-        
-        Long positionIdValue = positionId;
-        UUID mentorIdValue = mentorId;
-        
-        Page<Intern> internPage = internRepository.getAllInternByKeyword(pageRequest, keywordValue, internStatus, positionIdValue, mentorIdValue);
+
+        Page<Intern> internPage = internRepository
+                .getAllInternByKeyword(pageRequest, keywordValue, internStatus, startDate, endDate, positionId, mentorId);
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -176,12 +183,8 @@ public class InternService implements IInternService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
         LocalDate today = LocalDate.now();
-        LocalDate weekStartDate = today.with(DayOfWeek.MONDAY);
-        if (today.getDayOfWeek() != DayOfWeek.MONDAY) {
-            int daysToSubtract = today.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
-            weekStartDate = today.minusDays(daysToSubtract);
-        }
-        
+        LocalDate weekStartDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
         Page<Intern> internPage;
         if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
             internPage = internRepository.findAllInternsNotEvaluatedThisWeek(weekStartDate, pageable);
@@ -189,7 +192,7 @@ public class InternService implements IInternService {
             UUID mentorId = currentUser.getId();
             internPage = internRepository.findInternsNotEvaluatedThisWeekByMentor(mentorId, weekStartDate, pageable);
         }
-        
+
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
