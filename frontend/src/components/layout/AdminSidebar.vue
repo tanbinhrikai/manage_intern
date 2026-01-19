@@ -89,40 +89,48 @@ const isActive = (path) => route.path === path
 
 <style scoped>
 .sidebar {
-  width: 200px;
+  width: 250px;
   min-height: 100vh;
-  background: #2c3e50;
+  background: #1e293b;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-header {
-  padding: 20px 16px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .brand-name {
-  font-family: 'Georgia', serif;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
   font-style: italic;
-  font-size: 22px;
+  font-size: 20px;
   color: #ffffff;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  padding: 12px 0;
+  padding: 24px 16px;
+  gap: 4px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 12px 16px;
+  color: #94a3b8;
   text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
@@ -132,13 +140,19 @@ const isActive = (path) => route.path === path
 }
 
 .nav-item.active {
-  background: #4a9fd1;
+  background: transparent;
+  color: #ffffff;
+}
+
+/* Add a distinct active indicator if desired, or just color change as per typical sidebar designs */
+.nav-item.active .nav-icon {
   color: #ffffff;
 }
 
 .nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+  color: inherit;
 }
 </style>

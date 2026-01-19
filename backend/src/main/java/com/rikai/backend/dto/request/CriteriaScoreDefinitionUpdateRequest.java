@@ -14,13 +14,8 @@ public class CriteriaScoreDefinitionUpdateRequest {
     @NotNull(message = "CRITERIA_ID_REQUIRED")
     Integer criteriaId;
 
+    @NotNull(message = "SCORE_LABEL_REQUIRED")
     ScoreLabel scoreLabel;
-
-    @NotNull(message = "MIN_SCORE_REQUIRED")
-    Byte minScore;
-
-    @NotNull(message = "MAX_SCORE_REQUIRED")
-    Byte maxScore;
 
     String description;
 }

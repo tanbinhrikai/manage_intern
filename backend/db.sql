@@ -544,3 +544,10 @@ ALTER TABLE criteria_score_definitions ADD CONSTRAINT chk_score_label CHECK (sco
 ALTER table evaluation_criteria drop column display_order;
 
 ALTER table evaluation_criteria drop column is_active;
+
+
+-- Update criteria_score_definitions --
+
+alter  table  criteria_score_definitions drop  column  min_score;
+
+alter table  criteria_score_definitions drop column  max_score;
