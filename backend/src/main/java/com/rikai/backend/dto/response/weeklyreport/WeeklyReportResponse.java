@@ -1,5 +1,6 @@
 package com.rikai.backend.dto.response.weeklyreport;
 
+import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import com.rikai.backend.model.WeeklyReport;
 import lombok.*;
 
@@ -27,7 +28,7 @@ public class WeeklyReportResponse {
     private String tasksCompleted;
     private String issuesRisks;
     private String mentorOverallComment;
-    private String status;
+    private StatusWeeklyReport status;
     private BigDecimal averageScore;
     private List<WeeklyReportDetailResponse> details;
     private Instant createdAt;

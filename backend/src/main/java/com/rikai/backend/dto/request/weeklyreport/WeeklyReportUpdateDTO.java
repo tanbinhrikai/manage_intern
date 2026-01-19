@@ -1,5 +1,6 @@
 package com.rikai.backend.dto.request.weeklyreport;
 
+import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 import lombok.Data;
@@ -20,7 +21,7 @@ public class WeeklyReportUpdateDTO {
 
     private String mentorOverallComment;
 
-    private String status;
+    private StatusWeeklyReport status;
 
     private List<WeeklyReportDetailRequest> details;
 }

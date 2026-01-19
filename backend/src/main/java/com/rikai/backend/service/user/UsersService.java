@@ -1,6 +1,7 @@
 package com.rikai.backend.service.user;
 
 import com.rikai.backend.common.ErrorCode;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
@@ -12,6 +13,7 @@ import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
+import com.rikai.backend.service.auth.IAuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -21,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,12 +35,22 @@ public class UsersService implements IUserService {
     PasswordEncoder passwordEncoder;
     RolesRepository rolesRepository;
     DepartmentRepository departmentRepository;
+    IAuthenticationService authenticationService;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<UserResponse> getAllMentorUsers(Pageable pageable) {
-        return usersRepository.findAllMentorUsers(pageable)
-                .map(userMapper::toUserResponse);
+    public PageResponse<UserResponse> getAllMentorUsers(Pageable pageable) {
+        Page<Users> usersPage = usersRepository.findAllMentorUsers(pageable);
+        List<UserResponse> userResponses = usersPage.getContent().stream()
+                .map(UserResponse::fromUser)
+                .toList();
+        return PageResponse.<UserResponse>builder()
+                .items(userResponses)
+                .currentPage(usersPage.getNumber())
+                .totalPages(usersPage.getTotalPages())
+                .totalItems(usersPage.getTotalElements())
+                .pageSize(usersPage.getSize())
+                .build();
     }
 
     @Override
@@ -89,11 +102,25 @@ public class UsersService implements IUserService {
     }
 
     @Override
-    @Transactional
-    public void changeStatus(UUID id, boolean isActive) {
+    public UserResponse updateSelfMentor(UUID id, UserUpdateRequest userUpdateDTO) {
+        Users currentUser = authenticationService.getCurrentUser();
+        if (!currentUser.getId().equals(id)) {
+            throw new AppException(ErrorCode.FORBIDDEN);
+        }
+        currentUser.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
+        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
+                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+        currentUser.setDepartment(department);
+        Users savedUser = usersRepository.save(currentUser);
+        return userMapper.toUserResponse(savedUser);
+    }
+
+    @Override
+    public UserResponse toggleStatus(UUID id) {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        user.setActive(isActive);
-        usersRepository.save(user);
+        user.setActive(!user.isActive());
+        Users savedUser = usersRepository.save(user);
+        return UserResponse.fromUser(savedUser);
     }
 }

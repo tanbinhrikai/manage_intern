@@ -6,13 +6,13 @@ import com.rikai.backend.dto.request.InternCreationRequest;
 import com.rikai.backend.dto.request.InternUpdateRequest;
 import com.rikai.backend.dto.response.InternAnalysisResponse;
 import com.rikai.backend.dto.response.InternResponse;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.UUID;
 
 public interface IInternService {
-    PageResponse<InternResponse> getAllInterns(Pageable pageable);
+    PageResponse<InternResponse> getAllInterns(PageRequest pageRequest, String keyword, String status, Long positionId, UUID mentorId);
 
     InternResponse getInternById(Long id);
 
@@ -28,7 +28,9 @@ public interface IInternService {
 
     PageResponse<InternResponse> getInternsByPositionId(Long positionId, Pageable pageable);
 
-    PageResponse<InternResponse> getMyIntern(Pageable pageable);
+    PageResponse<InternResponse> getMyIntern(Pageable pageable, String keyword);
+
+    PageResponse<InternResponse> getInternsNotEvaluatedThisWeek(Pageable pageable);
 
     InternAnalysisResponse getAnalysis();
 }

@@ -6,6 +6,7 @@ import com.rikai.backend.dto.request.weeklyreport.WeeklyReportUpdateDTO;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.response.weeklyreport.WeeklyReportResponse;
 import com.rikai.backend.exception.AppException;
+import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.model.WeeklyReport;
@@ -124,7 +125,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .tasksAssigned(createDTO.getTasksAssigned())
                 .tasksCompleted(createDTO.getTasksCompleted())
                 .mentorOverallComment(createDTO.getMentorOverallComment())
-                .status("submitted")
+                .status(StatusWeeklyReport.SUBMITTED)
                 .build();
 
         if (createDTO.getDetails() != null) {

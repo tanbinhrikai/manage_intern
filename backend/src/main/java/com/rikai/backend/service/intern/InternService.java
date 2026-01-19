@@ -20,10 +20,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -39,8 +41,21 @@ public class InternService implements IInternService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<InternResponse> getAllInterns(Pageable pageable) {
-        Page<Intern> internPage = internRepository.findAll(pageable);
+    public PageResponse<InternResponse> getAllInterns(PageRequest pageRequest, String keyword, String status, Long positionId, UUID mentorId) {
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        InternStatus internStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
+            }
+        }
+        
+        Long positionIdValue = positionId;
+        UUID mentorIdValue = mentorId;
+        
+        Page<Intern> internPage = internRepository.getAllInternByKeyword(pageRequest, keywordValue, internStatus, positionIdValue, mentorIdValue);
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -127,13 +142,20 @@ public class InternService implements IInternService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<InternResponse> getMyIntern(Pageable pageable) {
+    public PageResponse<InternResponse> getMyIntern(Pageable pageable, String keyword) {
         Users users = authenticationService.getCurrentUser();
         var mentorId = users.getId();
         if (!usersRepository.existsById(mentorId)) {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
         }
-        Page<Intern> internPage = internRepository.findByMentor_Id(mentorId, pageable);
+
+        Page<Intern> internPage;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            internPage = internRepository.findByMentor_IdAndKeyword(mentorId, keyword.trim(), pageable);
+        } else {
+            internPage = internRepository.findByMentor_Id(mentorId, pageable);
+        }
+
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -148,13 +170,38 @@ public class InternService implements IInternService {
 
     @Override
     @Transactional(readOnly = true)
+    public PageResponse<InternResponse> getInternsNotEvaluatedThisWeek(Pageable pageable) {
+        Users currentUser = authenticationService.getCurrentUser();
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        LocalDate today = LocalDate.now();
+        LocalDate weekStartDate = today.with(DayOfWeek.MONDAY);
+        if (today.getDayOfWeek() != DayOfWeek.MONDAY) {
+            int daysToSubtract = today.getDayOfWeek().getValue() - DayOfWeek.MONDAY.getValue();
+            weekStartDate = today.minusDays(daysToSubtract);
+        }
+        
+        Page<Intern> internPage;
+        if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
+            internPage = internRepository.findAllInternsNotEvaluatedThisWeek(weekStartDate, pageable);
+        } else {
+            UUID mentorId = currentUser.getId();
+            internPage = internRepository.findInternsNotEvaluatedThisWeekByMentor(mentorId, weekStartDate, pageable);
+        }
+        
+        return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public InternAnalysisResponse getAnalysis() {
         long totalInterns = internRepository.count();
         long totalMentors = usersRepository.countByRole_RoleName("MENTOR");
         long activeInterns = internRepository.countByInternStatus(InternStatus.ACTIVE);
         long warningInterns = internRepository.countByInternStatus(InternStatus.WARNING);
         long droppedInterns = internRepository.countByInternStatus(InternStatus.DROPPED);
-        long completedInterns = internRepository.countByInternStatus(InternStatus.COMPLETE);
+        long completedInterns = internRepository.countByInternStatus(InternStatus.COMPLETED);
 
         return InternAnalysisResponse.builder()
                 .totalInterns(totalInterns)

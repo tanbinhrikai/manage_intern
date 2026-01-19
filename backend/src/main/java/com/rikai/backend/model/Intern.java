@@ -16,6 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "interns")
 public class Intern {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +40,7 @@ public class Intern {
     @Column(name = "end_date", nullable = false)
     LocalDate endDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "intern_status", nullable = false)
     InternStatus internStatus;
 

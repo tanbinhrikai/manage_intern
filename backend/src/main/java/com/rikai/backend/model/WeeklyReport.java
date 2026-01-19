@@ -1,5 +1,6 @@
 package com.rikai.backend.model;
 
+import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -57,7 +58,7 @@ public class WeeklyReport {
 
     @Column(name = "status")
     @Builder.Default
-    String status = "submitted";
+    StatusWeeklyReport status = StatusWeeklyReport.PENDING;
 
     @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
     List<WeeklyReportDetail> details;

@@ -49,7 +49,9 @@ public enum ErrorCode {
 
     EVALUATION_CRITERIA_NOT_EXISTED("Evaluation criteria not found", HttpStatus.NOT_FOUND),
     CRITERIA_SCORE_DEFINITION_NOT_EXISTED("Criteria score definition not found", HttpStatus.NOT_FOUND),
-    ;
+
+    FORBIDDEN("You are not allowed to perform this action", HttpStatus.FORBIDDEN),
+    INVALID_INTERN_STATUS("Invalid intern status", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;

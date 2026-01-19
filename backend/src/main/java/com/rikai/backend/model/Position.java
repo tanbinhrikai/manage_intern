@@ -13,6 +13,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "positions")
 public class Position {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

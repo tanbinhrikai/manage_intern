@@ -14,6 +14,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "roles")
 public class Roles {
     @Id
     @Column(name = "role_name", nullable = false)
