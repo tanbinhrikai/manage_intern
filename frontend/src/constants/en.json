@@ -372,8 +372,7 @@
             "title": "Score Definitions",
             "add": "Add Definition",
             "scoreLabel": "Score Label",
-            "minScore": "Min Score",
-            "maxScore": "Max Score",
+            "scoreRange": "Score Range",
             "description": "Description",
             "actions": "Actions",
             "labels": {

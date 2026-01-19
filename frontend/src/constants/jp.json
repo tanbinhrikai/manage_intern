@@ -372,8 +372,7 @@
             "title": "スコア定義",
             "add": "定義を追加",
             "scoreLabel": "スコアラベル",
-            "minScore": "最小スコア",
-            "maxScore": "最大スコア",
+            "scoreRange": "スコア範囲",
             "description": "説明",
             "actions": "アクション",
             "labels": {

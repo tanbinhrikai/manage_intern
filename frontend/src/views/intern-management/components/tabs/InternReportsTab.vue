@@ -311,7 +311,8 @@ onMounted(async () => {
               <el-input
                 v-model="reportForm.tasksAssigned"
                 type="textarea"
-                :rows="3"
+                :autosize="{ minRows: 4, maxRows: 10 }"
+                resize="none"
                 :placeholder="t('weeklyReport.form.tasksAssigned')"
               />
             </div>
@@ -320,7 +321,8 @@ onMounted(async () => {
               <el-input
                 v-model="reportForm.tasksCompleted"
                 type="textarea"
-                :rows="3"
+                :autosize="{ minRows: 4, maxRows: 10 }"
+                resize="none"
                 :placeholder="t('weeklyReport.form.tasksCompleted')"
               />
             </div>
@@ -329,7 +331,8 @@ onMounted(async () => {
               <el-input
                 v-model="reportForm.issuesRisks"
                 type="textarea"
-                :rows="3"
+                :autosize="{ minRows: 4, maxRows: 10 }"
+                resize="none"
                 :placeholder="t('weeklyReport.form.issuesRisks')"
               />
             </div>
@@ -397,6 +400,9 @@ onMounted(async () => {
               <el-table-column :label="t('weeklyReport.table.comment')" width="180">
                 <template #default="{ row }">
                   <el-input
+                    type="textarea"
+                    :autosize="{ minRows: 1, maxRows: 6 }"
+                    resize="none"
                     :model-value="getDetailForCriteria(row.id).comment"
                     @update:model-value="(val) => updateComment(row.id, val)"
                     :placeholder="t('weeklyReport.form.commentPlaceholder')"
