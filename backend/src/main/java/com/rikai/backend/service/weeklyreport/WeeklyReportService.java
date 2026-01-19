@@ -2,6 +2,7 @@ package com.rikai.backend.service.weeklyreport;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportCreateDTO;
+import com.rikai.backend.dto.request.weeklyreport.WeeklyReportDetailRequest;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportUpdateDTO;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.response.weeklyreport.WeeklyReportResponse;
@@ -181,19 +182,37 @@ public class WeeklyReportService implements IWeeklyReportService {
             if (report.getDetails() == null) {
                 report.setDetails(new ArrayList<>());
             }
-            report.getDetails().clear();
 
-            List<WeeklyReportDetail> newDetails = updateDTO.getDetails().stream().map(detailReq -> {
-                EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
-                        .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
-                return WeeklyReportDetail.builder()
-                        .weeklyReport(report)
-                        .criteria(criteria)
-                        .score(detailReq.getScore())
-                        .comment(detailReq.getComment())
-                        .build();
-            }).toList();
-            report.getDetails().addAll(newDetails);
+            List<Integer> requestCriteriaIds = updateDTO.getDetails().stream()
+                    .map(WeeklyReportDetailRequest::getCriteriaId).toList();
+
+            report.getDetails().removeIf(
+                    weeklyReportDetail -> !requestCriteriaIds.contains(weeklyReportDetail.getCriteria().getId()));
+
+            for (WeeklyReportDetailRequest weeklyReportDetailRequest : updateDTO.getDetails()) {
+                WeeklyReportDetail existingDetail = report.getDetails().stream()
+                        .filter(detail -> detail.getCriteria().getId()
+                                .equals(weeklyReportDetailRequest.getCriteriaId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existingDetail != null) {
+                    existingDetail.setScore(weeklyReportDetailRequest.getScore());
+                    existingDetail.setComment(weeklyReportDetailRequest.getComment());
+                } else {
+                    EvaluationCriteria criteria = evaluationCriteriaRepository
+                            .findById(weeklyReportDetailRequest.getCriteriaId())
+                            .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+
+                    WeeklyReportDetail newDetail = WeeklyReportDetail.builder()
+                            .weeklyReport(report)
+                            .criteria(criteria)
+                            .score(weeklyReportDetailRequest.getScore())
+                            .comment(weeklyReportDetailRequest.getComment())
+                            .build();
+                    report.getDetails().add(newDetail);
+                }
+            }
         }
         if (updateDTO.getIssuesRisks() != null) {
             report.setIssuesRisks(updateDTO.getIssuesRisks());

@@ -15,8 +15,6 @@ public class CriteriaScoreDefinitionResponse {
     Integer id;
     Integer criteriaId;
     ScoreLabel scoreLabel;
-    Byte minScore;
-    Byte maxScore;
     String description;
     Instant createdAt;
 }

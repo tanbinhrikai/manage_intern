@@ -28,12 +28,6 @@ public class CriteriaScoreDefinition {
     @Enumerated(EnumType.STRING)
     ScoreLabel scoreLabel;
 
-    @Column(name = "min_score", nullable = false)
-    Byte minScore;
-
-    @Column(name = "max_score", nullable = false)
-    Byte maxScore;
-
     @Column(name = "description", columnDefinition = "TEXT")
     String description;
 
