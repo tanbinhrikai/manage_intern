@@ -1,6 +1,7 @@
 package com.rikai.backend.controller;
 
 import com.rikai.backend.common.ApiResponse;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.DepartmentCreationRequest;
 import com.rikai.backend.dto.request.DepartmentUpdateRequest;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,8 +26,13 @@ public class DepartmentController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<List<DepartmentResponse>> getAllDepartmentsList() {
-        return ApiResponse.buildSuccessResponse(departmentService.getAllDepartmentsList(),
+    public ApiResponse<PageResponse<DepartmentResponse>> getAllDepartmentsList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false, name = "keyword") String keyword
+    ) {
+        PageRequest pageable = PageRequest.of(page, limit);
+        return ApiResponse.buildSuccessResponse(departmentService.getAllDepartmentsList(pageable , keyword),
                 SuccessCode.GET_ALL_DEPARTMENTS_SUCCESSFUL);
     }
 

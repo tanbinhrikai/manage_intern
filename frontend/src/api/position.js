@@ -1,7 +1,7 @@
 import http from "./http"
 
-export function getPositions() {
-    return http.get("/positions")
+export function getPositions(params = {}) {
+    return http.get("/positions", { params })
 }
 
 export function getPositionById(id) {

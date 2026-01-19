@@ -12,26 +12,13 @@ const localeStore = useLocaleStore()
 const toastStore = useToastStore()
 const t = computed(() => localeStore.t)
 
-const showLanguageDropdown = ref(false)
 const showUserDropdown = ref(false)
-
-const toggleLanguageDropdown = () => {
-  showLanguageDropdown.value = !showLanguageDropdown.value
-  showUserDropdown.value = false
-}
 
 const toggleUserDropdown = () => {
   showUserDropdown.value = !showUserDropdown.value
-  showLanguageDropdown.value = false
-}
-
-const changeLanguage = (locale) => {
-  localeStore.setLocale(locale)
-  showLanguageDropdown.value = false
 }
 
 const closeDropdowns = () => {
-  showLanguageDropdown.value = false
   showUserDropdown.value = false
 }
 
@@ -50,10 +37,14 @@ const handleLogout = () => {
 <template>
   <header class="header" @click="closeDropdowns">
     <div class="header-content">
+      <h1 class="page-title">{{ t('mentorDashboard.title') }}</h1>
+      
       <div class="header-right" @click.stop>
+        
         <div class="language-wrapper">
           <LanguageSwitcher />
         </div>
+        
         <div class="user-menu">
           <button class="user-btn" @click="toggleUserDropdown">
             <svg class="user-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -90,9 +81,9 @@ const handleLogout = () => {
 
 <style scoped>
 .header {
-  height: 56px;
+  height: 60px;
   background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
   padding: 0 24px;
@@ -101,8 +92,15 @@ const handleLogout = () => {
 .header-content {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
 }
 
 .header-right {
@@ -111,43 +109,62 @@ const handleLogout = () => {
   gap: 16px;
 }
 
-.language-switcher,
+.notification-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.notification-btn:hover {
+  background: #f1f5f9;
+}
+
+.bell-icon {
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+}
+
 .user-menu {
   position: relative;
 }
 
-.language-btn,
 .user-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 8px 12px;
   background: transparent;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   color: #374151;
   transition: all 0.2s;
 }
 
-.language-btn:hover,
 .user-btn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
-.globe-icon,
 .user-icon {
   width: 18px;
   height: 18px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .chevron-icon {
   width: 14px;
   height: 14px;
-  color: #9ca3af;
+  color: #94a3b8;
   transition: transform 0.2s;
 }
 
@@ -165,15 +182,11 @@ const handleLogout = () => {
   right: 0;
   min-width: 160px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 100;
-}
-
-.language-dropdown {
-  min-width: 120px;
 }
 
 .dropdown-item {
@@ -195,12 +208,6 @@ const handleLogout = () => {
   background: #f3f4f6;
 }
 
-.dropdown-item.active {
-  background: #eff6ff;
-  color: #3b82f6;
-  font-weight: 500;
-}
-
 .logout-item:hover {
   background: #fef2f2;
   color: #dc2626;
@@ -209,7 +216,7 @@ const handleLogout = () => {
 .menu-icon {
   width: 16px;
   height: 16px;
-  color: #6b7280;
+  color: #64748b;
 }
 
 .logout-item:hover .menu-icon {

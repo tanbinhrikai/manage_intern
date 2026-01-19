@@ -375,6 +375,9 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
 }
+.el-pagination {
+  justify-content: flex-start;
+}
 
 .page-title {
   font-size: 22px;

@@ -41,6 +41,11 @@ function openEditView() {
   router.push(`${prefix}/${internId}/edit`)
 }
 
+function openReportsTab() {
+  const prefix = authStore.userRole === 'MENTOR' ? '/mentor/my-interns' : '/admin/interns'
+  router.push(`${prefix}/${internId}/edit?tab=reports`)
+}
+
 const getStatusType = (status) => {
   const map = {
     ACTIVE: 'success',
@@ -146,7 +151,7 @@ onMounted(() => {
               </div>
             </template>
             <div class="action-list">
-              <el-button text class="action-btn">
+              <el-button text class="action-btn" @click="openReportsTab">
                 <el-icon class="mr-2"><Document /></el-icon>
                 {{ t('internDetail.actions.viewReports') }}
               </el-button>

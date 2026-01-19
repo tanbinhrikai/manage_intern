@@ -39,3 +39,7 @@ export function getMyIntern(params = {}) {
 export function getInternsAnalysis() {
     return http.get("/interns/analyze")
 }
+
+export function getInternsNotEvaluatedThisWeek(params = {}) {
+    return http.get("/interns/not-evaluated-this-week", { params })
+}

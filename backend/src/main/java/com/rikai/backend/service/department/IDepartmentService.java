@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface IDepartmentService {
 
-    List<DepartmentResponse> getAllDepartmentsList();
+    PageResponse<DepartmentResponse> getAllDepartmentsList(Pageable pageable , String keyword);
 
     DepartmentResponse getDepartmentById(Long id);
 

@@ -40,6 +40,10 @@ async function fetchInternDetail() {
 }
 
 onMounted(() => {
+  const tabParam = route.query.tab
+  if (tabParam && ['general', 'reports', 'performance', 'history'].includes(tabParam)) {
+    activeTab.value = tabParam
+  }
   fetchInternDetail()
 })
 </script>

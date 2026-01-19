@@ -1,6 +1,7 @@
 package com.rikai.backend.service.department;
 
 import com.rikai.backend.common.ErrorCode;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.DepartmentCreationRequest;
 import com.rikai.backend.dto.request.DepartmentUpdateRequest;
 import com.rikai.backend.dto.response.DepartmentResponse;
@@ -11,6 +12,8 @@ import com.rikai.backend.repository.DepartmentRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +29,12 @@ public class DepartmentService implements IDepartmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DepartmentResponse> getAllDepartmentsList() {
-        return departmentRepository.findAll()
-                .stream()
-                .map(departmentMapper::toDepartmentResponse)
-                .collect(Collectors.toList());
+    public PageResponse<DepartmentResponse> getAllDepartmentsList(Pageable pageable , String keyword) {
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
+        Page<Department> departments = departmentRepository.getAllDepartmentByKeyword(pageable , keywordValue);
+
+        return PageResponse.fromPage(departments.map(departmentMapper::toDepartmentResponse));
     }
 
     @Override

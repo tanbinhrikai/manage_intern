@@ -1,6 +1,7 @@
 package com.rikai.backend.service.position;
 
 import com.rikai.backend.common.ErrorCode;
+import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.PositionCreationRequest;
 import com.rikai.backend.dto.request.PositionUpdateRequest;
 import com.rikai.backend.dto.response.PositionResponse;
@@ -11,11 +12,10 @@ import com.rikai.backend.repository.PositionRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +26,12 @@ public class PositionService implements IPositionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PositionResponse> getAllPositionsList() {
-        return positionRepository.findAll()
-                .stream()
-                .map(positionMapper::toPositionResponse)
-                .collect(Collectors.toList());
+    public PageResponse<PositionResponse> getAllPositionsList(Pageable pageable , String keyword) {
+
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+
+        Page<Position> positions = positionRepository.getAllPositionByKeyword(pageable , keywordValue);
+        return PageResponse.fromPage(positions.map(positionMapper::toPositionResponse));
     }
 
     @Override

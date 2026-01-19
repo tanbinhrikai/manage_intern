@@ -110,7 +110,8 @@ async function handleSubmit() {
     email: formData.email,
     dateOfBirth: formData.dateOfBirth,
     departmentId: formData.departmentId,
-    isActive: formData.isActive
+    roleName: 'MENTOR',
+    active: formData.isActive
   }
 
   if (formData.password) {

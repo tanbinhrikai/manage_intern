@@ -1,7 +1,7 @@
 import http from "./http"
 
-export function getDepartments() {
-  return http.get("/departments")
+export function getDepartments(params = {}) {
+  return http.get("/departments", { params })
 }
 
 export function getDepartmentById(id) {
