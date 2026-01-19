@@ -41,13 +41,24 @@ const scoreForm = reactive({
   id: null,
   criteriaId: null,
   scoreLabel: 'Average',
-  minScore: 0,
-  maxScore: 0,
   description: ''
 })
 const scoreLabels = ['Excellent', 'Good', 'Average', 'Weak']
 const isScoreEdit = computed(() => !!scoreForm.id)
 const savingScore = ref(false)
+
+// Fixed score ranges based on ScoreLabel enum
+const scoreLabelRanges = {
+  Excellent: { min: 9, max: 10 },
+  Good: { min: 7, max: 8 },
+  Average: { min: 5, max: 6 },
+  Weak: { min: 0, max: 4 }
+}
+
+const getScoreRange = (label) => {
+  const range = scoreLabelRanges[label]
+  return range ? `${range.min}-${range.max}` : '-'
+}
 
 async function fetchCriteria() {
   if (!isEdit.value) return
@@ -97,8 +108,6 @@ function openAddScore() {
     id: null,
     criteriaId: parseInt(criteriaId),
     scoreLabel: 'Average',
-    minScore: 0,
-    maxScore: 0,
     description: ''
   })
   showScoreDialog.value = true
@@ -217,11 +226,8 @@ onMounted(fetchCriteria)
                  <el-tag>{{ row.scoreLabel }}</el-tag>
                </template>
              </el-table-column>
-             <el-table-column :label="t('evaluationCriteria.scoreDefinitions.minScore')" width="100" align="center">
-                <template #default="{ row }">{{ row.minScore }}</template>
-             </el-table-column>
-             <el-table-column :label="t('evaluationCriteria.scoreDefinitions.maxScore')" width="100" align="center">
-                <template #default="{ row }">{{ row.maxScore }}</template>
+             <el-table-column :label="t('evaluationCriteria.scoreDefinitions.scoreRange')" width="120" align="center">
+                <template #default="{ row }">{{ getScoreRange(row.scoreLabel) }}</template>
              </el-table-column>
              <el-table-column prop="description" :label="t('evaluationCriteria.scoreDefinitions.description')" min-width="200" show-overflow-tooltip/>
              
@@ -240,21 +246,9 @@ onMounted(fetchCriteria)
          <el-form label-position="top" :model="scoreForm">
             <el-form-item :label="t('evaluationCriteria.scoreDefinitions.scoreLabel')" required>
                <el-select v-model="scoreForm.scoreLabel" style="width: 100%">
-                 <el-option v-for="label in scoreLabels" :key="label" :label="label" :value="label"/>
+                 <el-option v-for="label in scoreLabels" :key="label" :label="`${label} (${getScoreRange(label)})`" :value="label"/>
                </el-select>
             </el-form-item>
-            <el-row :gutter="20">
-               <el-col :span="12">
-                 <el-form-item :label="t('evaluationCriteria.scoreDefinitions.minScore')" required>
-                    <el-input-number v-model="scoreForm.minScore" :min="0" :max="10" style="width: 100%"/>
-                 </el-form-item>
-               </el-col>
-               <el-col :span="12">
-                  <el-form-item :label="t('evaluationCriteria.scoreDefinitions.maxScore')" required>
-                    <el-input-number v-model="scoreForm.maxScore" :min="0" :max="10" style="width: 100%"/>
-                 </el-form-item>
-               </el-col>
-            </el-row>
              <el-form-item :label="t('evaluationCriteria.scoreDefinitions.description')">
                <el-input v-model="scoreForm.description" type="textarea" :rows="3"/>
             </el-form-item>
