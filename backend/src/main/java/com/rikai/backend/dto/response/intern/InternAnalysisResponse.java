@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.intern;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

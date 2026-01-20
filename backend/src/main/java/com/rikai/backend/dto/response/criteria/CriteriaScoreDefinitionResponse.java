@@ -1,7 +1,6 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.response.criteria;
 
 import com.rikai.backend.model.Enum.ScoreLabel;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,12 +9,11 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CriteriaScoreDefinitionUpdateRequest {
-    @NotNull(message = "CRITERIA_ID_REQUIRED")
+public class CriteriaScoreDefinitionResponse {
+    Long id;
     Long criteriaId;
-
-    @NotNull(message = "SCORE_LABEL_REQUIRED")
     ScoreLabel scoreLabel;
-
+    Integer minScore;
+    Integer maxScore;
     String description;
 }

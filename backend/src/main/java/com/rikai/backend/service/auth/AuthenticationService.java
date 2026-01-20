@@ -1,8 +1,8 @@
 package com.rikai.backend.service.auth;
 
 import com.rikai.backend.common.ErrorCode;
-import com.rikai.backend.dto.request.AuthenticationRequest;
-import com.rikai.backend.dto.response.AuthenticationResponse;
+import com.rikai.backend.dto.request.authentication.AuthenticationRequest;
+import com.rikai.backend.dto.response.authentication.AuthenticationResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
 import com.rikai.backend.model.Users;

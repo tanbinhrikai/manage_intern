@@ -2,9 +2,9 @@ package com.rikai.backend.service.position;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.PageResponse;
-import com.rikai.backend.dto.request.PositionCreationRequest;
-import com.rikai.backend.dto.request.PositionUpdateRequest;
-import com.rikai.backend.dto.response.PositionResponse;
+import com.rikai.backend.dto.request.position.PositionCreationRequest;
+import com.rikai.backend.dto.request.position.PositionUpdateRequest;
+import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.PositionMapper;
 import com.rikai.backend.model.Position;

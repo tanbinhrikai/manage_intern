@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.criteria;
 
 import com.rikai.backend.model.Enum.ScoreLabel;
 import jakarta.validation.constraints.NotNull;

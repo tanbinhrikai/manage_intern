@@ -14,6 +14,7 @@ import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
+import com.rikai.backend.validation.PasswordValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -38,6 +39,7 @@ public class UsersService implements IUserService {
     RolesRepository rolesRepository;
     DepartmentRepository departmentRepository;
     IAuthenticationService authenticationService;
+    private static final String DEFAULT_PASSWORD = "Abc123456@";
 
     @Override
     @Transactional(readOnly = true)
@@ -74,10 +76,17 @@ public class UsersService implements IUserService {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         Users user = userMapper.toUser(userCreateDTO);
+        String passwordToUse = userCreateDTO.getPassword();
+        if (passwordToUse == null || passwordToUse.isEmpty()) {
+            passwordToUse = DEFAULT_PASSWORD;
+        } else if (!PasswordValidator.isValid(passwordToUse)) {
+            throw new AppException(ErrorCode.PASSWORD_WEAK);
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(passwordToUse));
         user.setIsActive(true);
         Roles role = rolesRepository.findByRoleName("MENTOR")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-        user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
         user.setRole(role);
         if (userCreateDTO.getDepartmentId() != null) {
             Department department = departmentRepository.findById(userCreateDTO.getDepartmentId())

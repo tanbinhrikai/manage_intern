@@ -1,9 +1,9 @@
 package com.rikai.backend.service.criteriascoredefinition;
 
 import com.rikai.backend.common.ErrorCode;
-import com.rikai.backend.dto.request.CriteriaScoreDefinitionCreationRequest;
-import com.rikai.backend.dto.request.CriteriaScoreDefinitionUpdateRequest;
-import com.rikai.backend.dto.response.CriteriaScoreDefinitionResponse;
+import com.rikai.backend.dto.request.criteria.CriteriaScoreDefinitionCreationRequest;
+import com.rikai.backend.dto.request.criteria.CriteriaScoreDefinitionUpdateRequest;
+import com.rikai.backend.dto.response.criteria.CriteriaScoreDefinitionResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.CriteriaScoreDefinitionMapper;
 import com.rikai.backend.model.CriteriaScoreDefinition;

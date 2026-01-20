@@ -4,7 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.rikai.backend.common.ErrorCode;
-import com.rikai.backend.dto.response.AuthenticationResponse;
+import com.rikai.backend.dto.response.authentication.AuthenticationResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.RefreshToken;
 import com.rikai.backend.model.Users;

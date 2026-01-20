@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.position;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

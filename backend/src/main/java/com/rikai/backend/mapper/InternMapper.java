@@ -1,9 +1,9 @@
 package com.rikai.backend.mapper;
 
-import com.rikai.backend.dto.request.InternCreationRequest;
-import com.rikai.backend.dto.response.InternResponse;
-import com.rikai.backend.dto.response.MentorResponse;
-import com.rikai.backend.dto.response.PositionResponse;
+import com.rikai.backend.dto.request.intern.InternCreationRequest;
+import com.rikai.backend.dto.response.intern.InternResponse;
+import com.rikai.backend.dto.response.mentor.MentorResponse;
+import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.Position;
 import com.rikai.backend.model.Users;

@@ -2,9 +2,9 @@ package com.rikai.backend.service.department;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.PageResponse;
-import com.rikai.backend.dto.request.DepartmentCreationRequest;
-import com.rikai.backend.dto.request.DepartmentUpdateRequest;
-import com.rikai.backend.dto.response.DepartmentResponse;
+import com.rikai.backend.dto.request.department.DepartmentCreationRequest;
+import com.rikai.backend.dto.request.department.DepartmentUpdateRequest;
+import com.rikai.backend.dto.response.department.DepartmentResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.DepartmentMapper;
 import com.rikai.backend.model.Department;
@@ -16,9 +16,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

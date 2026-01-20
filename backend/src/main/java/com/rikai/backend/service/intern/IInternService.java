@@ -2,15 +2,14 @@ package com.rikai.backend.service.intern;
 
 import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.common.PageResponse;
-import com.rikai.backend.dto.request.InternCreationRequest;
-import com.rikai.backend.dto.request.InternUpdateRequest;
-import com.rikai.backend.dto.response.InternAnalysisResponse;
-import com.rikai.backend.dto.response.InternResponse;
+import com.rikai.backend.dto.request.intern.InternCreationRequest;
+import com.rikai.backend.dto.request.intern.InternUpdateRequest;
+import com.rikai.backend.dto.response.intern.InternAnalysisResponse;
+import com.rikai.backend.dto.response.intern.InternResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.Locale;
 import java.util.UUID;
 
 public interface IInternService {

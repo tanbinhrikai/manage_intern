@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.intern;
 
 import com.rikai.backend.common.InternStatus;
 import jakarta.validation.constraints.NotBlank;

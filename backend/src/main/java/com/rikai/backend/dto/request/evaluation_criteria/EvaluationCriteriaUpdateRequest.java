@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.evaluation_criteria;
 
 import com.rikai.backend.model.Enum.CriteriaCategory;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EvaluationCriteriaCreationRequest {
+public class EvaluationCriteriaUpdateRequest {
     @NotNull(message = "CRITERIA_CATEGORY_REQUIRED")
     CriteriaCategory category;
 
@@ -22,6 +22,5 @@ public class EvaluationCriteriaCreationRequest {
 
     String description;
 
-    @Builder.Default
-    BigDecimal weight = BigDecimal.ONE;
+    BigDecimal weight;
 }

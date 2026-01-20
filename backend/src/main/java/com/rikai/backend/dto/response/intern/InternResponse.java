@@ -1,7 +1,9 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.intern;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.common.InternStatus;
+import com.rikai.backend.dto.response.mentor.MentorResponse;
+import com.rikai.backend.dto.response.position.PositionResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

@@ -2,11 +2,14 @@ package com.rikai.backend.controller;
 
 import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.SuccessCode;
-import com.rikai.backend.dto.response.CriteriaCategoryResponse;
-import com.rikai.backend.dto.response.EvaluationCriteriaResponse;
-import com.rikai.backend.dto.response.ScoreLabelResponse;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaCreationRequest;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaUpdateRequest;
+import com.rikai.backend.dto.response.criteria.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
+import com.rikai.backend.dto.response.score_label.ScoreLabelResponse;
 import com.rikai.backend.model.Enum.CriteriaCategory;
 import com.rikai.backend.service.evaluationcriteria.IEvaluationCriteriaService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,7 +31,7 @@ public class EvaluationCriteriaController {
     /**
      * Get all evaluation criteria in hierarchy
      */
-    @GetMapping("/hierarchy")
+    @GetMapping("")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<List<CriteriaCategoryResponse>> getAllCriteriaHierarchy() {
         log.info("REST request to get all evaluation criteria in hierarchy");
@@ -130,4 +133,29 @@ public class EvaluationCriteriaController {
                 SuccessCode.GET_ALL_CRITERIA_SCORE_DEFINITION_SUCCESSFUL
         );
     }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<EvaluationCriteriaResponse> createEvaluationCriteria(
+            @Valid @RequestBody EvaluationCriteriaCreationRequest request) {
+        return ApiResponse.buildSuccessResponse(evaluationCriteriaService.createEvaluationCriteria(request),
+                SuccessCode.CREATE_EVALUATION_CRITERIA_SUCCESSFUL);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<EvaluationCriteriaResponse> updateEvaluationCriteria(@PathVariable Long id,
+                                                                            @Valid @RequestBody EvaluationCriteriaUpdateRequest request) {
+        return ApiResponse.buildSuccessResponse(evaluationCriteriaService.updateEvaluationCriteria(id, request),
+                SuccessCode.UPDATE_EVALUATION_CRITERIA_SUCCESSFUL);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> deleteEvaluationCriteria(@PathVariable Long id) {
+        evaluationCriteriaService.deleteEvaluationCriteria(id);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_EVALUATION_CRITERIA_SUCCESSFUL);
+    }
+
+
 }

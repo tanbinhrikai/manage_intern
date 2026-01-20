@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.authentication;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;

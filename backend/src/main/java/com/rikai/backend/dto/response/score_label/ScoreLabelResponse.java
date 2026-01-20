@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.score_label;
 
 import com.rikai.backend.model.Enum.ScoreLabel;
 import lombok.*;

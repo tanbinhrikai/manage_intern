@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.position;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;

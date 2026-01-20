@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.authentication;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.dto.response.user.UserResponse;

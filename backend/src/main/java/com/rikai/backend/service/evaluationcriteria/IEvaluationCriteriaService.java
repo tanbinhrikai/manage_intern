@@ -1,8 +1,10 @@
 package com.rikai.backend.service.evaluationcriteria;
 
-import com.rikai.backend.dto.response.CriteriaCategoryResponse;
-import com.rikai.backend.dto.response.EvaluationCriteriaResponse;
-import com.rikai.backend.dto.response.ScoreLabelResponse;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaCreationRequest;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaUpdateRequest;
+import com.rikai.backend.dto.response.criteria.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
+import com.rikai.backend.dto.response.score_label.ScoreLabelResponse;
 import com.rikai.backend.model.Enum.CriteriaCategory;
 
 import java.util.List;
@@ -49,4 +51,8 @@ public interface IEvaluationCriteriaService {
      * Get sub-criteria by parent id
      */
     List<EvaluationCriteriaResponse> getSubCriteriaByParentId(Long parentId);
+
+    EvaluationCriteriaResponse createEvaluationCriteria(EvaluationCriteriaCreationRequest request);
+    EvaluationCriteriaResponse updateEvaluationCriteria(Long id, EvaluationCriteriaUpdateRequest request);
+    void deleteEvaluationCriteria(Long id);
 }

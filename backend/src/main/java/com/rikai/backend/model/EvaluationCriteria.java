@@ -31,58 +31,36 @@ public class EvaluationCriteria {
     @Column(name = "description", columnDefinition = "TEXT")
     String description;
 
-    /**
-     * Trọng số của tiêu chí (mặc định = 1)
-     */
     @Column(name = "weight", precision = 5, scale = 2)
     @Builder.Default
     BigDecimal weight = BigDecimal.ONE;
 
-    /**
-     * Tham chiếu đến tiêu chí cha (null nếu là tiêu chí gốc/main criteria)
-     */
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id", referencedColumnName = "id")
     EvaluationCriteria parent;
 
-    /**
-     * Danh sách các tiêu chí con
-     */
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     List<EvaluationCriteria> children = new ArrayList<>();
 
-    /**
-     * Thứ tự hiển thị trong cùng cấp
-     */
     @Column(name = "display_order", nullable = false)
     @Builder.Default
     Integer displayOrder = 0;
 
-    /**
-     * Trạng thái hoạt động của tiêu chí
-     */
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     Boolean isActive = true;
 
-    /**
-     * Danh sách định nghĩa mô tả cho từng mức điểm
-     */
     @OneToMany(mappedBy = "criteria", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     List<CriteriaScoreDefinition> scoreDefinitions = new ArrayList<>();
 
-    /**
-     * Helper method để kiểm tra tiêu chí có phải là tiêu chí cha (main criteria) không
-     */
     public boolean isMainCriteria() {
         return parent == null;
     }
 
-    /**
-     * Helper method để kiểm tra tiêu chí có phải là tiêu chí con (sub-criteria) không
-     */
     public boolean isSubCriteria() {
         return parent != null;
     }

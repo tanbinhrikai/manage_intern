@@ -1,9 +1,11 @@
 package com.rikai.backend.service.evaluationcriteria;
 
 import com.rikai.backend.common.ErrorCode;
-import com.rikai.backend.dto.response.CriteriaCategoryResponse;
-import com.rikai.backend.dto.response.EvaluationCriteriaResponse;
-import com.rikai.backend.dto.response.ScoreLabelResponse;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaCreationRequest;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaUpdateRequest;
+import com.rikai.backend.dto.response.criteria.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
+import com.rikai.backend.dto.response.score_label.ScoreLabelResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.EvaluationCriteriaMapper;
 import com.rikai.backend.model.EvaluationCriteria;
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,5 +132,30 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         return subCriteria.stream()
                 .map(evaluationCriteriaMapper::toResponseWithScoreDefinitions)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public EvaluationCriteriaResponse createEvaluationCriteria(EvaluationCriteriaCreationRequest request) {
+        EvaluationCriteria criteria = evaluationCriteriaMapper.toEvaluationCriteria(request);
+        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
+    }
+
+    @Override
+    @Transactional
+    public EvaluationCriteriaResponse updateEvaluationCriteria(Long id, EvaluationCriteriaUpdateRequest request) {
+        EvaluationCriteria criteria = evaluationCriteriaRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+        evaluationCriteriaMapper.updateEvaluationCriteriaFromRequest(criteria, request);
+        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
+    }
+
+    @Override
+    @Transactional
+    public void deleteEvaluationCriteria(Long id) {
+        if (!evaluationCriteriaRepository.existsById(id)) {
+            throw new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED);
+        }
+        evaluationCriteriaRepository.deleteById(id);
     }
 }

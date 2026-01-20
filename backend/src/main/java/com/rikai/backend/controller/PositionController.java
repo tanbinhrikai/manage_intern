@@ -3,9 +3,9 @@ package com.rikai.backend.controller;
 import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
-import com.rikai.backend.dto.request.PositionCreationRequest;
-import com.rikai.backend.dto.request.PositionUpdateRequest;
-import com.rikai.backend.dto.response.PositionResponse;
+import com.rikai.backend.dto.request.position.PositionCreationRequest;
+import com.rikai.backend.dto.request.position.PositionUpdateRequest;
+import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.service.position.IPositionService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -14,8 +14,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/positions")

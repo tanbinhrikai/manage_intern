@@ -1,6 +1,6 @@
 package com.rikai.backend.service.token;
 
-import com.rikai.backend.dto.response.AuthenticationResponse;
+import com.rikai.backend.dto.response.authentication.AuthenticationResponse;
 import com.rikai.backend.model.Users;
 
 public interface ITokenService {

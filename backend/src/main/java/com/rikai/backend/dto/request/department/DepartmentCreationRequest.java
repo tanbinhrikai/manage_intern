@@ -1,4 +1,4 @@
-package com.rikai.backend.dto.request;
+package com.rikai.backend.dto.request.department;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -9,7 +9,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PositionCreationRequest {
-    @NotBlank(message = "POSITION_TITLE_REQUIRED")
+public class DepartmentCreationRequest {
+    @NotBlank(message = "DEPARTMENT_TITLE_REQUIRED")
     String title;
 }

@@ -1,11 +1,8 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.department;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -13,9 +10,7 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class MentorResponse {
-    UUID id;
-    String email;
-    String fullName;
-    LocalDate dateOfBirth;
+public class DepartmentResponse {
+    Long id;
+    String title;
 }

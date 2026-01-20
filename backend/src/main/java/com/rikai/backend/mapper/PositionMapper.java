@@ -1,7 +1,7 @@
 package com.rikai.backend.mapper;
 
-import com.rikai.backend.dto.request.PositionCreationRequest;
-import com.rikai.backend.dto.response.PositionResponse;
+import com.rikai.backend.dto.request.position.PositionCreationRequest;
+import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.model.Position;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

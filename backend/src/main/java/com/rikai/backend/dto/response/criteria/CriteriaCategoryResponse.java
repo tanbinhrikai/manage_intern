@@ -1,5 +1,6 @@
-package com.rikai.backend.dto.response;
+package com.rikai.backend.dto.response.criteria;
 
+import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
 import com.rikai.backend.model.Enum.CriteriaCategory;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

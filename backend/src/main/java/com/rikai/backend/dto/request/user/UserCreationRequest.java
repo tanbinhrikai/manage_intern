@@ -17,10 +17,6 @@ public class UserCreationRequest {
     @Email(message = "INVALID_EMAIL")
     String email;
     @Size(min = 8 , message = "INVALID_PASSWORD")
-    @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
-            message = "PASSWORD_WEAK"
-    )
     String password;
     @NotBlank(message = "INVALID_FULLNAME")
     String fullName;

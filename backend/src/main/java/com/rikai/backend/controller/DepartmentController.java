@@ -3,9 +3,9 @@ package com.rikai.backend.controller;
 import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
-import com.rikai.backend.dto.request.DepartmentCreationRequest;
-import com.rikai.backend.dto.request.DepartmentUpdateRequest;
-import com.rikai.backend.dto.response.DepartmentResponse;
+import com.rikai.backend.dto.request.department.DepartmentCreationRequest;
+import com.rikai.backend.dto.request.department.DepartmentUpdateRequest;
+import com.rikai.backend.dto.response.department.DepartmentResponse;
 import com.rikai.backend.service.department.IDepartmentService;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
@@ -14,8 +14,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/departments")

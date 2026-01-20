@@ -1,15 +1,18 @@
 package com.rikai.backend.mapper;
 
-import com.rikai.backend.dto.response.CriteriaCategoryResponse;
-import com.rikai.backend.dto.response.CriteriaScoreDefinitionResponse;
-import com.rikai.backend.dto.response.EvaluationCriteriaResponse;
-import com.rikai.backend.dto.response.ScoreLabelResponse;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaCreationRequest;
+import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaUpdateRequest;
+import com.rikai.backend.dto.response.criteria.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.criteria.CriteriaScoreDefinitionResponse;
+import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
+import com.rikai.backend.dto.response.score_label.ScoreLabelResponse;
 import com.rikai.backend.model.CriteriaScoreDefinition;
 import com.rikai.backend.model.EvaluationCriteria;
 import com.rikai.backend.model.Enum.CriteriaCategory;
 import com.rikai.backend.model.Enum.ScoreLabel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
 import java.util.Arrays;
@@ -18,6 +21,23 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface EvaluationCriteriaMapper {
+
+    @Mapping(target = "categoryDisplayName", expression = "java(criteria.getCategory().getDisplayName())")
+    @Mapping(target = "categoryDescription", expression = "java(criteria.getCategory().getDescription())")
+    @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentName", source = "parent.name")
+    @Mapping(target = "children", ignore = true)
+    @Mapping(target = "scoreDefinitions", source = "scoreDefinitions", qualifiedByName = "toScoreDefinitionResponseList")
+    EvaluationCriteriaResponse toEvaluationCriteriaResponse(EvaluationCriteria criteria);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "scoreDefinitions", ignore = true)
+    EvaluationCriteria toEvaluationCriteria(EvaluationCriteriaCreationRequest request);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "scoreDefinitions", ignore = true)
+    void updateEvaluationCriteriaFromRequest(@MappingTarget EvaluationCriteria criteria,
+                                             EvaluationCriteriaUpdateRequest request);
 
     /**
      * Map EvaluationCriteria entity to response (not include children)
@@ -68,8 +88,6 @@ public interface EvaluationCriteriaMapper {
      * Map CriteriaScoreDefinition entity to response
      */
     @Mapping(target = "criteriaId", source = "criteria.id")
-    @Mapping(target = "scoreLabelDisplayName", expression = "java(definition.getScoreLabel().getDisplayName())")
-    @Mapping(target = "scoreLabelDescription", expression = "java(definition.getScoreLabel().getDescription())")
     @Mapping(target = "minScore", expression = "java(definition.getScoreLabel().getMinScore())")
     @Mapping(target = "maxScore", expression = "java(definition.getScoreLabel().getMaxScore())")
     CriteriaScoreDefinitionResponse toScoreDefinitionResponse(CriteriaScoreDefinition definition);
@@ -88,8 +106,6 @@ public interface EvaluationCriteriaMapper {
     default ScoreLabelResponse toScoreLabelResponse(ScoreLabel scoreLabel) {
         return ScoreLabelResponse.builder()
                 .value(scoreLabel)
-                .displayName(scoreLabel.getDisplayName())
-                .description(scoreLabel.getDescription())
                 .minScore(scoreLabel.getMinScore())
                 .maxScore(scoreLabel.getMaxScore())
                 .build();
