@@ -2,15 +2,12 @@ package com.rikai.backend.dto.response.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.dto.response.DepartmentResponse;
-import com.rikai.backend.dto.response.RolesResponse;
-import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Getter
 @Setter

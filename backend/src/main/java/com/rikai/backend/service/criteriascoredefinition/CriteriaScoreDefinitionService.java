@@ -37,7 +37,7 @@ public class CriteriaScoreDefinitionService implements ICriteriaScoreDefinitionS
 
     @Override
     @Transactional(readOnly = true)
-    public CriteriaScoreDefinitionResponse getScoreDefinitionById(Integer id) {
+    public CriteriaScoreDefinitionResponse getScoreDefinitionById(Long id) {
         CriteriaScoreDefinition definition = criteriaScoreDefinitionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CRITERIA_SCORE_DEFINITION_NOT_EXISTED));
         return criteriaScoreDefinitionMapper.toCriteriaScoreDefinitionResponse(definition);
@@ -58,7 +58,7 @@ public class CriteriaScoreDefinitionService implements ICriteriaScoreDefinitionS
 
     @Override
     @Transactional
-    public CriteriaScoreDefinitionResponse updateScoreDefinition(Integer id,
+    public CriteriaScoreDefinitionResponse updateScoreDefinition(Long id,
             CriteriaScoreDefinitionUpdateRequest request) {
         CriteriaScoreDefinition definition = criteriaScoreDefinitionRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CRITERIA_SCORE_DEFINITION_NOT_EXISTED));
@@ -76,7 +76,7 @@ public class CriteriaScoreDefinitionService implements ICriteriaScoreDefinitionS
 
     @Override
     @Transactional
-    public void deleteScoreDefinition(Integer id) {
+    public void deleteScoreDefinition(Long id) {
         if (!criteriaScoreDefinitionRepository.existsById(id)) {
             throw new AppException(ErrorCode.CRITERIA_SCORE_DEFINITION_NOT_EXISTED);
         }
@@ -85,7 +85,7 @@ public class CriteriaScoreDefinitionService implements ICriteriaScoreDefinitionS
 
     @Override
     @Transactional(readOnly = true)
-    public List<CriteriaScoreDefinitionResponse> getScoreDefinitionsByCriteriaId(Integer criteriaId) {
+    public List<CriteriaScoreDefinitionResponse> getScoreDefinitionsByCriteriaId(Long criteriaId) {
         if (!evaluationCriteriaRepository.existsById(criteriaId)) {
             throw new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED);
         }

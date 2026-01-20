@@ -1,8 +1,6 @@
 package com.rikai.backend.dto.response;
 
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.rikai.backend.model.Enum.ScoreLabel;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,8 +9,10 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class RolesResponse {
-    String roleName;
+public class ScoreLabelResponse {
+    ScoreLabel value;
+    String displayName;
     String description;
+    Integer minScore;
+    Integer maxScore;
 }

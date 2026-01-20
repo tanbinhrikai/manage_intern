@@ -12,8 +12,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class WeeklyReportDetailResponse {
-    private Integer id;
-    private Integer criteriaId;
+    private Long id;
+    private Long criteriaId;
     private String criteriaName;
     private Byte score;
     private String comment;

@@ -5,7 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.Set;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -13,10 +13,25 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EvaluationCriteriaResponse {
-    Integer id;
+    Long id;
+    
+    // Category info
     CriteriaCategory category;
+    String categoryDisplayName;
+    String categoryDescription;
+    
+    // Criteria info
     String name;
     String description;
     BigDecimal weight;
-    Set<CriteriaScoreDefinitionResponse> scoreDefinitions;
+    Integer displayOrder;
+    Boolean isActive;
+    
+    // Hierarchical structure
+    Long parentId;
+    String parentName;
+    List<EvaluationCriteriaResponse> children;
+    
+    // Score definitions (chỉ cho sub-criteria)
+    List<CriteriaScoreDefinitionResponse> scoreDefinitions;
 }

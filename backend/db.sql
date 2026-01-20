@@ -14,9 +14,8 @@ CREATE TABLE IF NOT EXISTS roles (
 -- =====================================================
 CREATE TABLE IF NOT EXISTS departments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_department_name (name)
+    title VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -44,7 +43,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- =====================================================
 -- 4. JOB POSITIONS TABLE
 -- =====================================================
-CREATE TABLE IF NOT EXISTS job_positions (
+CREATE TABLE IF NOT EXISTS positions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     department_id INT,
@@ -95,7 +94,7 @@ CREATE TABLE IF NOT EXISTS interns (
     INDEX idx_intern_mentor (mentor_id),
     INDEX idx_intern_status (status),
     INDEX idx_intern_offer_status (offer_status),
-    FOREIGN KEY (position_id) REFERENCES job_positions(id) ON DELETE RESTRICT,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE RESTRICT,
     FOREIGN KEY (batch_id) REFERENCES internship_batches(id) ON DELETE SET NULL,
     FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT chk_intern_status CHECK (status IN ('ACTIVE', 'WARNING', 'COMPLETED', 'DROPPED')),
@@ -113,9 +112,6 @@ CREATE TABLE IF NOT EXISTS weekly_reports (
     week_start_date DATE NOT NULL,
     tasks_assigned TEXT,
     tasks_completed TEXT,
-    output_quality TEXT,
-    proactivity_score TINYINT,
-    progress_score TINYINT,
     issues_risks TEXT,
     mentor_overall_comment TEXT,
     status VARCHAR(20) DEFAULT 'submitted',
@@ -127,9 +123,7 @@ CREATE TABLE IF NOT EXISTS weekly_reports (
     INDEX idx_report_status (status),
     UNIQUE KEY uk_report_intern_week (intern_id, week_start_date),
     FOREIGN KEY (intern_id) REFERENCES interns(id) ON DELETE CASCADE,
-    FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    CONSTRAINT chk_proactivity_score CHECK (proactivity_score IS NULL OR (proactivity_score >= 1 AND proactivity_score <= 10)),
-    CONSTRAINT chk_progress_score CHECK (progress_score IS NULL OR (progress_score >= 1 AND progress_score <= 10))
+    FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
@@ -144,9 +138,9 @@ CREATE TABLE IF NOT EXISTS evaluation_criteria (
     is_active BOOLEAN DEFAULT TRUE,
     display_order INT DEFAULT 0,
     INDEX idx_criteria_category (category),
-    INDEX idx_criteria_active (is_active),
-    CONSTRAINT chk_criteria_category CHECK (category IN ('EXPERTISE', 'MINDSET', 'SKILLS'))
+    INDEX idx_criteria_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- =====================================================
 -- 9. EVALUATION TEMPLATES TABLE
@@ -160,7 +154,7 @@ CREATE TABLE IF NOT EXISTS evaluation_templates (
     INDEX idx_template_position (position_id),
     INDEX idx_template_criteria (criteria_id),
     UNIQUE KEY uk_template_position_criteria (position_id, criteria_id),
-    FOREIGN KEY (position_id) REFERENCES job_positions(id) ON DELETE CASCADE,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE CASCADE,
     FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -220,7 +214,7 @@ CREATE TABLE IF NOT EXISTS internship_roadmaps (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_roadmap_position (position_id),
     INDEX idx_roadmap_stage (stage_name),
-    FOREIGN KEY (position_id) REFERENCES job_positions(id) ON DELETE CASCADE,
+    FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE CASCADE,
     CONSTRAINT chk_roadmap_stage CHECK (stage_name IN ('ONBOARDING', 'TRAINING', 'PROJECT', 'EVALUATION'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -352,32 +346,13 @@ CREATE TABLE IF NOT EXISTS refresh_token (
 -- =====================================================
 
 -- Insert default roles
-INSERT INTO roles (role_name, description) VALUES
-('ADMIN', 'System Administrator with full access'),
-('MENTOR', 'Mentor who manages interns')
-ON DUPLICATE KEY UPDATE description = VALUES(description);
-
--- Insert default departments (example)
-INSERT INTO departments (name) VALUES
-('Backend Development'),
-('Frontend Development'),
-('Mobile Development'),
-('Marketing'),
-('Sales')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
-
+INSERT INTO roles (role_name) VALUES
+('ADMIN'),
+('MENTOR'),
+('HR');
 -- =====================================================
 -- END OF SCHEMA
 -- =====================================================
-
-INSERT INTO internship_batches (name, start_date, end_date, description)
-VALUES 
-    ('RINT 01', '2025-01-01', '2025-06-30', 'Đợt thực tập RINT 01.'),
-    ('RINT 02', '2025-02-01', '2025-07-31', 'Đợt thực tập RINT 02.'),
-    ('RINT 03', '2025-03-01', '2025-08-31', 'Đợt thực tập RINT 03.'),
-    ('RINT 04', '2025-04-01', '2025-09-30', 'Đợt thực tập RINT 04.'),
-    ('RINT 05', '2025-05-01', '2025-10-31', 'Đợt thực tập RINT 05.');
-    
 -- '1', 'Nguyễn Văn An', 'an.nguyen@rikai.technology', '0901000001', '1', '1', '04b5f9d5-6475-459c-97da-6acd0cdcbbde', '2025-01-01', '2025-06-30', 'COMPLETED', 'ACCEPTED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'
 -- '2', 'Trần Thị Bình', 'binh.tran@rikai.technology', '0901000002', '1', '1', '04b5f9d5-6475-459c-97da-6acd0cdcbbde', '2025-01-01', '2025-06-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'
 -- '3', 'Lê Văn Cường', 'cuong.le@rikai.technology', '0901000003', '2', '1', '42b3746a-41ad-4f79-8e3e-7022a96490c1', '2025-01-01', '2025-06-30', 'COMPLETED', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'
@@ -422,17 +397,11 @@ VALUES
 -- =====================================================
 -- UPDATE EVALUATION CRITERIA CONSTRAINT
 -- =====================================================
-ALTER TABLE evaluation_criteria DROP CONSTRAINT chk_criteria_category;
-
-ALTER TABLE weekly_reports
-    DROP COLUMN output_quality,
-    DROP COLUMN proactivity_score,
-    DROP COLUMN progress_score;
-
 ALTER TABLE weekly_reports
     ADD COLUMN average_score DECIMAL(4,2) DEFAULT 0 AFTER status;
 
-ALTER TABLE evaluation_criteria ADD CONSTRAINT chk_criteria_category CHECK (category IN ('EXPERTISE', 'SKILLS', 'MINDSET'));
+ALTER TABLE evaluation_criteria ADD CONSTRAINT chk_criteria_category
+    CHECK (category IN ('WORK_PERFORMANCE', 'ATTITUDE_SOFT_SKILLS', 'KNOWLEDGE_APPLICATION'));
 
 -- =====================================================
 -- CRITERIA SCORE DEFINITIONS TABLE
@@ -441,8 +410,6 @@ CREATE TABLE IF NOT EXISTS criteria_score_definitions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     criteria_id INT NOT NULL,
     score_label VARCHAR(50),
-    min_score TINYINT NOT NULL,
-    max_score TINYINT NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (criteria_id) REFERENCES evaluation_criteria(id) ON DELETE CASCADE,
@@ -536,18 +503,3 @@ INSERT INTO criteria_score_definitions (criteria_id, score_label, min_score, max
 (10, 'Average', 5, 6, 'Needs significant mentor guidance; handling is temporary, problems easily recur.'),
 (10, 'Weak', 0, 4, 'Passive, easily gives up; problems not solved or handled incorrectly, repeating old errors.');
 
--- =====================================================
--- UPDATE CRITERIA SCORE DEFINITIONS CONSTRAINT
--- =====================================================
-ALTER TABLE criteria_score_definitions ADD CONSTRAINT chk_score_label CHECK (score_label IN ('Excellent', 'Good', 'Average', 'Weak'));
-
-ALTER table evaluation_criteria drop column display_order;
-
-ALTER table evaluation_criteria drop column is_active;
-
-
--- Update criteria_score_definitions --
-
-alter  table  criteria_score_definitions drop  column  min_score;
-
-alter table  criteria_score_definitions drop column  max_score;

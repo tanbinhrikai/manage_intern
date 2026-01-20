@@ -4,17 +4,21 @@ import com.rikai.backend.model.Enum.ScoreLabel;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CriteriaScoreDefinitionResponse {
-    Integer id;
-    Integer criteriaId;
+    Long id;
+    Long criteriaId;
+    
+    // Score label info
     ScoreLabel scoreLabel;
+    String scoreLabelDisplayName;
+    String scoreLabelDescription;
+    Integer minScore;
+    Integer maxScore;
+    
     String description;
-    Instant createdAt;
 }

@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CriteriaScoreDefinitionCreationRequest {
     @NotNull(message = "CRITERIA_ID_REQUIRED")
-    Integer criteriaId;
+    Long criteriaId;
 
     @NotNull(message = "SCORE_LABEL_REQUIRED")
     ScoreLabel scoreLabel;

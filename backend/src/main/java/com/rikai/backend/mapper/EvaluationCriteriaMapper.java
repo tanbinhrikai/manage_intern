@@ -1,24 +1,127 @@
 package com.rikai.backend.mapper;
 
-import com.rikai.backend.dto.request.EvaluationCriteriaCreationRequest;
-import com.rikai.backend.dto.request.EvaluationCriteriaUpdateRequest;
+import com.rikai.backend.dto.response.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.CriteriaScoreDefinitionResponse;
 import com.rikai.backend.dto.response.EvaluationCriteriaResponse;
+import com.rikai.backend.dto.response.ScoreLabelResponse;
+import com.rikai.backend.model.CriteriaScoreDefinition;
 import com.rikai.backend.model.EvaluationCriteria;
+import com.rikai.backend.model.Enum.CriteriaCategory;
+import com.rikai.backend.model.Enum.ScoreLabel;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring", uses = { CriteriaScoreDefinitionMapper.class })
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring")
 public interface EvaluationCriteriaMapper {
-    @Mapping(target = "scoreDefinitions", source = "scoreDefinitions")
-    EvaluationCriteriaResponse toEvaluationCriteriaResponse(EvaluationCriteria criteria);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "scoreDefinitions", ignore = true)
-    EvaluationCriteria toEvaluationCriteria(EvaluationCriteriaCreationRequest request);
+    /**
+     * Map EvaluationCriteria entity to response (not include children)
+     */
+    @Mapping(target = "categoryDisplayName", expression = "java(criteria.getCategory().getDisplayName())")
+    @Mapping(target = "categoryDescription", expression = "java(criteria.getCategory().getDescription())")
+    @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentName", source = "parent.name")
+    @Mapping(target = "children", ignore = true)
+    @Mapping(target = "scoreDefinitions", source = "scoreDefinitions", qualifiedByName = "toScoreDefinitionResponseList")
+    EvaluationCriteriaResponse toResponse(EvaluationCriteria criteria);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "scoreDefinitions", ignore = true)
-    void updateEvaluationCriteriaFromRequest(@MappingTarget EvaluationCriteria criteria,
-            EvaluationCriteriaUpdateRequest request);
+    /**
+     * Map EvaluationCriteria entity to response (include children)
+     */
+    @Mapping(target = "categoryDisplayName", expression = "java(criteria.getCategory().getDisplayName())")
+    @Mapping(target = "categoryDescription", expression = "java(criteria.getCategory().getDescription())")
+    @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentName", source = "parent.name")
+    @Mapping(target = "children", source = "children", qualifiedByName = "toResponseListWithoutChildren")
+    @Mapping(target = "scoreDefinitions", source = "scoreDefinitions", qualifiedByName = "toScoreDefinitionResponseList")
+    EvaluationCriteriaResponse toResponseWithChildren(EvaluationCriteria criteria);
+
+    /**
+     * Map list without children (to avoid infinite recursion)
+     */
+    @Named("toResponseListWithoutChildren")
+    default List<EvaluationCriteriaResponse> toResponseListWithoutChildren(List<EvaluationCriteria> criteriaList) {
+        if (criteriaList == null) return null;
+        return criteriaList.stream()
+                .filter(c -> c.getIsActive())
+                .map(this::toResponseWithScoreDefinitions)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Map with score definitions but without children
+     */
+    @Mapping(target = "categoryDisplayName", expression = "java(criteria.getCategory().getDisplayName())")
+    @Mapping(target = "categoryDescription", expression = "java(criteria.getCategory().getDescription())")
+    @Mapping(target = "parentId", source = "parent.id")
+    @Mapping(target = "parentName", source = "parent.name")
+    @Mapping(target = "children", ignore = true)
+    @Mapping(target = "scoreDefinitions", source = "scoreDefinitions", qualifiedByName = "toScoreDefinitionResponseList")
+    EvaluationCriteriaResponse toResponseWithScoreDefinitions(EvaluationCriteria criteria);
+
+    /**
+     * Map CriteriaScoreDefinition entity to response
+     */
+    @Mapping(target = "criteriaId", source = "criteria.id")
+    @Mapping(target = "scoreLabelDisplayName", expression = "java(definition.getScoreLabel().getDisplayName())")
+    @Mapping(target = "scoreLabelDescription", expression = "java(definition.getScoreLabel().getDescription())")
+    @Mapping(target = "minScore", expression = "java(definition.getScoreLabel().getMinScore())")
+    @Mapping(target = "maxScore", expression = "java(definition.getScoreLabel().getMaxScore())")
+    CriteriaScoreDefinitionResponse toScoreDefinitionResponse(CriteriaScoreDefinition definition);
+
+    @Named("toScoreDefinitionResponseList")
+    default List<CriteriaScoreDefinitionResponse> toScoreDefinitionResponseList(List<CriteriaScoreDefinition> definitions) {
+        if (definitions == null) return null;
+        return definitions.stream()
+                .map(this::toScoreDefinitionResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Map ScoreLabel enum to response
+     */
+    default ScoreLabelResponse toScoreLabelResponse(ScoreLabel scoreLabel) {
+        return ScoreLabelResponse.builder()
+                .value(scoreLabel)
+                .displayName(scoreLabel.getDisplayName())
+                .description(scoreLabel.getDescription())
+                .minScore(scoreLabel.getMinScore())
+                .maxScore(scoreLabel.getMaxScore())
+                .build();
+    }
+
+    /**
+     * Get all ScoreLabel as response
+     */
+    default List<ScoreLabelResponse> getAllScoreLabelResponses() {
+        return Arrays.stream(ScoreLabel.values())
+                .map(this::toScoreLabelResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Map CriteriaCategory to CriteriaCategoryResponse (not include criteria list)
+     */
+    default CriteriaCategoryResponse toCategoryResponse(CriteriaCategory category) {
+        return CriteriaCategoryResponse.builder()
+                .category(category)
+                .displayName(category.getDisplayName())
+                .description(category.getDescription())
+                .mainCriteria(null)
+                .build();
+    }
+
+    /**
+     * Get all CriteriaCategory as response
+     */
+    default List<CriteriaCategoryResponse> getAllCategoryResponses() {
+        return Arrays.stream(CriteriaCategory.values())
+                .map(this::toCategoryResponse)
+                .collect(Collectors.toList());
+    }
 }

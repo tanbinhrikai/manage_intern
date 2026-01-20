@@ -27,7 +27,7 @@ public class FlywayConfig {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource())
                 .locations(flywayLocations)
-                .baselineOnMigrate(true)//default baseline is V1
+                .baselineOnMigrate(true)
                 .baselineVersion("0")
                 .load();
         flyway.migrate();

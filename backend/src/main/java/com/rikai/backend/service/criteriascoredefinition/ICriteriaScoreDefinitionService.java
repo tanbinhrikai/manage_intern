@@ -9,13 +9,13 @@ import java.util.List;
 public interface ICriteriaScoreDefinitionService {
     List<CriteriaScoreDefinitionResponse> getAllScoreDefinitions();
 
-    CriteriaScoreDefinitionResponse getScoreDefinitionById(Integer id);
+    CriteriaScoreDefinitionResponse getScoreDefinitionById(Long id);
 
     CriteriaScoreDefinitionResponse createScoreDefinition(CriteriaScoreDefinitionCreationRequest request);
 
-    CriteriaScoreDefinitionResponse updateScoreDefinition(Integer id, CriteriaScoreDefinitionUpdateRequest request);
+    CriteriaScoreDefinitionResponse updateScoreDefinition(Long id, CriteriaScoreDefinitionUpdateRequest request);
 
-    void deleteScoreDefinition(Integer id);
+    void deleteScoreDefinition(Long id);
 
-    List<CriteriaScoreDefinitionResponse> getScoreDefinitionsByCriteriaId(Integer criteriaId);
+    List<CriteriaScoreDefinitionResponse> getScoreDefinitionsByCriteriaId(Long criteriaId);
 }

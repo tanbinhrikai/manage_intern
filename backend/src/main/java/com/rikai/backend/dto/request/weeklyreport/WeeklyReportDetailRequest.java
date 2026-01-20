@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class WeeklyReportDetailRequest {
     @NotNull(message = "CRITERIA_ID_REQUIRED")
-    private Integer criteriaId;
+    private Long criteriaId;
 
     @Min(value = 1, message = "INVALID_SCORE")
     @Max(value = 10, message = "INVALID_SCORE")

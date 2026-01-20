@@ -18,7 +18,7 @@ import java.time.Instant;
 public class WeeklyReportDetail {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "weekly_report_id", referencedColumnName = "id", nullable = false)

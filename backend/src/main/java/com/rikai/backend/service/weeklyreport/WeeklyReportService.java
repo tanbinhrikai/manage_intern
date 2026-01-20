@@ -184,7 +184,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                 report.setDetails(new ArrayList<>());
             }
 
-            List<Integer> requestCriteriaIds = updateDTO.getDetails().stream()
+            List<Long> requestCriteriaIds = updateDTO.getDetails().stream()
                     .map(WeeklyReportDetailRequest::getCriteriaId).toList();
 
             report.getDetails().removeIf(

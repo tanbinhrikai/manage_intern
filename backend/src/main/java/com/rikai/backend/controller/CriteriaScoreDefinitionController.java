@@ -31,7 +31,7 @@ public class CriteriaScoreDefinitionController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<CriteriaScoreDefinitionResponse> getScoreDefinitionById(@PathVariable Integer id) {
+    public ApiResponse<CriteriaScoreDefinitionResponse> getScoreDefinitionById(@PathVariable Long id) {
         return ApiResponse.buildSuccessResponse(criteriaScoreDefinitionService.getScoreDefinitionById(id),
                 SuccessCode.GET_CRITERIA_SCORE_DEFINITION_SUCCESSFUL);
     }
@@ -39,7 +39,7 @@ public class CriteriaScoreDefinitionController {
     @GetMapping("/criteria/{criteriaId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<List<CriteriaScoreDefinitionResponse>> getScoreDefinitionsByCriteriaId(
-            @PathVariable Integer criteriaId) {
+            @PathVariable Long criteriaId) {
         return ApiResponse.buildSuccessResponse(
                 criteriaScoreDefinitionService.getScoreDefinitionsByCriteriaId(criteriaId),
                 SuccessCode.GET_ALL_CRITERIA_SCORE_DEFINITION_SUCCESSFUL);
@@ -55,7 +55,7 @@ public class CriteriaScoreDefinitionController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<CriteriaScoreDefinitionResponse> updateScoreDefinition(@PathVariable Integer id,
+    public ApiResponse<CriteriaScoreDefinitionResponse> updateScoreDefinition(@PathVariable Long id,
             @Valid @RequestBody CriteriaScoreDefinitionUpdateRequest request) {
         return ApiResponse.buildSuccessResponse(criteriaScoreDefinitionService.updateScoreDefinition(id, request),
                 SuccessCode.UPDATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL);
@@ -63,7 +63,7 @@ public class CriteriaScoreDefinitionController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<Void> deleteScoreDefinition(@PathVariable Integer id) {
+    public ApiResponse<Void> deleteScoreDefinition(@PathVariable Long id) {
         criteriaScoreDefinitionService.deleteScoreDefinition(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL);
     }

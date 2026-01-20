@@ -18,17 +18,17 @@ import java.time.Instant;
 public class CriteriaScoreDefinition {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "criteria_id", referencedColumnName = "id", nullable = false)
     EvaluationCriteria criteria;
 
-    @Column(name = "score_label", length = 50)
+    @Column(name = "score_label", length = 50, nullable = false)
     @Enumerated(EnumType.STRING)
     ScoreLabel scoreLabel;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
     String description;
 
     @CreationTimestamp
