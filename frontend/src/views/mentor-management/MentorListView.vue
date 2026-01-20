@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
@@ -14,7 +14,8 @@ const t = computed(() => localeStore.t)
 const mentors = ref([])
 const departments = ref([])
 const currentPage = ref(1)
-const pageSize = 8
+const pageSize = 10
+const totalItems = ref(0)
 const searchName = ref("")
 const filterStatus = ref("")
 const filterDepartment = ref("")
@@ -22,26 +23,20 @@ const showMentorForm = ref(false)
 const showMentorDetail = ref(false)
 const selectedMentor = ref(null)
 const loading = ref(false)
-const filteredMentors = computed(() => {
-  let result = mentors.value
-  if (searchName.value) {
-    result = result.filter(m => m.fullName.toLowerCase().includes(searchName.value.toLowerCase()))
-  }
-  if (filterStatus.value !== "") {
-    const isActive = filterStatus.value === 'ACTIVE'
-    result = result.filter(m => m.active === isActive)
-  }
-  if (filterDepartment.value) {
-    result = result.filter(m => m.department?.id === filterDepartment.value)
-  }
-  return result.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize)
-})
 
 async function fetchMentors() {
   loading.value = true
   try {
-    const res = await getMentors()
+    const params = {
+      page: currentPage.value - 1,
+      limit: pageSize,
+      keyword: searchName.value || undefined,
+      department_id: filterDepartment.value || undefined,
+      is_active: filterStatus.value === 'ACTIVE' ? true : filterStatus.value === 'LOCKED' ? false : undefined
+    }
+    const res = await getMentors(params)
     mentors.value = res.data?.data?.items || []
+    totalItems.value = res.data?.data?.totalItems || 0
   } catch (error) {
     ElMessage.error(t.value('mentorManagement.messages.loadError'))
   } finally {
@@ -51,8 +46,9 @@ async function fetchMentors() {
 
 async function fetchDepartments() {
   try {
-    const res = await getDepartments()
-    departments.value = res.data?.data || []
+    const res = await getDepartments({ limit: 100 })
+    departments.value = res.data?.data?.items || []
+    console.log(res.data.data.items)
   } catch (error) {
     console.error("Failed to load departments:", error)
   }
@@ -133,6 +129,20 @@ async function handleToggleStatus(mentor) {
   }
 }
 
+function handlePageChange(page) {
+  currentPage.value = page
+  fetchMentors()
+}
+
+function handleSearch() {
+  currentPage.value = 1
+  fetchMentors()
+}
+
+watch([searchName, filterStatus, filterDepartment], () => {
+  handleSearch()
+})
+
 onMounted(() => {
   fetchMentors()
   fetchDepartments()
@@ -194,7 +204,7 @@ onMounted(() => {
         </div>
 
         <el-table 
-          :data="filteredMentors" 
+          :data="mentors" 
           stripe 
           style="width: 100%"
           v-loading="loading"
@@ -267,9 +277,10 @@ onMounted(() => {
           <el-pagination
             v-model:current-page="currentPage"
             :page-size="pageSize"
-            :total="mentors.length"
+            :total="totalItems"
             layout="prev, pager, next"
             background
+            @current-change="handlePageChange"
           />
         </div>
       </el-card>
@@ -277,6 +288,7 @@ onMounted(() => {
       <MentorFormDialog
         v-model:visible="showMentorForm"
         :mentor="selectedMentor"
+        :departments="departments"
         @save="handleSaveMentor"
       />
 

@@ -127,7 +127,6 @@ const handleSubmit = async () => {
           </el-form-item>
 
           <div class="form-options">
-            <el-checkbox v-model="form.rememberMe">Remember me</el-checkbox>
             <a href="#" class="forgot-link">{{ t('login.forgotPassword') }}</a>
           </div>
 
@@ -141,10 +140,6 @@ const handleSubmit = async () => {
             {{ isLoading ? t('login.signingIn') : t('login.loginButton') }}
           </el-button>
         </el-form>
-
-        <div class="footer-section">
-          <p>Need assistance? <a href="#" class="support-link">Contact Support →</a></p>
-        </div>
       </div>
     </div>
   </div>
@@ -212,6 +207,7 @@ const handleSubmit = async () => {
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 24px 0;
+  text-align: center;
 }
 
 .error-alert {
@@ -225,16 +221,12 @@ const handleSubmit = async () => {
 .login-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: #374151;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .login-form :deep(.el-input__wrapper) {
   padding: 8px 12px;
   border-radius: 8px;
-}
-
-.login-form :deep(.el-input--large .el-input__wrapper) {
-  padding: 12px 16px;
 }
 
 .password-toggle {

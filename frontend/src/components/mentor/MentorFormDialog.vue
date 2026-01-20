@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import { getDepartments } from '@/api/department'
 
 const props = defineProps({
   visible: {
@@ -11,6 +10,10 @@ const props = defineProps({
   mentor: {
     type: Object,
     default: null
+  },
+  departments: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -21,7 +24,6 @@ const t = computed(() => localeStore.t)
 
 const formRef = ref(null)
 const loading = ref(false)
-const departments = ref([])
 
 const isEdit = computed(() => !!props.mentor)
 
@@ -124,16 +126,6 @@ async function handleSubmit() {
   })
 }
 
-async function fetchDepartments() {
-  try {
-    const res = await getDepartments()
-    departments.value = res.data?.data || []
-  } catch (error) {
-    console.error("Failed to load departments:", error)
-  }
-}
-
-onMounted(fetchDepartments)
 </script>
 
 <template>
@@ -186,7 +178,7 @@ onMounted(fetchDepartments)
           style="width: 100%"
         >
           <el-option
-            v-for="dept in departments"
+            v-for="dept in props.departments"
             :key="dept.id"
             :label="dept.title"
             :value="dept.id"

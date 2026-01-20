@@ -6,6 +6,9 @@ spring:
     username: myuser
     password: Password@123
 
+  flyway:
+    locations: classpath:db/migration
+
   jpa:
     hibernate:
       ddl-auto: update

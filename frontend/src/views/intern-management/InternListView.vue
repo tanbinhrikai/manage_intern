@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, View, Edit, Delete } from '@element-plus/icons-vue'
+import { Search, Plus, View, Edit, Delete, Calendar } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import InternFormDialog from "@/components/intern/InternFormDialog.vue"
@@ -24,6 +24,8 @@ const searchName = ref("")
 const filterStatus = ref("")
 const filterPosition = ref("")
 const filterMentor = ref("")
+const filterStartDate = ref(null)
+const filterEndDate = ref(null)
 const showInternForm = ref(false)
 const showInternDetail = ref(false)
 const selectedIntern = ref(null)
@@ -41,27 +43,20 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
-const filteredInterns = computed(() => {
-  let result = interns.value
-  if (searchName.value) {
-    result = result.filter(i => i.fullName.toLowerCase().includes(searchName.value.toLowerCase()))
-  }
-  if (filterStatus.value) {
-    result = result.filter(i => i.internStatus === filterStatus.value)
-  }
-  if (filterPosition.value) {
-    result = result.filter(i => i.position?.id === filterPosition.value)
-  }
-  if (filterMentor.value) {
-    result = result.filter(i => i.mentor?.id === filterMentor.value)
-  }
-  return result
-})
-
 async function fetchInterns() {
   loading.value = true
   try {
-    const res = await getInterns({ page: currentPage.value - 1, size: pageSize })
+    const params = {
+      page: currentPage.value - 1,
+      limit: pageSize,
+      keyword: searchName.value || undefined,
+      status: filterStatus.value || undefined,
+      position_id: filterPosition.value || undefined,
+      mentor_id: filterMentor.value || undefined,
+      start_date: filterStartDate.value || undefined,
+      end_date: filterEndDate.value || undefined
+    }
+    const res = await getInterns(params)
     interns.value = res.data?.data?.items || []
     totalItems.value = res.data?.data?.totalItems || 0
   } catch (error) {
@@ -73,8 +68,8 @@ async function fetchInterns() {
 
 async function fetchPositions() {
   try {
-    const res = await getPositions()
-    positions.value = res.data?.data || []
+    const res = await getPositions({ limit: 100 })
+    positions.value = res.data?.data?.items || []
   } catch (error) {
     console.error("Failed to load positions:", error)
   }
@@ -82,7 +77,7 @@ async function fetchPositions() {
 
 async function fetchMentors() {
   try {
-    const res = await getMentors()
+    const res = await getMentors({ limit: 100 })
     mentors.value = res.data?.data?.items || []
   } catch (error) {
     console.error("Failed to load mentors:", error)
@@ -160,6 +155,15 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString()
 }
 
+function handleSearch() {
+  currentPage.value = 1
+  fetchInterns()
+}
+
+watch([searchName, filterStatus, filterPosition, filterMentor, filterStartDate, filterEndDate], () => {
+  handleSearch()
+})
+
 onMounted(() => {
   fetchInterns()
   fetchPositions()
@@ -228,6 +232,22 @@ onMounted(() => {
                 :value="mentor.id"
               />
             </el-select>
+            <el-date-picker
+              v-model="filterStartDate"
+              type="date"
+              :placeholder="t('internManagement.startDateFrom')"
+              clearable
+              value-format="YYYY-MM-DD"
+              class="date-picker"
+            />
+            <el-date-picker
+              v-model="filterEndDate"
+              type="date"
+              :placeholder="t('internManagement.endDateTo')"
+              clearable
+              value-format="YYYY-MM-DD"
+              class="date-picker"
+            />
           </div>
           
           <el-button 
@@ -240,7 +260,7 @@ onMounted(() => {
         </div>
 
         <el-table 
-          :data="filteredInterns" 
+          :data="interns" 
           stripe 
           style="width: 100%"
           v-loading="loading"
@@ -343,6 +363,7 @@ onMounted(() => {
       <InternFormDialog
         v-model:visible="showInternForm"
         :intern="selectedIntern"
+        :positions="positions"
         @save="handleSaveIntern"
       />
 
@@ -407,6 +428,10 @@ onMounted(() => {
 }
 
 .filter-select {
+  width: 160px;
+}
+
+.date-picker {
   width: 160px;
 }
 
