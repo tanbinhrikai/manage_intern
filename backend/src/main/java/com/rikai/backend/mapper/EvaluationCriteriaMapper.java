@@ -10,10 +10,12 @@ import com.rikai.backend.model.CriteriaScoreDefinition;
 import com.rikai.backend.model.EvaluationCriteria;
 import com.rikai.backend.model.Enum.CriteriaCategory;
 import com.rikai.backend.model.Enum.ScoreLabel;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,11 +33,16 @@ public interface EvaluationCriteriaMapper {
     EvaluationCriteriaResponse toEvaluationCriteriaResponse(EvaluationCriteria criteria);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "children", ignore = true)
     @Mapping(target = "scoreDefinitions", ignore = true)
     EvaluationCriteria toEvaluationCriteria(EvaluationCriteriaCreationRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "parent", ignore = true)
+    @Mapping(target = "children", ignore = true)
     @Mapping(target = "scoreDefinitions", ignore = true)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEvaluationCriteriaFromRequest(@MappingTarget EvaluationCriteria criteria,
                                              EvaluationCriteriaUpdateRequest request);
 

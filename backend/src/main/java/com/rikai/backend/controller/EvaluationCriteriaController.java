@@ -156,6 +156,4 @@ public class EvaluationCriteriaController {
         evaluationCriteriaService.deleteEvaluationCriteria(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_EVALUATION_CRITERIA_SUCCESSFUL);
     }
-
-
 }

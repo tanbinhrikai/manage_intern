@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +139,19 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     @Transactional
     public EvaluationCriteriaResponse createEvaluationCriteria(EvaluationCriteriaCreationRequest request) {
         EvaluationCriteria criteria = evaluationCriteriaMapper.toEvaluationCriteria(request);
+        applyDefaults(criteria);
+
+        if (request.getParentId() != null) {
+            EvaluationCriteria parent = evaluationCriteriaRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+            if (parent.getParent() != null) {
+                throw new AppException(ErrorCode.INVALID_CRITERIA_PARENT);
+            }
+            if (request.getCategory() != parent.getCategory()) {
+                throw new AppException(ErrorCode.INVALID_CRITERIA_CATEGORY);
+            }
+            criteria.setParent(parent);
+        }
         return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
     }
 
@@ -147,6 +161,37 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         EvaluationCriteria criteria = evaluationCriteriaRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
         evaluationCriteriaMapper.updateEvaluationCriteriaFromRequest(criteria, request);
+
+        if (request.getParentId() != null) {
+            if (request.getParentId().equals(id)) {
+                throw new AppException(ErrorCode.INVALID_CRITERIA_PARENT);
+            }
+
+            EvaluationCriteria parent = evaluationCriteriaRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+
+            if (parent.getParent() != null) {
+                throw new AppException(ErrorCode.INVALID_CRITERIA_PARENT);
+            }
+
+            if (request.getCategory() != parent.getCategory()) {
+                throw new AppException(ErrorCode.INVALID_CRITERIA_CATEGORY);
+            }
+
+            criteria.setParent(parent);
+        } else if (criteria.getParent() != null && request.getCategory() != criteria.getParent().getCategory()) {
+            throw new AppException(ErrorCode.INVALID_CRITERIA_CATEGORY);
+        }
+
+        applyDefaults(criteria);
+//        if (request.getCategory() != null) {
+//            List<EvaluationCriteria> children = evaluationCriteriaRepository.findSubCriteriaByParentId(criteria.getId());
+//            for (EvaluationCriteria child : children) {
+//                child.setCategory(request.getCategory());
+//            }
+//            evaluationCriteriaRepository.saveAll(children);
+//            criteria.setCategory(request.getCategory());
+//        }
         return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
     }
 
@@ -157,5 +202,17 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
             throw new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED);
         }
         evaluationCriteriaRepository.deleteById(id);
+    }
+
+    private void applyDefaults(EvaluationCriteria criteria) {
+        if (criteria.getWeight() == null) {
+            criteria.setWeight(BigDecimal.ONE);
+        }
+        if (criteria.getDisplayOrder() == null) {
+            criteria.setDisplayOrder(0);
+        }
+        if (criteria.getIsActive() == null) {
+            criteria.setIsActive(true);
+        }
     }
 }

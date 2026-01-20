@@ -33,7 +33,9 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ApiResponse<?> handlingHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletResponse response) {
-        return buildResponse(ErrorCode.INVALID_KEY, null, response);
+        exception.getMostSpecificCause();
+        String message = "Invalid request body: " + exception.getMostSpecificCause().getMessage();
+        return buildResponse(ErrorCode.INVALID_KEY, message, response);
     }
     @ExceptionHandler(NoResourceFoundException.class)
     public ApiResponse<?> handlingNoResourceFoundExceptionException(NoResourceFoundException exception, HttpServletResponse response) {
@@ -43,13 +45,14 @@ public class GlobalExceptionHandler {
     public ApiResponse<?> handlingValidation(MethodArgumentNotValidException exception, HttpServletResponse response) {
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
         Map<String, Object> attributes = null;
+        String rawMessage = null;
         try {
             var firstError = exception.getBindingResult().getAllErrors().stream().findFirst().orElse(null);
             if (firstError != null) {
-                String enumKey = firstError.getDefaultMessage();
-                if (enumKey != null) {
+                rawMessage = firstError.getDefaultMessage();
+                if (rawMessage != null) {
                     try {
-                        errorCode = ErrorCode.valueOf(enumKey);
+                        errorCode = ErrorCode.valueOf(rawMessage);
                     } catch (IllegalArgumentException ignored) {
                     }
                     ConstraintViolation<?> constraintViolation = firstError.unwrap(ConstraintViolation.class);
@@ -63,6 +66,9 @@ public class GlobalExceptionHandler {
         String finalMessage = Objects.nonNull(attributes)
                 ? mapAttribute(errorCode.getMessage(), attributes)
                 : errorCode.getMessage();
+        if (errorCode == ErrorCode.INVALID_KEY && rawMessage != null && !rawMessage.isEmpty()) {
+            finalMessage = rawMessage;
+        }
         return buildResponse(errorCode, finalMessage, response);
     }
 

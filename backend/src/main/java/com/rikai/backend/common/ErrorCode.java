@@ -49,6 +49,25 @@ public enum ErrorCode {
 
     EVALUATION_CRITERIA_NOT_EXISTED("Evaluation criteria not found", HttpStatus.NOT_FOUND),
     CRITERIA_SCORE_DEFINITION_NOT_EXISTED("Criteria score definition not found", HttpStatus.NOT_FOUND),
+    INVALID_CRITERIA_PARENT("Invalid parent criteria", HttpStatus.BAD_REQUEST),
+    INVALID_CRITERIA_CATEGORY("Criteria category does not match parent category", HttpStatus.BAD_REQUEST),
+
+    // Validation keys (DTO)
+    CRITERIA_CATEGORY_REQUIRED("Criteria category is required", HttpStatus.BAD_REQUEST),
+    CRITERIA_NAME_REQUIRED("Criteria name is required", HttpStatus.BAD_REQUEST),
+    DISPLAY_ORDER_INVALID("Display order must be >= 0", HttpStatus.BAD_REQUEST),
+    CRITERIA_ID_REQUIRED("Criteria id is required", HttpStatus.BAD_REQUEST),
+    SCORE_LABEL_REQUIRED("Score label is required", HttpStatus.BAD_REQUEST),
+    INVALID_FULLNAME("Full name is required", HttpStatus.BAD_REQUEST),
+    ROLE_REQUIRED("Role is required", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_REQUIRED("Department is required", HttpStatus.BAD_REQUEST),
+    POSITION_TITLE_REQUIRED("Position title is required", HttpStatus.BAD_REQUEST),
+    JOB_POSITION_REQUIRED("Job position is required", HttpStatus.BAD_REQUEST),
+    MENTOR_REQUIRED("Mentor is required", HttpStatus.BAD_REQUEST),
+    START_DATE_REQUIRED("Start date is required", HttpStatus.BAD_REQUEST),
+    END_DATE_REQUIRED("End date is required", HttpStatus.BAD_REQUEST),
+    STATUS_REQUIRED("Status is required", HttpStatus.BAD_REQUEST),
+    DEPARTMENT_TITLE_REQUIRED("Department title is required", HttpStatus.BAD_REQUEST),
 
     FORBIDDEN("You are not allowed to perform this action", HttpStatus.FORBIDDEN),
     INVALID_INTERN_STATUS("Invalid intern status", HttpStatus.BAD_REQUEST);
