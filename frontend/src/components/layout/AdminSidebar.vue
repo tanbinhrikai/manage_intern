@@ -13,6 +13,7 @@ const menuItems = [
   { key: 'dashboard', path: '/admin/dashboard', icon: 'dashboard' },
   { key: 'interns', path: '/admin/interns', icon: 'interns' },
   { key: 'mentors', path: '/admin/mentors', icon: 'mentors' },
+  { key: 'hrs', path: '/admin/hrs', icon: 'hr' },
   { key: 'departments', path: '/admin/departments', icon: 'department' },
   { key: 'positions', path: '/admin/positions', icon: 'position' },
   { key: 'evaluationCriteria', path: '/admin/evaluation-criteria', icon: 'criteria' },
@@ -59,6 +60,12 @@ const userInitials = computed(() => {
         <svg v-else-if="item.icon === 'mentors'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
           <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <svg v-else-if="item.icon === 'hr'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
         <svg v-else-if="item.icon === 'department'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M3 21h18"/>

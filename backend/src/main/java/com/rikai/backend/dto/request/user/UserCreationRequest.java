@@ -1,7 +1,7 @@
 package com.rikai.backend.dto.request.user;
 
 
-import com.rikai.backend.validation.DobConstraint;
+import com.rikai.backend.model.Enum.RoleType;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -20,8 +20,9 @@ public class UserCreationRequest {
     String password;
     @NotBlank(message = "INVALID_FULLNAME")
     String fullName;
+    @NotNull(message = "ROLE_REQUIRED")
+    RoleType roleName;
 
-    @DobConstraint(min = 10)
     LocalDate dateOfBirth;
 
     @NotNull(message = "DEPARTMENT_REQUIRED")

@@ -29,6 +29,7 @@
         "dashboard": "Dashboard",
         "interns": "Interns",
         "mentors": "Mentors",
+        "hrs": "HR Staff",
         "departments": "Departments",
         "positions": "Positions",
         "evaluationCriteria": "Evaluation Criteria",
@@ -166,6 +167,67 @@
             "close": "Close"
         }
     },
+    "hrManagement": {
+        "title": "HR Staff Management",
+        "searchByName": "Search by name...",
+        "searchByDepartment": "Search by department...",
+        "addNew": "Add New HR",
+        "table": {
+            "fullName": "Full Name",
+            "email": "Email",
+            "department": "Department",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "status": {
+            "active": "Active",
+            "locked": "Locked"
+        },
+        "allStatus": "All Status",
+        "allDepartments": "All Departments",
+        "messages": {
+            "loadError": "Failed to load HR list",
+            "updateSuccess": "Updated successfully!",
+            "createSuccess": "Created successfully!",
+            "saveError": "An error occurred, please try again.",
+            "toggleSuccess": "Account status changed successfully!",
+            "toggleError": "Cannot change user status!",
+            "validationError": "Please fill in all required fields!"
+        },
+        "confirm": {
+            "title": "Confirm",
+            "lockAccount": "Are you sure you want to lock account {name}?",
+            "unlockAccount": "Are you sure you want to unlock account {name}?",
+            "ok": "Confirm",
+            "cancel": "Cancel"
+        },
+        "form": {
+            "addTitle": "Add New HR",
+            "editTitle": "Update HR",
+            "fullName": "Full Name",
+            "fullNamePlaceholder": "John Doe",
+            "email": "Email",
+            "emailPlaceholder": "example@company.com",
+            "dateOfBirth": "Date of Birth",
+            "department": "Department",
+            "selectDepartment": "Select department",
+            "isActive": "Active",
+            "password": "Password",
+            "passwordHint": "(Leave blank to keep current)",
+            "passwordPlaceholder": "********",
+            "passwordValidation": "Password must be at least 8 characters with uppercase, lowercase and number.",
+            "save": "Save",
+            "create": "Create",
+            "cancel": "Cancel",
+            "ageRestriction": "HR must be at least 18 years old."
+        },
+        "detail": {
+            "title": "HR Details",
+            "hrName": "HR Name",
+            "department": "Department",
+            "close": "Close"
+        }
+    },
     "internDetail": {
         "profileTitle": "Intern Profile",
         "editInfo": "Update Info",
@@ -213,6 +275,9 @@
         "startDateFrom": "Start Date From",
         "endDateTo": "End Date To",
         "addNew": "Add New Intern",
+        "moreFilters": "More Filters",
+        "hideFilters": "Hide Filters",
+        "clearFilters": "Clear",
         "table": {
             "fullName": "Full Name",
             "position": "Position",

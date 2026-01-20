@@ -5,13 +5,13 @@ import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
-import { getMentors, createMentor, updateMentor, toggleUserStatus } from '@/api/user'
+import { getHRs, createUser, updateUser, toggleUserStatus } from '@/api/user'
 import { getDepartments } from '@/api/department'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
-const mentors = ref([])
+const hrs = ref([])
 const departments = ref([])
 const currentPage = ref(1)
 const pageSize = 10
@@ -19,12 +19,12 @@ const totalItems = ref(0)
 const searchName = ref("")
 const filterStatus = ref("")
 const filterDepartment = ref("")
-const showMentorForm = ref(false)
-const showMentorDetail = ref(false)
-const selectedMentor = ref(null)
+const showHRForm = ref(false)
+const showHRDetail = ref(false)
+const selectedHR = ref(null)
 const loading = ref(false)
 
-async function fetchMentors() {
+async function fetchHRs() {
   loading.value = true
   try {
     const params = {
@@ -34,11 +34,11 @@ async function fetchMentors() {
       department_id: filterDepartment.value || undefined,
       is_active: filterStatus.value === 'ACTIVE' ? true : filterStatus.value === 'LOCKED' ? false : undefined
     }
-    const res = await getMentors(params)
-    mentors.value = res.data?.data?.items || []
+    const res = await getHRs(params)
+    hrs.value = res.data?.data?.items || []
     totalItems.value = res.data?.data?.totalItems || 0
   } catch (error) {
-    ElMessage.error(t.value('mentorManagement.messages.loadError'))
+    ElMessage.error(t.value('hrManagement.messages.loadError'))
   } finally {
     loading.value = false
   }
@@ -48,42 +48,41 @@ async function fetchDepartments() {
   try {
     const res = await getDepartments({ limit: 100 })
     departments.value = res.data?.data?.items || []
-    console.log(res.data.data.items)
   } catch (error) {
     console.error("Failed to load departments:", error)
   }
 }
 
-function openAddMentor() {
-  selectedMentor.value = null
-  showMentorForm.value = true
+function openAddHR() {
+  selectedHR.value = null
+  showHRForm.value = true
 }
 
-function openEditMentor(mentor) {
-  selectedMentor.value = mentor
-  showMentorForm.value = true
+function openEditHR(hr) {
+  selectedHR.value = hr
+  showHRForm.value = true
 }
 
-function openDetailMentor(mentor) {
-  selectedMentor.value = mentor
-  showMentorDetail.value = true
+function openDetailHR(hr) {
+  selectedHR.value = hr
+  showHRDetail.value = true
 }
 
-function closeMentorDetail() {
-  showMentorDetail.value = false
+function closeHRDetail() {
+  showHRDetail.value = false
 }
 
-async function handleSaveMentor(payload, done) {
+async function handleSaveHR(payload, done) {
   try {
-    if (selectedMentor.value) {
-      await updateMentor(selectedMentor.value.id, payload)
-      ElMessage.success(t.value('mentorManagement.messages.updateSuccess'))
+    if (selectedHR.value) {
+      await updateUser(selectedHR.value.id, payload)
+      ElMessage.success(t.value('hrManagement.messages.updateSuccess'))
     } else {
-      await createMentor(payload)
-      ElMessage.success(t.value('mentorManagement.messages.createSuccess'))
+      await createUser(payload)
+      ElMessage.success(t.value('hrManagement.messages.createSuccess'))
     }
-    fetchMentors()
-    showMentorForm.value = false
+    fetchHRs()
+    showHRForm.value = false
   } catch (error) {
     console.error("Save error:", error)
   } finally {
@@ -91,29 +90,29 @@ async function handleSaveMentor(payload, done) {
   }
 }
 
-async function handleToggleStatus(mentor) {
-  const confirmMessage = mentor.active 
-    ? t.value('mentorManagement.confirm.lockAccount').replace('{name}', mentor.fullName)
-    : t.value('mentorManagement.confirm.unlockAccount').replace('{name}', mentor.fullName)
+async function handleToggleStatus(hr) {
+  const confirmMessage = hr.active 
+    ? t.value('hrManagement.confirm.lockAccount').replace('{name}', hr.fullName)
+    : t.value('hrManagement.confirm.unlockAccount').replace('{name}', hr.fullName)
   
   try {
     await ElMessageBox.confirm(
       confirmMessage,
-      t.value('mentorManagement.confirm.title'),
+      t.value('hrManagement.confirm.title'),
       { 
-        confirmButtonText: t.value('mentorManagement.confirm.ok'), 
-        cancelButtonText: t.value('mentorManagement.confirm.cancel'), 
+        confirmButtonText: t.value('hrManagement.confirm.ok'), 
+        cancelButtonText: t.value('hrManagement.confirm.cancel'), 
         type: 'warning' 
       }
     )
-    const res = await toggleUserStatus(mentor.id)
+    const res = await toggleUserStatus(hr.id)
     if (res.data && res.data.data) {
-      const index = mentors.value.findIndex(m => m.id === mentor.id)
+      const index = hrs.value.findIndex(h => h.id === hr.id)
       if (index !== -1) {
-        mentors.value[index] = res.data.data
+        hrs.value[index] = res.data.data
       }
     }
-    ElMessage.success(t.value('mentorManagement.messages.toggleSuccess'))
+    ElMessage.success(t.value('hrManagement.messages.toggleSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error("Toggle status error:", error)
@@ -123,12 +122,12 @@ async function handleToggleStatus(mentor) {
 
 function handlePageChange(page) {
   currentPage.value = page
-  fetchMentors()
+  fetchHRs()
 }
 
 function handleSearch() {
   currentPage.value = 1
-  fetchMentors()
+  fetchHRs()
 }
 
 watch([searchName, filterStatus, filterDepartment], () => {
@@ -136,18 +135,18 @@ watch([searchName, filterStatus, filterDepartment], () => {
 })
 
 onMounted(() => {
-  fetchMentors()
+  fetchHRs()
   fetchDepartments()
 })
 </script>
 
 <template>
   <AdminLayout>
-    <div class="mentor-list-view">
+    <div class="hr-list-view">
       <el-card class="main-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <h2 class="page-title">{{ t('mentorManagement.title') }}</h2>
+            <h2 class="page-title">{{ t('hrManagement.title') }}</h2>
           </div>
         </template>
 
@@ -155,29 +154,29 @@ onMounted(() => {
           <div class="search-group">
             <el-input 
               v-model="searchName" 
-              :placeholder="t('mentorManagement.searchByName')"
+              :placeholder="t('hrManagement.searchByName')"
               :prefix-icon="Search"
               clearable
               class="search-input"
             />
             <el-select 
               v-model="filterStatus" 
-              :placeholder="t('mentorManagement.allStatus')"
+              :placeholder="t('hrManagement.allStatus')"
               clearable
               class="filter-select"
             >
-              <el-option :label="t('mentorManagement.allStatus')" value="" />
-              <el-option :label="t('mentorManagement.status.active')" value="ACTIVE" />
-              <el-option :label="t('mentorManagement.status.locked')" value="LOCKED" />
+              <el-option :label="t('hrManagement.allStatus')" value="" />
+              <el-option :label="t('hrManagement.status.active')" value="ACTIVE" />
+              <el-option :label="t('hrManagement.status.locked')" value="LOCKED" />
             </el-select>
             <el-select 
               v-model="filterDepartment" 
-              :placeholder="t('mentorManagement.allDepartments')"
+              :placeholder="t('hrManagement.allDepartments')"
               clearable
               class="filter-select"
               style="width: 200px;"
             >
-              <el-option :label="t('mentorManagement.allDepartments')" value="" />
+              <el-option :label="t('hrManagement.allDepartments')" value="" />
               <el-option
                 v-for="dept in departments"
                 :key="dept.id"
@@ -190,31 +189,32 @@ onMounted(() => {
           <el-button 
             type="primary"
             :icon="Plus"
-            @click="openAddMentor"
+            @click="openAddHR"
           >
-            {{ t('mentorManagement.addNew') }}
+            {{ t('hrManagement.addNew') }}
           </el-button>
         </div>
 
         <el-table 
-          :data="mentors" 
+          :data="hrs" 
           stripe 
           style="width: 100%"
           v-loading="loading"
         >
           <el-table-column 
             prop="fullName" 
-            :label="t('mentorManagement.table.fullName')" 
+            :label="t('hrManagement.table.fullName')" 
             min-width="150" 
           />
           <el-table-column 
             prop="email" 
-            :label="t('mentorManagement.table.email')" 
+            :label="t('hrManagement.table.email')" 
             min-width="200" 
           />
           <el-table-column 
-            :label="t('mentorManagement.table.department')" 
+            :label="t('hrManagement.table.department')" 
             min-width="150"
+          
           >
             <template #default="scope">
               <el-tag type="info" v-if="scope.row.department">
@@ -224,18 +224,18 @@ onMounted(() => {
             </template>
           </el-table-column>
           <el-table-column 
-            :label="t('mentorManagement.table.status')" 
+            :label="t('hrManagement.table.status')" 
             min-width="120" 
             align="center"
           >
             <template #default="scope">
               <el-tag :type="scope.row.active ? 'success' : 'danger'">
-                {{ scope.row.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
+                {{ scope.row.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column 
-            :label="t('mentorManagement.table.actions')" 
+            :label="t('hrManagement.table.actions')" 
             min-width="200" 
             fixed="right" 
             align="center"
@@ -246,14 +246,14 @@ onMounted(() => {
                 :icon="View" 
                 size="small" 
                 circle
-                @click="openDetailMentor(scope.row)"
+                @click="openDetailHR(scope.row)"
               />
               <el-button 
                 type="warning" 
                 :icon="Edit" 
                 size="small" 
                 circle
-                @click="openEditMentor(scope.row)"
+                @click="openEditHR(scope.row)"
               />
               <el-button 
                 :type="scope.row.active ? 'danger' : 'success'" 
@@ -279,43 +279,41 @@ onMounted(() => {
       </el-card>
 
       <MentorFormDialog
-        v-model:visible="showMentorForm"
-        :mentor="selectedMentor"
+        v-model:visible="showHRForm"
+        :mentor="selectedHR"
         :departments="departments"
-        @save="handleSaveMentor"
+        user-type="HR"
+        @save="handleSaveHR"
       />
 
       <el-dialog 
-        v-model="showMentorDetail" 
-        :title="t('mentorManagement.detail.title')"
+        v-model="showHRDetail" 
+        :title="t('hrManagement.detail.title')"
         width="450px"
       >
         <el-descriptions :column="1" border>
-          <el-descriptions-item :label="t('mentorManagement.detail.mentorName')">
-            {{ selectedMentor?.fullName }}
+          <el-descriptions-item :label="t('hrManagement.detail.hrName')">
+            {{ selectedHR?.fullName }}
           </el-descriptions-item>
-          <el-descriptions-item :label="t('mentorManagement.table.email')">
-            {{ selectedMentor?.email }}
+          <el-descriptions-item :label="t('hrManagement.table.email')">
+            {{ selectedHR?.email }}
           </el-descriptions-item>
-          <el-descriptions-item :label="t('mentorManagement.detail.department')">
-            <el-tag type="info" v-if="selectedMentor?.department">
-              {{ selectedMentor.department.title }}
+          <el-descriptions-item :label="t('hrManagement.detail.department')">
+            <el-tag type="info" v-if="selectedHR?.department">
+              {{ selectedHR.department.title }}
             </el-tag>
             <span v-else>-</span>
           </el-descriptions-item>
-          <el-descriptions-item :label="t('mentorManagement.table.status')">
-            <el-tag :type="selectedMentor?.active ? 'success' : 'danger'">
-              {{ selectedMentor?.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
+          <el-descriptions-item :label="t('hrManagement.table.status')">
+            <el-tag :type="selectedHR?.active ? 'success' : 'danger'">
+              {{ selectedHR?.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
             </el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item :label="t('mentorManagement.detail.internCount')">
-            {{ selectedMentor?.internCount || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
         <template #footer>
-          <el-button @click="closeMentorDetail">
-            {{ t('mentorManagement.detail.close') }}
+          <el-button @click="closeHRDetail">
+            {{ t('hrManagement.detail.close') }}
           </el-button>
         </template>
       </el-dialog>
@@ -324,7 +322,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.mentor-list-view {
+.hr-list-view {
   max-width: 1400px;
   margin: 0 auto;
 }

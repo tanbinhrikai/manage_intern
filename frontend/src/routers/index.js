@@ -39,6 +39,12 @@ const routes = [
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
+    path: "/admin/hrs",
+    name: "HRList",
+    component: () => import("@/views/hr-management/HRListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
     path: "/admin/interns",
     name: "InternList",
     component: () => import("@/views/intern-management/InternListView.vue"),

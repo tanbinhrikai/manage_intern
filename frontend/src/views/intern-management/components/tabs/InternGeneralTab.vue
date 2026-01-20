@@ -51,8 +51,8 @@ watch(() => props.intern, (newVal) => {
 
 async function fetchPositions() {
   try {
-    const res = await getPositions()
-    positions.value = res.data?.data || []
+    const res = await getPositions({ limit: 100 })
+    positions.value = res.data?.data?.items || []
   } catch (error) {
     console.error("Failed to load positions:", error)
   }
@@ -62,9 +62,8 @@ async function fetchMentors() {
   if (!isAdmin.value) return
 
   try {
-    const res = await getMentors()
-    const items = res.data?.data?.items || []
-    mentors.value = items.filter(u => u.role?.roleName === 'MENTOR')
+    const res = await getMentors({ limit: 100 })
+    mentors.value = res.data?.data?.items || []
   } catch (error) {
     console.error("Failed to load mentors:", error)
   }

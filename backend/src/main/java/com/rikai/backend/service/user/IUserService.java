@@ -18,11 +18,19 @@ public interface IUserService {
             Boolean isActive,
             Long departmentId);
 
+    PageResponse<UserResponse> getAllHrUsers(
+            PageRequest pageRequest,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId);
+
     UserResponse createUser(UserCreationRequest userCreateDTO);
 
     UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO);
 
-    UserResponse updateSelfMentor(UUID id, UserUpdateRequest userUpdateDTO);
+    UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO);
 
     UserResponse toggleStatus(UUID id);
 }

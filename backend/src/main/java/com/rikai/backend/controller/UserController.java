@@ -28,9 +28,9 @@ public class UserController {
     IAuthenticationService authenticationService;
     IUserService userService;
 
-    @GetMapping("")
+    @GetMapping("/mentors")
     @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<PageResponse<UserResponse>> getAllUser(
+    public ApiResponse<PageResponse<UserResponse>> getAllMentorUser(
             @RequestParam(defaultValue = "", required = false) String keyword,
             @RequestParam(required = false, name = "start_date") LocalDate startDate,
             @RequestParam(required = false, name = "end_date") LocalDate endDate,
@@ -41,6 +41,22 @@ public class UserController {
     ) {
         PageRequest pageable = PageRequest.of(page, limit);
         PageResponse<UserResponse> result = userService.getAllMentorUsers(pageable, keyword, startDate, endDate, isActive, departmentId);
+        return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
+    }
+
+    @GetMapping("/hrs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<PageResponse<UserResponse>> getAllHrUser(
+            @RequestParam(defaultValue = "", required = false) String keyword,
+            @RequestParam(required = false, name = "start_date") LocalDate startDate,
+            @RequestParam(required = false, name = "end_date") LocalDate endDate,
+            @RequestParam(required = false, name = "department_id") Long departmentId,
+            @RequestParam(required = false, name = "is_active") Boolean isActive,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit
+    ) {
+        PageRequest pageable = PageRequest.of(page, limit);
+        PageResponse<UserResponse> result = userService.getAllHrUsers(pageable, keyword, startDate, endDate, isActive, departmentId);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
     }
 
@@ -80,10 +96,9 @@ public class UserController {
         return ApiResponse.buildSuccessResponse(userResponse, SuccessCode.GET_MY_INFO_SUCCESSFUL);
     }
 
-    @PostMapping("/update-my-info/{id}")
-    public ApiResponse<UserResponse> updateSelfMentor(@PathVariable("id") UUID id,
-                                                      @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
-        UserResponse updatedUser = userService.updateSelfMentor(id, userUpdateRequest);
+    @PostMapping("/update-my-info")
+    public ApiResponse<UserResponse> updateSelfMentor(@Valid @RequestBody UserUpdateRequest userUpdateRequest) {
+        UserResponse updatedUser = userService.updateSelfUser(userUpdateRequest);
         return ApiResponse.buildSuccessResponse(
                 updatedUser,
                 SuccessCode.UPDATE_USER_SUCCESSFUL);

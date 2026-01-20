@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import { getMentors } from '@/api/user'
 
 const props = defineProps({
   visible: {
@@ -17,6 +16,10 @@ const props = defineProps({
     default: false
   },
   positions: {
+    type: Array,
+    default: () => []
+  },
+  mentors: {
     type: Array,
     default: () => []
   }
@@ -118,23 +121,6 @@ async function handleSubmit() {
     loading.value = false
   })
 }
-
-async function fetchMentors() {
-  if (props.hideMentor) return
-
-  try {
-    const res = await getMentors()
-    const users = res.data?.data?.items || []
-    mentors.value = users.filter(u => u.role?.roleName === 'MENTOR')
-    console.log('Mentors loaded:', mentors.value)
-  } catch (error) {
-    console.error("Failed to load mentors:", error)
-  }
-}
-
-onMounted(() => {
-  fetchMentors()
-})
 </script>
 
 <template>
@@ -183,8 +169,8 @@ onMounted(() => {
               style="width: 100%"
             >
               <el-option
-                v-for="mentor in mentors"
-                :key="mentor.id || mentor.email"
+                v-for="mentor in props.mentors"
+                :key="mentor.id"
                 :label="mentor.fullName"
                 :value="mentor.id"
               />

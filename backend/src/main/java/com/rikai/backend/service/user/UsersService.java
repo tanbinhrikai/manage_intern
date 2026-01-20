@@ -8,13 +8,13 @@ import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
 import com.rikai.backend.model.Department;
+import com.rikai.backend.model.Enum.RoleType;
 import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
-import com.rikai.backend.validation.PasswordValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -39,7 +39,6 @@ public class UsersService implements IUserService {
     RolesRepository rolesRepository;
     DepartmentRepository departmentRepository;
     IAuthenticationService authenticationService;
-    private static final String DEFAULT_PASSWORD = "Abc123456@";
 
     @Override
     @Transactional(readOnly = true)
@@ -70,23 +69,51 @@ public class UsersService implements IUserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> getAllHrUsers(
+            PageRequest pageRequest,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId) {
+        Page<Users> usersPage = usersRepository.findAllHRUsers(
+                pageRequest,
+                keyword != null && !keyword.trim().isEmpty() ? keyword.trim() : null,
+                startDate,
+                endDate,
+                isActive,
+                departmentId);
+        List<UserResponse> userResponses = usersPage.getContent().stream()
+                .map(UserResponse::fromUser)
+                .toList();
+        return PageResponse.<UserResponse>builder()
+                .items(userResponses)
+                .currentPage(usersPage.getNumber())
+                .totalPages(usersPage.getTotalPages())
+                .totalItems(usersPage.getTotalElements())
+                .pageSize(usersPage.getSize())
+                .build();
+    }
+
+    @Override
     @Transactional
     public UserResponse createUser(UserCreationRequest userCreateDTO) {
         if (usersRepository.findByEmail(userCreateDTO.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         Users user = userMapper.toUser(userCreateDTO);
-        String passwordToUse = userCreateDTO.getPassword();
-        if (passwordToUse == null || passwordToUse.isEmpty()) {
-            passwordToUse = DEFAULT_PASSWORD;
-        } else if (!PasswordValidator.isValid(passwordToUse)) {
-            throw new AppException(ErrorCode.PASSWORD_WEAK);
-        }
-
-        user.setPasswordHash(passwordEncoder.encode(passwordToUse));
         user.setIsActive(true);
-        Roles role = rolesRepository.findByRoleName("MENTOR")
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        Roles role = null;
+        if(userCreateDTO.getRoleName().equals(RoleType.MENTOR)) {
+             role = rolesRepository.findByRoleName("MENTOR")
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        }
+        if(userCreateDTO.getRoleName().equals(RoleType.HR)) {
+            role = rolesRepository.findByRoleName("HR")
+                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        }
+        user.setPasswordHash(passwordEncoder.encode(userCreateDTO.getPassword()));
         user.setRole(role);
         if (userCreateDTO.getDepartmentId() != null) {
             Department department = departmentRepository.findById(userCreateDTO.getDepartmentId())
@@ -114,22 +141,13 @@ public class UsersService implements IUserService {
             user.setDepartment(department);
         }
 
-        if (userUpdateDTO.getRoleName() != null) {
-            Roles role = rolesRepository.findById(userUpdateDTO.getRoleName())
-                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-            user.setRole(role);
-        }
-
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
 
     @Override
-    public UserResponse updateSelfMentor(UUID id, UserUpdateRequest userUpdateDTO) {
+    public UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO) {
         Users currentUser = authenticationService.getCurrentUser();
-        if (!currentUser.getId().equals(id)) {
-            throw new AppException(ErrorCode.FORBIDDEN);
-        }
         currentUser.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
         Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
                 .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));

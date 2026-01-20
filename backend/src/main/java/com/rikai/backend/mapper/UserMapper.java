@@ -29,6 +29,7 @@ public interface UserMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "role", ignore = true)
     @Mapping(target = "department", ignore = true)
+    @Mapping(target = "isActive", source = "active")
     void updateUser(@MappingTarget Users user, UserUpdateRequest userUpdateRequest);
 
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -32,6 +33,10 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ApiResponse<?> handlingHttpMessageNotReadableException(HttpMessageNotReadableException exception, HttpServletResponse response) {
+        return buildResponse(ErrorCode.INVALID_KEY, null, response);
+    }
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ApiResponse<?> handlingNoResourceFoundExceptionException(NoResourceFoundException exception, HttpServletResponse response) {
         return buildResponse(ErrorCode.INVALID_KEY, null, response);
     }
     @ExceptionHandler(value = MethodArgumentNotValidException.class)

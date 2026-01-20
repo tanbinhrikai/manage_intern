@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, View, Edit, Delete, Calendar } from '@element-plus/icons-vue'
+import { Search, Plus, View, Edit, Delete, Calendar, ArrowDown, ArrowUp, Filter } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import InternFormDialog from "@/components/intern/InternFormDialog.vue"
@@ -30,6 +30,7 @@ const showInternForm = ref(false)
 const showInternDetail = ref(false)
 const selectedIntern = ref(null)
 const loading = ref(false)
+const showAdvancedFilters = ref(false)
 
 const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETE', 'DROPPED']
 
@@ -77,7 +78,7 @@ async function fetchPositions() {
 
 async function fetchMentors() {
   try {
-    const res = await getMentors({ limit: 100 })
+    const res = await getMentors({ limit: 100, is_active: true })
     mentors.value = res.data?.data?.items || []
   } catch (error) {
     console.error("Failed to load mentors:", error)
@@ -110,12 +111,7 @@ async function handleSaveIntern(payload, done) {
     fetchInterns()
     showInternForm.value = false
   } catch (error) {
-    console.error("Save error:", error)
-    if (error.response && error.response.data) {
-      ElMessage.error('Error: ' + JSON.stringify(error.response.data))
-    } else {
-      ElMessage.error(t.value('internManagement.messages.saveError'))
-    }
+    //console.error("Save error:", error)
   } finally {
     done?.()
   }
@@ -139,8 +135,7 @@ async function handleDeleteIntern(intern) {
     fetchInterns()
   } catch (error) {
     if (error !== 'cancel') {
-      console.error("Delete error:", error)
-      ElMessage.error(t.value('internManagement.messages.saveError'))
+      //console.error("Delete error:", error)
     }
   }
 }
@@ -182,7 +177,7 @@ onMounted(() => {
         </template>
 
         <div class="toolbar">
-          <div class="filter-group">
+          <div class="basic-filters">
             <el-input 
               v-model="searchName" 
               :placeholder="t('internManagement.searchByName')"
@@ -190,20 +185,6 @@ onMounted(() => {
               clearable
               class="search-input"
             />
-            <el-select 
-              v-model="filterStatus" 
-              :placeholder="t('internManagement.allStatus')"
-              clearable
-              class="filter-select"
-            >
-              <el-option :label="t('internManagement.allStatus')" value="" />
-              <el-option
-                v-for="status in statusOptions"
-                :key="status"
-                :label="t('internManagement.status.' + status)"
-                :value="status"
-              />
-            </el-select>
             <el-select 
               v-model="filterPosition" 
               :placeholder="t('internManagement.allPositions')"
@@ -232,6 +213,41 @@ onMounted(() => {
                 :value="mentor.id"
               />
             </el-select>
+            <el-button 
+              text 
+              :icon="showAdvancedFilters ? ArrowUp : ArrowDown"
+              @click="showAdvancedFilters = !showAdvancedFilters"
+              class="toggle-filters-btn"
+            >
+              {{ showAdvancedFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+            </el-button>
+          </div>
+          
+          <el-button 
+            type="primary"
+            :icon="Plus"
+            @click="openAddIntern"
+          >
+            {{ t('internManagement.addNew') }}
+          </el-button>
+        </div>
+
+        <el-collapse-transition>
+          <div v-show="showAdvancedFilters" class="advanced-filters">
+            <el-select 
+              v-model="filterStatus" 
+              :placeholder="t('internManagement.allStatus')"
+              clearable
+              class="filter-select"
+            >
+              <el-option :label="t('internManagement.allStatus')" value="" />
+              <el-option
+                v-for="status in statusOptions"
+                :key="status"
+                :label="t('internManagement.status.' + status)"
+                :value="status"
+              />
+            </el-select>
             <el-date-picker
               v-model="filterStartDate"
               type="date"
@@ -249,15 +265,7 @@ onMounted(() => {
               class="date-picker"
             />
           </div>
-          
-          <el-button 
-            type="primary"
-            :icon="Plus"
-            @click="openAddIntern"
-          >
-            {{ t('internManagement.addNew') }}
-          </el-button>
-        </div>
+        </el-collapse-transition>
 
         <el-table 
           :data="interns" 
@@ -364,6 +372,7 @@ onMounted(() => {
         v-model:visible="showInternForm"
         :intern="selectedIntern"
         :positions="positions"
+        :mentors="mentors"
         @save="handleSaveIntern"
       />
 
@@ -411,16 +420,28 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   gap: 16px;
-  flex-wrap: wrap;
 }
 
-.filter-group {
+.basic-filters {
   display: flex;
   gap: 12px;
-  flex: 1;
+  align-items: center;
+}
+
+.advanced-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   flex-wrap: wrap;
+  background-color: transparent;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.toggle-filters-btn {
+  color: #6b7280;
 }
 
 .search-input {
@@ -441,7 +462,7 @@ onMounted(() => {
 
 .pagination-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 24px;
 }
 

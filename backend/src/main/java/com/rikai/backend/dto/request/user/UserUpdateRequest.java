@@ -24,15 +24,9 @@ public class UserUpdateRequest {
     String password;
     @NotBlank(message = "INVALID_FULLNAME")
     String fullName;
-
-    @DobConstraint(min = 10)
     LocalDate dateOfBirth;
-
     boolean isActive;
 
     @NotNull(message = "DEPARTMENT_REQUIRED")
     Long departmentId;
-
-    @NotNull(message = "ROLE_REQUIRED")
-    String roleName;
 }

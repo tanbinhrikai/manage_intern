@@ -33,6 +33,28 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
             Boolean isActive,
             Long departmentId);
 
+    @Query("""
+                SELECT u FROM Users u
+                WHERE (:keyword IS NULL OR :keyword = '' OR 
+                      (LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                      )
+                AND (:startDate IS NULL OR u.dateOfBirth >= :startDate)
+                AND (:endDate IS NULL OR u.dateOfBirth <= :endDate)
+                AND (:departmentId IS NULL OR u.department.id = :departmentId)
+                AND (:isActive IS NULL OR u.isActive = :isActive)
+                AND u.role.roleName = 'HR'
+            """)
+    Page<Users> findAllHRUsers(
+            Pageable pageable,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId);
+
+
+
+
     long countByRole_RoleName(String roleName);
 
     Optional<Users> findByEmailAndIsActive(String email, boolean isActive);

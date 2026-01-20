@@ -21,15 +21,12 @@ public class UserResponse {
     private String email;
     private String fullName;
     private LocalDate dateOfBirth;
-    @Builder.Default
-    private boolean isActive = true;
+    private boolean isActive;
     private Instant createdAt;
     private Instant updatedAt;
     private RolesResponse role;
     private DepartmentResponse department;
 
-    // Remove fromUser for now if it relies on Roles which we are moving away from?
-    // Actually, let's keep it but adapt it.
     public static UserResponse fromUser(Users user) {
         if (user == null) {
             return null;

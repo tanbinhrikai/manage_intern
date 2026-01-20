@@ -14,6 +14,11 @@ const props = defineProps({
   departments: {
     type: Array,
     default: () => []
+  },
+  userType: {
+    type: String,
+    default: 'MENTOR',
+    validator: (value) => ['MENTOR', 'HR'].includes(value)
   }
 })
 
@@ -21,6 +26,11 @@ const emit = defineEmits(['update:visible', 'save'])
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
+
+// Dynamic translation prefix based on userType
+const translationPrefix = computed(() => 
+  props.userType === 'HR' ? 'hrManagement' : 'mentorManagement'
+)
 
 const formRef = ref(null)
 const loading = ref(false)
@@ -37,14 +47,14 @@ const formData = reactive({
 })
 
 const formRules = computed(() => ({
-  fullName: [{ required: true, message: t.value('mentorManagement.messages.validationError'), trigger: 'blur' }],
+  fullName: [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'blur' }],
   email: [
-    { required: true, message: t.value('mentorManagement.messages.validationError'), trigger: 'blur' },
+    { required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'blur' },
     { type: 'email', message: t.value('login.validation.emailInvalid'), trigger: 'blur' }
   ],
-  dateOfBirth: [{ required: true, message: t.value('mentorManagement.messages.validationError'), trigger: 'change' }],
-  departmentId: [{ required: true, message: t.value('mentorManagement.messages.validationError'), trigger: 'change' }],
-  password: isEdit.value ? [] : [{ required: true, message: t.value('mentorManagement.messages.validationError'), trigger: 'blur' }]
+  dateOfBirth: [],
+  departmentId: [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'change' }],
+  password: isEdit.value ? [] : [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'blur' }]
 }))
 
 const disabledDate = (time) => {
@@ -112,7 +122,7 @@ async function handleSubmit() {
     email: formData.email,
     dateOfBirth: formData.dateOfBirth,
     departmentId: formData.departmentId,
-    roleName: 'MENTOR',
+    roleName: props.userType,
     active: formData.isActive
   }
 
@@ -131,7 +141,7 @@ async function handleSubmit() {
 <template>
   <el-dialog 
     :model-value="visible"
-    :title="isEdit ? t('mentorManagement.form.editTitle') : t('mentorManagement.form.addTitle')"
+    :title="isEdit ? t(`${translationPrefix}.form.editTitle`) : t(`${translationPrefix}.form.addTitle`)"
     width="500px"
     :close-on-click-modal="false"
     @close="handleClose"
@@ -142,39 +152,51 @@ async function handleSubmit() {
       :rules="formRules"
       label-position="top"
     >
-      <el-form-item :label="t('mentorManagement.form.fullName')" prop="fullName">
+      <el-form-item :label="t(`${translationPrefix}.form.fullName`)" prop="fullName">
         <el-input 
           v-model="formData.fullName" 
-          :placeholder="t('mentorManagement.form.fullNamePlaceholder')"
+          :placeholder="t(`${translationPrefix}.form.fullNamePlaceholder`)"
         />
       </el-form-item>
 
-      <el-form-item :label="t('mentorManagement.form.email')" prop="email">
+      <el-form-item :label="t(`${translationPrefix}.form.email`)" prop="email">
         <el-input 
           v-model="formData.email" 
           type="email"
-          :placeholder="t('mentorManagement.form.emailPlaceholder')"
+          :placeholder="t(`${translationPrefix}.form.emailPlaceholder`)"
         />
       </el-form-item>
 
-      <el-form-item :label="t('mentorManagement.form.dateOfBirth')" prop="dateOfBirth">
+      <el-form-item 
+        :label="t(`${translationPrefix}.form.password`) + (isEdit ? ' ' + t(`${translationPrefix}.form.passwordHint`) : '')" 
+        prop="password"
+      >
+        <el-input 
+          v-model="formData.password" 
+          type="password"
+          :placeholder="t(`${translationPrefix}.form.passwordPlaceholder`)"
+          show-password
+        />
+      </el-form-item>
+
+      <el-form-item :label="t(`${translationPrefix}.form.dateOfBirth`)" prop="dateOfBirth">
         <el-date-picker
           v-model="formData.dateOfBirth"
           type="date"
-          :placeholder="t('mentorManagement.form.dateOfBirth')"
+          :placeholder="t(`${translationPrefix}.form.dateOfBirth`)"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           style="width: 100%"
           :disabled-date="disabledDate"
           :default-value="defaultDate"
         />
-        <div class="form-help-text">{{ t('mentorManagement.form.ageRestriction') }}</div>
+        <div class="form-help-text">{{ t(`${translationPrefix}.form.ageRestriction`) }}</div>
       </el-form-item>
 
-      <el-form-item :label="t('mentorManagement.form.department')" prop="departmentId">
+      <el-form-item :label="t(`${translationPrefix}.form.department`)" prop="departmentId">
         <el-select 
           v-model="formData.departmentId" 
-          :placeholder="t('mentorManagement.form.selectDepartment')"
+          :placeholder="t(`${translationPrefix}.form.selectDepartment`)"
           style="width: 100%"
         >
           <el-option
@@ -185,25 +207,14 @@ async function handleSubmit() {
           />
         </el-select>
       </el-form-item>
-      <el-form-item 
-        :label="t('mentorManagement.form.password') + (isEdit ? ' ' + t('mentorManagement.form.passwordHint') : '')" 
-        prop="password"
-      >
-        <el-input 
-          v-model="formData.password" 
-          type="password"
-          :placeholder="t('mentorManagement.form.passwordPlaceholder')"
-          show-password
-        />
-      </el-form-item>
     </el-form>
 
     <template #footer>
       <el-button @click="handleClose">
-        {{ t('mentorManagement.form.cancel') }}
+        {{ t(`${translationPrefix}.form.cancel`) }}
       </el-button>
       <el-button type="primary" @click="handleSubmit" :loading="loading">
-        {{ isEdit ? t('mentorManagement.form.save') : t('mentorManagement.form.create') }}
+        {{ isEdit ? t(`${translationPrefix}.form.save`) : t(`${translationPrefix}.form.create`) }}
       </el-button>
     </template>
   </el-dialog>
