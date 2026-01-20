@@ -210,6 +210,8 @@
         "allStatus": "すべてのステータス",
         "allPositions": "すべてのポジション",
         "allMentors": "すべてのメンター",
+        "startDateFrom": "開始日から",
+        "endDateTo": "終了日まで",
         "addNew": "新規インターン追加",
         "table": {
             "fullName": "氏名",

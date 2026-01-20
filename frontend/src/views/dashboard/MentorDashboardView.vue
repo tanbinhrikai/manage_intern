@@ -1,63 +1,96 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
+import { getInternsNotEvaluatedThisWeek, getMyIntern } from '@/api/intern'
 
+const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
-const internsNeedEvaluation = [
-  { name: 'Le Thi C', position: 'Backend Developer', deadline: 3 },
-  { name: 'Nguyen Van D', position: 'Frontend Developer', deadline: 3 },
-  { name: 'Pham Thi E', position: 'Marketing Specialist', deadline: 3 },
-  { name: 'Hoang Minh F', position: 'Data Analyst', deadline: 4 }
-]
+const loading = ref(false)
+const internsNeedEvaluation = ref([])
+const internsUnderSupervision = ref([])
 
-const evaluationProgress = {
-  completed: 8,
-  total: 10
-}
-
-const progressPercentage = computed(() => {
-  return (evaluationProgress.completed / evaluationProgress.total) * 100
+const evaluationProgress = computed(() => {
+  const total = internsUnderSupervision.value.length
+  const needEval = internsNeedEvaluation.value.length
+  const completed = total - needEval
+  return { completed: completed >= 0 ? completed : 0, total }
 })
 
-const internsUnderSupervision = [
-  { name: 'Le Thi C', position: 'Backend Developer', status: 'active', week: 3, totalWeeks: 12 },
-  { name: 'Nguyen Van D', position: 'Frontend Developer', status: 'active', week: 3, totalWeeks: 12 },
-  { name: 'Pham Thi E', position: 'Marketing Specialist', status: 'active', week: 3, totalWeeks: 8 },
-  { name: 'Hoang Minh F', position: 'Data Analyst', status: 'active', week: 2, totalWeeks: 10 }
-]
+const progressPercentage = computed(() => {
+  if (evaluationProgress.value.total === 0) return 0
+  return (evaluationProgress.value.completed / evaluationProgress.value.total) * 100
+})
 
 const getStatusType = (status) => {
   const statusMap = {
-    active: 'success',
-    warning: 'warning',
-    completed: 'primary'
+    ACTIVE: 'success',
+    WARNING: 'warning',
+    COMPLETED: 'primary',
+    DROPPED: 'danger'
   }
   return statusMap[status] || 'info'
 }
 
+const calculateWeekNumber = (startDate) => {
+  if (!startDate) return 1
+  const start = new Date(startDate)
+  const now = new Date()
+  const diffTime = Math.abs(now - start)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return Math.max(1, Math.ceil(diffDays / 7))
+}
+
+const calculateTotalWeeks = (startDate, endDate) => {
+  if (!startDate || !endDate) return 12
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const diffTime = Math.abs(end - start)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return Math.max(1, Math.ceil(diffDays / 7))
+}
+
 const handleSubmitReport = (intern) => {
-  console.log('Submit report for:', intern.name)
+  router.push(`/mentor/my-interns/${intern.id}/edit?tab=reports`)
 }
 
 const handleViewDetails = (intern) => {
-  console.log('View details for:', intern.name)
+  router.push(`/mentor/my-interns/${intern.id}`)
 }
+
+async function fetchData() {
+  loading.value = true
+  try {
+    const [notEvalRes, myInternsRes] = await Promise.all([
+      getInternsNotEvaluatedThisWeek({ limit: 20 }),
+      getMyIntern({ limit: 100 })
+    ])
+    
+    internsNeedEvaluation.value = notEvalRes.data?.data?.items || []
+    internsUnderSupervision.value = myInternsRes.data?.data?.items || []
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchData)
 </script>
 
 <template>
   <MentorLayout>
-    <div class="mentor-dashboard">
-      <h1 class="page-title">{{ t('mentorDashboard.title') }}</h1>
+    <div class="mentor-dashboard" v-loading="loading">
 
-      <section class="section">
+      <section class="section" v-if="internsNeedEvaluation.length > 0">
         <h2 class="section-title">{{ t('mentorDashboard.internsNeedEvaluation') }}</h2>
-        <el-row :gutter="16">
+        <el-row :gutter="16" >
           <el-col 
             v-for="intern in internsNeedEvaluation" 
-            :key="intern.name" 
+            :key="intern.id" 
             :xs="24" 
             :sm="12" 
             :md="8" 
@@ -65,14 +98,14 @@ const handleViewDetails = (intern) => {
           >
             <el-card class="intern-card" shadow="hover">
               <template #header>
-                <span class="intern-name">{{ intern.name }}</span>
+                <span class="intern-name">{{ intern.fullName }}</span>
               </template>
               <el-descriptions :column="1" size="small">
                 <el-descriptions-item :label="t('mentorDashboard.position')">
-                  <el-tag type="success" size="small">{{ intern.position }}</el-tag>
+                  <el-tag type="success" size="small">{{ intern.position?.title }}</el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item :label="t('mentorDashboard.deadline')">
-                  {{ t('mentorDashboard.week') }} {{ intern.deadline }}
+                  {{ t('mentorDashboard.week') }} {{ calculateWeekNumber(intern.startDate) }}
                 </el-descriptions-item>
               </el-descriptions>
               <el-button 
@@ -85,6 +118,7 @@ const handleViewDetails = (intern) => {
             </el-card>
           </el-col>
         </el-row>
+      
       </section>
 
       <section class="section">
@@ -107,38 +141,41 @@ const handleViewDetails = (intern) => {
         <el-card shadow="hover">
           <el-table :data="internsUnderSupervision" stripe style="width: 100%">
             <el-table-column 
-              prop="name" 
+              prop="fullName" 
               :label="t('mentorDashboard.table.fullName')" 
               min-width="150"
             />
             <el-table-column 
-              prop="position" 
               :label="t('mentorDashboard.table.position')" 
               min-width="180"
-            />
+            >
+              <template #default="scope">
+                {{ scope.row.position?.title }}
+              </template>
+            </el-table-column>
             <el-table-column 
               :label="t('mentorDashboard.table.status')" 
               min-width="120"
             >
               <template #default="scope">
-                <el-tag :type="getStatusType(scope.row.status)">
-                  {{ t('mentorDashboard.status.' + scope.row.status) }}
+                <el-tag :type="getStatusType(scope.row.internStatus)">
+                  {{ t('internManagement.status.' + scope.row.internStatus) }}
                 </el-tag>
               </template>
             </el-table-column>
             <el-table-column 
               :label="t('mentorDashboard.table.internshipDuration')" 
-              min-width="150"
+              min-width="180"
             >
               <template #default="scope">
                 <el-progress 
-                  :percentage="(scope.row.week / scope.row.totalWeeks) * 100" 
+                  :percentage="(calculateWeekNumber(scope.row.startDate) / calculateTotalWeeks(scope.row.startDate, scope.row.endDate)) * 100" 
                   :stroke-width="10"
                   :show-text="false"
                   color="#2ecc71"
                   style="width: 80px; display: inline-block; margin-right: 8px;"
                 />
-                <span>{{ t('mentorDashboard.week') }} {{ scope.row.week }} / {{ scope.row.totalWeeks }}</span>
+                <span>{{ t('mentorDashboard.week') }} {{ calculateWeekNumber(scope.row.startDate) }} / {{ calculateTotalWeeks(scope.row.startDate, scope.row.endDate) }}</span>
               </template>
             </el-table-column>
             <el-table-column 

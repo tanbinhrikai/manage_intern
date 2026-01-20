@@ -1,31 +1,23 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { ElMessage } from 'element-plus'
 import { Search, View, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
-import InternFormDialog from "@/components/intern/InternFormDialog.vue"
 import { useRouter } from 'vue-router'
-import { getMyIntern, updateIntern } from '@/api/intern'
-import { getPositions } from '@/api/position'
+import { getMyIntern } from '@/api/intern'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
 const interns = ref([])
-const positions = ref([])
 const currentPage = ref(1)
 const pageSize = 10
 const totalItems = ref(0)
 const searchName = ref("")
-const filterStatus = ref("")
-const filterPosition = ref("")
-const showInternForm = ref(false)
 const selectedIntern = ref(null)
 const loading = ref(false)
-
-const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETE', 'DROPPED']
 
 const getStatusType = (status) => {
   const map = {
@@ -37,24 +29,15 @@ const getStatusType = (status) => {
   return map[status] || 'info'
 }
 
-const filteredInterns = computed(() => {
-  let result = interns.value
-  if (searchName.value) {
-    result = result.filter(i => i.fullName.toLowerCase().includes(searchName.value.toLowerCase()))
-  }
-  if (filterStatus.value) {
-    result = result.filter(i => i.internStatus === filterStatus.value)
-  }
-  if (filterPosition.value) {
-    result = result.filter(i => i.position?.id === filterPosition.value)
-  }
-  return result
-})
-
 async function fetchMyInterns() {
   loading.value = true
   try {
-    const res = await getMyIntern({ page: currentPage.value - 1, size: pageSize })
+    const params = {
+      page: currentPage.value - 1,
+      limit: pageSize,
+      keyword: searchName.value || undefined
+    }
+    const res = await getMyIntern(params)
     interns.value = res.data?.data?.items || []
     totalItems.value = res.data?.data?.totalItems || 0
   } catch (error) {
@@ -64,13 +47,9 @@ async function fetchMyInterns() {
   }
 }
 
-async function fetchPositions() {
-  try {
-    const res = await getPositions()
-    positions.value = res.data?.data || []
-  } catch (error) {
-    console.error("Failed to load positions:", error)
-  }
+function handleSearch() {
+  currentPage.value = 1
+  fetchMyInterns()
 }
 
 function openDetailIntern(intern) {
@@ -92,9 +71,12 @@ function formatDate(date) {
   return new Date(date).toLocaleDateString()
 }
 
+watch([searchName], () => {
+  handleSearch()
+})
+
 onMounted(() => {
   fetchMyInterns()
-  fetchPositions()
 })
 </script>
 
@@ -117,39 +99,11 @@ onMounted(() => {
               clearable
               class="search-input"
             />
-            <el-select 
-              v-model="filterStatus" 
-              :placeholder="t('internManagement.allStatus')"
-              clearable
-              class="filter-select"
-            >
-              <el-option :label="t('internManagement.allStatus')" value="" />
-              <el-option
-                v-for="status in statusOptions"
-                :key="status"
-                :label="t('internManagement.status.' + status)"
-                :value="status"
-              />
-            </el-select>
-            <el-select 
-              v-model="filterPosition" 
-              :placeholder="t('internManagement.allPositions')"
-              clearable
-              class="filter-select"
-            >
-              <el-option :label="t('internManagement.allPositions')" value="" />
-              <el-option
-                v-for="pos in positions"
-                :key="pos.id"
-                :label="pos.title"
-                :value="pos.id"
-              />
-            </el-select>
           </div>
         </div>
 
         <el-table 
-          :data="filteredInterns" 
+          :data="interns" 
           stripe 
           style="width: 100%"
           v-loading="loading"

@@ -29,7 +29,7 @@ const formData = reactive({
   category: 'SKILLS',
   name: '',
   description: '',
-  weight: 0,
+  weight: 1,
 
   scoreDefinitions: [] 
 })
@@ -47,7 +47,6 @@ const scoreLabels = ['Excellent', 'Good', 'Average', 'Weak']
 const isScoreEdit = computed(() => !!scoreForm.id)
 const savingScore = ref(false)
 
-// Fixed score ranges based on ScoreLabel enum
 const scoreLabelRanges = {
   Excellent: { min: 9, max: 10 },
   Good: { min: 7, max: 8 },
@@ -209,7 +208,7 @@ onMounted(fetchCriteria)
           </el-form>
         </el-card>
 
-        <!-- Score Definitions (Only visible in Edit Mode) -->
+      
         <el-card v-if="isEdit" shadow="never" class="definitions-card">
            <template #header>
             <div class="card-header">

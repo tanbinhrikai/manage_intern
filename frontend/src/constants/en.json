@@ -210,6 +210,8 @@
         "allStatus": "All Status",
         "allPositions": "All Positions",
         "allMentors": "All Mentors",
+        "startDateFrom": "Start Date From",
+        "endDateTo": "End Date To",
         "addNew": "Add New Intern",
         "table": {
             "fullName": "Full Name",

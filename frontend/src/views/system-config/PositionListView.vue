@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, watch } from "vue"
 import { ElMessage } from 'element-plus'
 import { Search, Plus, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
@@ -11,6 +11,9 @@ const t = computed(() => localeStore.t)
 
 const positions = ref([])
 const searchName = ref("")
+const currentPage = ref(1)
+const pageSize = 10
+const totalItems = ref(0)
 const loading = ref(false)
 const showForm = ref(false)
 const selectedPosition = ref(null)
@@ -19,18 +22,16 @@ const saving = ref(false)
 
 const isEdit = computed(() => !!selectedPosition.value)
 
-const filteredPositions = computed(() => {
-  if (!searchName.value) return positions.value
-  return positions.value.filter(p => 
-    p.title?.toLowerCase().includes(searchName.value.toLowerCase())
-  )
-})
-
 async function fetchPositions() {
   loading.value = true
   try {
-    const res = await getPositions()
-    positions.value = res.data?.data || []
+    const res = await getPositions({ 
+      page: currentPage.value - 1, 
+      limit: pageSize,
+      keyword: searchName.value || undefined
+    })
+    positions.value = res.data?.data?.items || []
+    totalItems.value = res.data?.data?.totalItems || 0
   } catch (error) {
     ElMessage.error(t.value('positionManagement.messages.loadError'))
   } finally {
@@ -78,6 +79,20 @@ async function handleSave() {
   }
 }
 
+function handlePageChange(page) {
+  currentPage.value = page
+  fetchPositions()
+}
+
+function handleSearch() {
+  currentPage.value = 1
+  fetchPositions()
+}
+
+watch(searchName, () => {
+  handleSearch()
+})
+
 onMounted(fetchPositions)
 </script>
 
@@ -110,7 +125,7 @@ onMounted(fetchPositions)
         </div>
 
         <el-table 
-          :data="filteredPositions" 
+          :data="positions" 
           stripe 
           style="width: 100%"
           v-loading="loading"
@@ -142,6 +157,17 @@ onMounted(fetchPositions)
             </template>
           </el-table-column>
         </el-table>
+
+        <div class="pagination-wrapper" v-if="totalItems > pageSize">
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            :total="totalItems"
+            layout="prev, pager, next"
+            background
+            @current-change="handlePageChange"
+          />
+        </div>
       </el-card>
 
       <el-dialog 
@@ -214,6 +240,12 @@ onMounted(fetchPositions)
 
 .search-input {
   max-width: 300px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
 }
 
 :deep(.el-table) {

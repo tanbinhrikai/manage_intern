@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import { getPositions } from '@/api/position'
 import { getMentors } from '@/api/user'
 
 const props = defineProps({
@@ -16,6 +15,10 @@ const props = defineProps({
   hideMentor: {
     type: Boolean,
     default: false
+  },
+  positions: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -26,7 +29,6 @@ const t = computed(() => localeStore.t)
 
 const formRef = ref(null)
 const loading = ref(false)
-const positions = ref([])
 const mentors = ref([])
 
 const isEdit = computed(() => !!props.intern)
@@ -117,15 +119,6 @@ async function handleSubmit() {
   })
 }
 
-async function fetchPositions() {
-  try {
-    const res = await getPositions()
-    positions.value = res.data?.data || []
-  } catch (error) {
-    console.error("Failed to load positions:", error)
-  }
-}
-
 async function fetchMentors() {
   if (props.hideMentor) return
 
@@ -140,7 +133,6 @@ async function fetchMentors() {
 }
 
 onMounted(() => {
-  fetchPositions()
   fetchMentors()
 })
 </script>
@@ -175,7 +167,7 @@ onMounted(() => {
               style="width: 100%"
             >
               <el-option
-                v-for="pos in positions"
+                v-for="pos in props.positions"
                 :key="pos.id"
                 :label="pos.title"
                 :value="pos.id"
