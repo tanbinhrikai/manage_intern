@@ -3,8 +3,8 @@ spring:
     name: backend
   datasource:
     url: ${URL_DATABASE}
-    username: myuser
-    password: Password@123
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: none
