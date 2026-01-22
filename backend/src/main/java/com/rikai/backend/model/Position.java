@@ -8,7 +8,8 @@ import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,5 +24,7 @@ public class Position {
     String title;
 
     @OneToMany(mappedBy = "position")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     Set<Intern> interns;
 }

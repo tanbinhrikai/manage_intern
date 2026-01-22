@@ -20,10 +20,14 @@ public class EvaluationScore {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", referencedColumnName = "id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     EvaluationSession session;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "criteria_id", referencedColumnName = "id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     EvaluationCriteria criteria;
 
     @Column(name = "score", precision = 4, scale = 2)

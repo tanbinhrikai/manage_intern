@@ -7,7 +7,8 @@ import lombok.experimental.FieldDefaults;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -22,5 +23,7 @@ public class Department {
     String title;
 
     @OneToMany(mappedBy = "department")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     Set<Users> users;
 }

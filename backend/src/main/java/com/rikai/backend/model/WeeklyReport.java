@@ -15,7 +15,8 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -57,6 +58,8 @@ public class WeeklyReport {
     String mentorOverallComment;
 
     @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     List<WeeklyReportDetail> details;
 
     @CreationTimestamp

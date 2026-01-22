@@ -10,7 +10,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -23,6 +24,8 @@ public class WeeklyReportDetail {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "weekly_report_id", referencedColumnName = "id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     WeeklyReport weeklyReport;
 
     @ManyToOne(fetch = FetchType.LAZY)
