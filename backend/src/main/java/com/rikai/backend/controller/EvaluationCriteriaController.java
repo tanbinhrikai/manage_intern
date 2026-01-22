@@ -42,7 +42,7 @@ public class EvaluationCriteriaController {
     }
 
     /**
-     * Get all main criteria (without parent)
+     * Get all main criteria
      */
     @GetMapping("/main")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
@@ -55,7 +55,7 @@ public class EvaluationCriteriaController {
     }
 
     /**
-     * Get all sub-criteria (can be scored)
+     * Get all sub-criteria
      */
     @GetMapping("/sub")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")

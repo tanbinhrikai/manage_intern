@@ -28,7 +28,6 @@ public class WeeklyReportResponse {
     private String tasksCompleted;
     private String issuesRisks;
     private String mentorOverallComment;
-    private StatusWeeklyReport status;
     private BigDecimal averageScore;
     private List<WeeklyReportDetailResponse> details;
     private Instant createdAt;
@@ -66,7 +65,6 @@ public class WeeklyReportResponse {
                 .averageScore(report.getAverageScore())
                 .issuesRisks(report.getIssuesRisks())
                 .mentorOverallComment(report.getMentorOverallComment())
-                .status(report.getStatus())
                 .details(detailResponses)
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())

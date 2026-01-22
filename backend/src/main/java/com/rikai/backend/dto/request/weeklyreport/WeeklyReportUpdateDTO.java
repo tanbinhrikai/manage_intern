@@ -21,7 +21,5 @@ public class WeeklyReportUpdateDTO {
 
     private String mentorOverallComment;
 
-    private StatusWeeklyReport status;
-
     private List<WeeklyReportDetailRequest> details;
 }

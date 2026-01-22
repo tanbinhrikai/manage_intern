@@ -41,3 +41,6 @@ out/
 application-local.yml
 *.bak
 .history/
+Hệ thống quản lý Intern.md
+TỔNG QUAN KIẾN TRÚC MODULE.md
+Schedule Feature.csv

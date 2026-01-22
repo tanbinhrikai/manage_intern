@@ -11,8 +11,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ScoreLabelResponse {
     ScoreLabel value;
-    String displayName;
-    String description;
     Integer minScore;
     Integer maxScore;
 }

@@ -1,14 +1,14 @@
-package com.rikai.backend.dto.request.weeklyreport;
+package com.rikai.backend.dto.request.evaluationsession;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-public class WeeklyReportDetailRequest {
+public class EvaluationScoreRequest {
     @NotNull(message = "CRITERIA_ID_REQUIRED")
     private Long criteriaId;
 

@@ -70,7 +70,17 @@ public enum ErrorCode {
     DEPARTMENT_TITLE_REQUIRED("Department title is required", HttpStatus.BAD_REQUEST),
 
     FORBIDDEN("You are not allowed to perform this action", HttpStatus.FORBIDDEN),
-    INVALID_INTERN_STATUS("Invalid intern status", HttpStatus.BAD_REQUEST);
+    INVALID_INTERN_STATUS("Invalid intern status", HttpStatus.BAD_REQUEST),
+
+    // Evaluation Session errors
+    EVALUATION_SESSION_NOT_EXISTED("Evaluation session not found", HttpStatus.NOT_FOUND),
+    EVALUATION_SESSION_ALREADY_EXISTS("Evaluation session already exists for this intern and session type", HttpStatus.BAD_REQUEST),
+    EVALUATION_SESSION_SEQUENCE_INVALID("Previous evaluation session must be completed first", HttpStatus.BAD_REQUEST),
+    INVALID_SESSION_TYPE("Invalid session type", HttpStatus.BAD_REQUEST),
+    INVALID_EVALUATION_DATE("Evaluation date must be within intern's internship period", HttpStatus.BAD_REQUEST),
+    NO_WEEKLY_REPORTS_FOUND("No weekly reports found for the evaluation period", HttpStatus.BAD_REQUEST),
+    SESSION_TYPE_REQUIRED("Session type is required", HttpStatus.BAD_REQUEST),
+    EVALUATION_DATE_REQUIRED("Evaluation date is required", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;

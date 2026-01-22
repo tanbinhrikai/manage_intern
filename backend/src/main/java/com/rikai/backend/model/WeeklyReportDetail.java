@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -29,7 +30,7 @@ public class WeeklyReportDetail {
     EvaluationCriteria criteria;
 
     @Column(name = "score")
-    Byte score;
+    BigDecimal score;
 
     @Column(name = "comment", columnDefinition = "TEXT")
     String comment;

@@ -19,6 +19,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
@@ -95,14 +96,14 @@ public interface EvaluationCriteriaMapper {
      * Map CriteriaScoreDefinition entity to response
      */
     @Mapping(target = "criteriaId", source = "criteria.id")
-    @Mapping(target = "minScore", expression = "java(definition.getScoreLabel().getMinScore())")
-    @Mapping(target = "maxScore", expression = "java(definition.getScoreLabel().getMaxScore())")
     CriteriaScoreDefinitionResponse toScoreDefinitionResponse(CriteriaScoreDefinition definition);
 
+
     @Named("toScoreDefinitionResponseList")
-    default List<CriteriaScoreDefinitionResponse> toScoreDefinitionResponseList(List<CriteriaScoreDefinition> definitions) {
+    default List<CriteriaScoreDefinitionResponse> toScoreDefinitionResponseList(Set<CriteriaScoreDefinition> definitions) {
         if (definitions == null) return null;
         return definitions.stream()
+                // .sorted(Comparator.comparing(CriteriaScoreDefinition::getId)) // Mẹo: Nên thêm sort để list trả về không bị lộn xộn
                 .map(this::toScoreDefinitionResponse)
                 .collect(Collectors.toList());
     }

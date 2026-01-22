@@ -11,8 +11,10 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,7 +40,8 @@ public class WeeklyReportController {
             @RequestParam(required = false) Long internId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
-        Pageable pageable = PageRequest.of(page, limit);
+        // sort by weekStartDate desc by default
+        PageRequest pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "weekStartDate"));
         PageResponse<WeeklyReportResponse> result = weeklyReportService.getAllReports(pageable, internId);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
     }
@@ -98,9 +101,12 @@ public class WeeklyReportController {
      */
     @GetMapping("/intern/{internId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
-    public ApiResponse<List<WeeklyReportResponse>> getReportsByInternId(
-            @PathVariable Long internId) {
-        List<WeeklyReportResponse> result = weeklyReportService.getReportsByInternId(internId);
+    public ApiResponse<PageResponse<WeeklyReportResponse>> getReportsByInternId(
+            @PathVariable Long internId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+        PageRequest pageRequest = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "weekStartDate"));
+        PageResponse<WeeklyReportResponse> result = weeklyReportService.getReportsByInternId(internId, pageRequest);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
     }
 }

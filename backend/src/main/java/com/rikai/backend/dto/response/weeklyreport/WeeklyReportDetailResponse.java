@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -15,6 +17,6 @@ public class WeeklyReportDetailResponse {
     private Long id;
     private Long criteriaId;
     private String criteriaName;
-    private Byte score;
+    private BigDecimal score;
     private String comment;
 }

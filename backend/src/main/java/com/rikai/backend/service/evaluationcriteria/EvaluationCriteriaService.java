@@ -38,6 +38,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<CriteriaCategoryResponse> getAllCriteriaHierarchy() {
         log.info("Getting all criteria in hierarchical structure");
         List<EvaluationCriteria> mainCriteria = evaluationCriteriaRepository.findAllMainCriteria();
+        // Force initialize scoreDefinitions for main criteria
+        mainCriteria.forEach(criteria -> {
+            if (criteria.getScoreDefinitions() != null) {
+                criteria.getScoreDefinitions().size(); // Force initialization
+            }
+        });
         Map<CriteriaCategory, List<EvaluationCriteria>> criteriaByCategory = mainCriteria.stream()
                 .collect(Collectors.groupingBy(EvaluationCriteria::getCategory));
         List<CriteriaCategoryResponse> result = new ArrayList<>();
@@ -47,6 +53,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
                     .map(mc -> {
                         List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository
                                 .findSubCriteriaByParentId(mc.getId());
+                        // Force initialize scoreDefinitions for sub-criteria
+                        subCriteria.forEach(sc -> {
+                            if (sc.getScoreDefinitions() != null) {
+                                sc.getScoreDefinitions().size(); // Force initialization
+                            }
+                        });
                         EvaluationCriteriaResponse response = evaluationCriteriaMapper.toResponse(mc);
                         response.setChildren(subCriteria.stream()
                                 .map(evaluationCriteriaMapper::toResponseWithScoreDefinitions)
@@ -74,6 +86,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<EvaluationCriteriaResponse> getAllMainCriteria() {
         log.info("Getting all main criteria");
         List<EvaluationCriteria> mainCriteria = evaluationCriteriaRepository.findAllMainCriteria();
+        // Force initialize scoreDefinitions to avoid lazy loading issues
+        mainCriteria.forEach(criteria -> {
+            if (criteria.getScoreDefinitions() != null) {
+                criteria.getScoreDefinitions().size(); // Force initialization
+            }
+        });
         return mainCriteria.stream()
                 .map(evaluationCriteriaMapper::toResponse)
                 .collect(Collectors.toList());
@@ -84,6 +102,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<EvaluationCriteriaResponse> getAllSubCriteria() {
         log.info("Getting all sub-criteria");
         List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository.findAllSubCriteria();
+        // Force initialize scoreDefinitions to avoid lazy loading issues
+        subCriteria.forEach(criteria -> {
+            if (criteria.getScoreDefinitions() != null) {
+                criteria.getScoreDefinitions().size(); // Force initialization
+            }
+        });
         return subCriteria.stream()
                 .map(evaluationCriteriaMapper::toResponseWithScoreDefinitions)
                 .collect(Collectors.toList());
@@ -104,6 +128,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<EvaluationCriteriaResponse> getCriteriaByCategory(CriteriaCategory category) {
         log.info("Getting criteria by category: {}", category);
         List<EvaluationCriteria> criteria = evaluationCriteriaRepository.findByCategory(category);
+        // Force initialize scoreDefinitions to avoid lazy loading issues
+        criteria.forEach(c -> {
+            if (c.getScoreDefinitions() != null) {
+                c.getScoreDefinitions().size(); // Force initialization
+            }
+        });
         return criteria.stream()
                 .map(evaluationCriteriaMapper::toResponse)
                 .collect(Collectors.toList());
@@ -130,6 +160,12 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         }
 
         List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository.findSubCriteriaByParentId(parentId);
+        // Force initialize scoreDefinitions to avoid lazy loading issues
+        subCriteria.forEach(criteria -> {
+            if (criteria.getScoreDefinitions() != null) {
+                criteria.getScoreDefinitions().size(); // Force initialization
+            }
+        });
         return subCriteria.stream()
                 .map(evaluationCriteriaMapper::toResponseWithScoreDefinitions)
                 .collect(Collectors.toList());

@@ -15,6 +15,8 @@ import java.time.Instant;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "criteria_score_definitions")
+@EqualsAndHashCode(exclude = {"criteria"})
+@ToString(exclude = {"criteria"})
 public class CriteriaScoreDefinition {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

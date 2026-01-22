@@ -7,7 +7,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -16,6 +18,8 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "evaluation_criteria")
+@EqualsAndHashCode(exclude = {"children", "scoreDefinitions", "parent"})
+@ToString(exclude = {"children", "scoreDefinitions", "parent"})
 public class EvaluationCriteria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,7 +59,7 @@ public class EvaluationCriteria {
 
     @OneToMany(mappedBy = "criteria", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    List<CriteriaScoreDefinition> scoreDefinitions = new ArrayList<>();
+    Set<CriteriaScoreDefinition> scoreDefinitions = new HashSet<>();
 
     public boolean isMainCriteria() {
         return parent == null;

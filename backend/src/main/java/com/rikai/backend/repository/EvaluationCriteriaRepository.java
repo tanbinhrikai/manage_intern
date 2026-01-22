@@ -26,17 +26,19 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
     List<EvaluationCriteria> findAll();
 
     /**
-     * Get all main criteria (without parent)
+     * Get all main criteria (without parent) with score definitions
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
+           "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.parent IS NULL AND ec.isActive = true " +
            "ORDER BY ec.category, ec.displayOrder")
     List<EvaluationCriteria> findAllMainCriteria();
 
     /**
-     * Get all main criteria by category
+     * Get all main criteria by category with score definitions
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
+           "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.parent IS NULL AND ec.category = :category AND ec.isActive = true " +
            "ORDER BY ec.displayOrder")
     List<EvaluationCriteria> findMainCriteriaByCategory(@Param("category") CriteriaCategory category);
@@ -44,25 +46,31 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
     /**
      * Get all sub-criteria by parent id
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
+//    @Query("SELECT ec FROM EvaluationCriteria ec " +
+//           "LEFT JOIN FETCH ec.scoreDefinitions " +
+//           "WHERE ec.parent.id = :parentId AND ec.isActive = true " +
+//           "ORDER BY ec.displayOrder")
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
            "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.parent.id = :parentId AND ec.isActive = true " +
            "ORDER BY ec.displayOrder")
     List<EvaluationCriteria> findSubCriteriaByParentId(@Param("parentId") Long parentId);
 
     /**
-     * Get all sub-criteria (with parent)
+     * Get all sub-criteria (with parent) with score definitions
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
-           "LEFT JOIN FETCH ec.scoreDefinitions " +
-           "WHERE ec.parent IS NOT NULL AND ec.isActive = true " +
-           "ORDER BY ec.category, ec.parent.displayOrder, ec.displayOrder")
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
+            "LEFT JOIN FETCH ec.scoreDefinitions " +
+            "JOIN FETCH ec.parent p " +
+            "WHERE ec.parent IS NOT NULL AND ec.isActive = true " +
+            "ORDER BY ec.category, p.displayOrder, ec.displayOrder")
     List<EvaluationCriteria> findAllSubCriteria();
 
     /**
-     * Get all criteria by category
+     * Get all criteria by category with score definitions
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
+           "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.category = :category AND ec.isActive = true " +
            "ORDER BY ec.displayOrder")
     List<EvaluationCriteria> findByCategory(@Param("category") CriteriaCategory category);
@@ -70,8 +78,9 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
     /**
      * Get criteria by id with children and score definitions
      */
-    @Query("SELECT ec FROM EvaluationCriteria ec " +
+    @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
            "LEFT JOIN FETCH ec.children c " +
+           "LEFT JOIN FETCH c.scoreDefinitions " +
            "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.id = :id")
     Optional<EvaluationCriteria> findByIdWithChildrenAndScoreDefinitions(@Param("id") Long id);

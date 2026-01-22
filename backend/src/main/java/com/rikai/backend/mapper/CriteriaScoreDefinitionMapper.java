@@ -12,10 +12,6 @@ import org.mapstruct.MappingTarget;
 public interface CriteriaScoreDefinitionMapper {
 
     @Mapping(target = "criteriaId", source = "criteria.id")
-//    @Mapping(target = "scoreLabelDisplayName", expression = "java(definition.getScoreLabel().getDisplayName())")
-//    @Mapping(target = "scoreLabelDescription", expression = "java(definition.getScoreLabel().getDescription())")
-    @Mapping(target = "minScore", expression = "java(definition.getScoreLabel().getMinScore())")
-    @Mapping(target = "maxScore", expression = "java(definition.getScoreLabel().getMaxScore())")
     CriteriaScoreDefinitionResponse toCriteriaScoreDefinitionResponse(CriteriaScoreDefinition definition);
 
     @Mapping(target = "id", ignore = true)

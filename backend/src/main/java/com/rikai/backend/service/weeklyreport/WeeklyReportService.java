@@ -21,14 +21,19 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +48,7 @@ public class WeeklyReportService implements IWeeklyReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<WeeklyReportResponse> getAllReports(Pageable pageable, Long internId) {
+    public PageResponse<WeeklyReportResponse> getAllReports(PageRequest pageRequest, Long internId) {
         Users currentUser = authenticationService.getCurrentUser();
         if (currentUser == null) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -52,9 +57,9 @@ public class WeeklyReportService implements IWeeklyReportService {
         Page<WeeklyReport> reportsPage;
         if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
             if (internId != null) {
-                reportsPage = weeklyReportRepository.findByInternId(internId, pageable);
+                reportsPage = weeklyReportRepository.findByInternId(internId, pageRequest);
             } else {
-                reportsPage = weeklyReportRepository.findAll(pageable);
+                reportsPage = weeklyReportRepository.findAll(pageRequest);
             }
         } else {
             if (internId != null) {
@@ -64,9 +69,9 @@ public class WeeklyReportService implements IWeeklyReportService {
                     throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
                 }
                 reportsPage = weeklyReportRepository.findByMentorIdAndInternId(
-                        currentUser.getId(), internId, pageable);
+                        currentUser.getId(), internId, pageRequest);
             } else {
-                reportsPage = weeklyReportRepository.findByMentorId(currentUser.getId(), pageable);
+                reportsPage = weeklyReportRepository.findByMentorId(currentUser.getId(), pageRequest);
             }
         }
 
@@ -126,7 +131,6 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .tasksAssigned(createDTO.getTasksAssigned())
                 .tasksCompleted(createDTO.getTasksCompleted())
                 .mentorOverallComment(createDTO.getMentorOverallComment())
-                .status(StatusWeeklyReport.SUBMITTED)
                 .build();
 
         if (createDTO.getDetails() != null) {
@@ -141,6 +145,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                         .build();
             }).collect(Collectors.toList());
             report.setDetails(details);
+            recalculateMainScores(report);
         }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
@@ -214,6 +219,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                     report.getDetails().add(newDetail);
                 }
             }
+            recalculateMainScores(report);
         }
         if (updateDTO.getIssuesRisks() != null) {
             report.setIssuesRisks(updateDTO.getIssuesRisks());
@@ -221,13 +227,15 @@ public class WeeklyReportService implements IWeeklyReportService {
         if (updateDTO.getMentorOverallComment() != null) {
             report.setMentorOverallComment(updateDTO.getMentorOverallComment());
         }
-        if (updateDTO.getStatus() != null) {
-            report.setStatus(updateDTO.getStatus());
-        }
 
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
+
+    /**
+     * Delete weekly report by ID
+     * @param id
+     */
 
     @Override
     @Transactional
@@ -246,9 +254,15 @@ public class WeeklyReportService implements IWeeklyReportService {
         weeklyReportRepository.delete(report);
     }
 
+    /**
+     * Get weekly reports by intern ID with pagination
+     * @param internId
+     * @param pageRequest
+     * @return
+     */
     @Override
     @Transactional(readOnly = true)
-    public List<WeeklyReportResponse> getReportsByInternId(Long internId) {
+    public PageResponse<WeeklyReportResponse> getReportsByInternId(Long internId, PageRequest pageRequest) {
         Intern intern = internRepository.findById(internId)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
 
@@ -260,10 +274,16 @@ public class WeeklyReportService implements IWeeklyReportService {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
 
-        List<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId);
-        return reports.stream()
-                .map(WeeklyReportResponse::fromWeeklyReport)
-                .collect(Collectors.toList());
+        Page<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId, pageRequest);
+        return PageResponse.<WeeklyReportResponse>builder()
+                .items(reports.stream()
+                        .map(WeeklyReportResponse::fromWeeklyReport)
+                        .collect(Collectors.toList()))
+                .currentPage(reports.getNumber())
+                .totalPages(reports.getTotalPages())
+                .totalItems(reports.getTotalElements())
+                .pageSize(reports.getSize())
+                .build();
     }
 
     private Integer calculateWeekNumber(LocalDate weekStartDate, LocalDate internStartDate) {
@@ -286,5 +306,79 @@ public class WeeklyReportService implements IWeeklyReportService {
                     intern.getMentor().getId().equals(currentUser.getId());
         }
         return false;
+    }
+
+    /**
+     * Recalculate main scores based on sub-criteria scores and weights
+     * @param report
+     */
+    private void recalculateMainScores(WeeklyReport report) {
+        if (report.getDetails() == null || report.getDetails().isEmpty()) {
+            return;
+        }
+
+        List<WeeklyReportDetail> details = report.getDetails();
+        // Delete parent criteria details to recalculate
+        details.removeIf(detail -> detail.getCriteria() != null && detail.getCriteria().getParent() == null);
+
+        // Group sub-criteria by their parent criteria
+        Map<EvaluationCriteria, List<WeeklyReportDetail>> subCriteriaByParent = new LinkedHashMap<>();
+        for (WeeklyReportDetail detail : details) {
+            EvaluationCriteria criteria = detail.getCriteria();
+            if (criteria != null && criteria.getParent() != null) {
+                subCriteriaByParent
+                        .computeIfAbsent(criteria.getParent(), parent -> new ArrayList<>())
+                        .add(detail);
+            }
+        }
+
+        // Loop through each parent criteria to calculate main score
+        for (Map.Entry<EvaluationCriteria, List<WeeklyReportDetail>> entry : subCriteriaByParent.entrySet()) {
+            EvaluationCriteria parent = entry.getKey();
+            List<WeeklyReportDetail> subDetails = entry.getValue();
+
+            BigDecimal weightedSum = BigDecimal.ZERO; // Sum (score * weight)
+            BigDecimal totalWeight = BigDecimal.ZERO; // Sum weight
+
+            for (WeeklyReportDetail subDetail : subDetails) {
+                if (subDetail.getScore() == null) {
+                    continue;
+                }
+                BigDecimal score = subDetail.getScore();
+
+                BigDecimal weight = subDetail.getCriteria().getWeight() != null
+                        ? subDetail.getCriteria().getWeight()
+                        : BigDecimal.ONE;
+
+                // Caculate numerator: cumulative (score * weight)
+                weightedSum = weightedSum.add(score.multiply(weight));
+
+                // Calculate denominator: cumulative weight
+                totalWeight = totalWeight.add(weight);
+            }
+
+            // If totalWeight is 0, skip to avoid division by zero
+            if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+
+            // ecipe: weightedSum / totalWeight
+            // setScale(2, RoundingMode.HALF_UP) to round to 2 decimal places
+            BigDecimal finalScore = weightedSum.divide(totalWeight, 2, RoundingMode.HALF_UP);
+
+            // Clamping: ensure finalScore is between 0 and 10
+            if (finalScore.compareTo(BigDecimal.ZERO) < 0) {
+                finalScore = BigDecimal.ZERO;
+            } else if (finalScore.compareTo(BigDecimal.TEN) > 0) {
+                finalScore = BigDecimal.TEN;
+            }
+
+            WeeklyReportDetail mainDetail = WeeklyReportDetail.builder()
+                    .weeklyReport(report)
+                    .criteria(parent)
+                    .score(finalScore)
+                    .build();
+            details.add(mainDetail);
+        }
     }
 }

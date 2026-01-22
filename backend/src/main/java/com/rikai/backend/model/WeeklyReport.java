@@ -56,10 +56,6 @@ public class WeeklyReport {
     @Column(name = "mentor_overall_comment", columnDefinition = "TEXT")
     String mentorOverallComment;
 
-    @Column(name = "status")
-    @Builder.Default
-    StatusWeeklyReport status = StatusWeeklyReport.PENDING;
-
     @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
     List<WeeklyReportDetail> details;
 
@@ -81,6 +77,7 @@ public class WeeklyReport {
 
         double average = this.details.stream()
                 .filter(detail -> detail.getScore() != null)
+                .filter(detail -> detail.getCriteria() != null && detail.getCriteria().getParent() == null)
                 .mapToInt(detail -> detail.getScore().intValue())
                 .average()
                 .orElse(0.0);

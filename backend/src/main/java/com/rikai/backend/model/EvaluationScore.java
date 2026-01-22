@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -24,8 +26,8 @@ public class EvaluationScore {
     @JoinColumn(name = "criteria_id", referencedColumnName = "id", nullable = false)
     EvaluationCriteria criteria;
 
-    @Column(name = "score")
-    Byte score;
+    @Column(name = "score", precision = 4, scale = 2)
+    BigDecimal score;
 
     @Column(name = "comment", columnDefinition = "TEXT")
     String comment;

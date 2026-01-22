@@ -13,7 +13,5 @@ public class CriteriaScoreDefinitionResponse {
     Long id;
     Long criteriaId;
     ScoreLabel scoreLabel;
-    Integer minScore;
-    Integer maxScore;
     String description;
 }

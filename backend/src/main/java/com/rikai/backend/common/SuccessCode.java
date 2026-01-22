@@ -68,6 +68,15 @@ public enum SuccessCode {
     GET_ALL_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Get all criteria score definitions successful", HttpStatus.OK),
     UPDATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Update criteria score definition successful", HttpStatus.OK),
     DELETE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Delete criteria score definition successful", HttpStatus.OK),
+
+    // Evaluation Session success codes
+    CREATE_EVALUATION_SESSION_SUCCESSFUL("Create evaluation session successful", HttpStatus.CREATED),
+    GET_EVALUATION_SESSION_SUCCESSFUL("Get evaluation session successful", HttpStatus.OK),
+    GET_ALL_EVALUATION_SESSIONS_SUCCESSFUL("Get all evaluation sessions successful", HttpStatus.OK),
+    UPDATE_EVALUATION_SESSION_SUCCESSFUL("Update evaluation session successful", HttpStatus.OK),
+    DELETE_EVALUATION_SESSION_SUCCESSFUL("Delete evaluation session successful", HttpStatus.OK),
+    GENERATE_EVALUATION_SESSION_SUCCESSFUL("Generate evaluation session successful", HttpStatus.CREATED),
+    GET_INTERN_EVALUATION_SUMMARY_SUCCESSFUL("Get intern evaluation summary successful", HttpStatus.OK),
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {
