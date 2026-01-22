@@ -56,10 +56,6 @@ public class WeeklyReport {
     @Column(name = "mentor_overall_comment", columnDefinition = "TEXT")
     String mentorOverallComment;
 
-    @Column(name = "status")
-    @Builder.Default
-    StatusWeeklyReport status = StatusWeeklyReport.PENDING;
-
     @OneToMany(mappedBy = "weeklyReport", cascade = CascadeType.ALL, orphanRemoval = true)
     List<WeeklyReportDetail> details;
 

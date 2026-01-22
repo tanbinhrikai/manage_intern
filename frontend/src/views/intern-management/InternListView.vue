@@ -32,7 +32,7 @@ const selectedIntern = ref(null)
 const loading = ref(false)
 const showAdvancedFilters = ref(false)
 
-const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETE', 'DROPPED']
+const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETED', 'DROPPED']
 
 const getStatusType = (status) => {
   const map = {

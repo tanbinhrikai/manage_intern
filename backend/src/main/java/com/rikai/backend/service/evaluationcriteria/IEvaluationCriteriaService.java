@@ -2,20 +2,19 @@ package com.rikai.backend.service.evaluationcriteria;
 
 import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaCreationRequest;
 import com.rikai.backend.dto.request.evaluation_criteria.EvaluationCriteriaUpdateRequest;
-import com.rikai.backend.dto.response.criteria.CriteriaCategoryResponse;
+import com.rikai.backend.dto.response.criteria_group.CriteriaGroupResponse;
 import com.rikai.backend.dto.response.evaluation_criteria.EvaluationCriteriaResponse;
 import com.rikai.backend.dto.response.score_label.ScoreLabelResponse;
-import com.rikai.backend.model.Enum.CriteriaCategory;
 
 import java.util.List;
 
 public interface IEvaluationCriteriaService {
 
     /**
-     * Get all evaluation criteria (hierarchical structure)
-     * Return list by category -> main criteria -> sub-criteria
+     * Get all evaluation criteria grouped by Criteria Group (hierarchical structure)
+     * Return list by group -> main criteria -> sub-criteria
      */
-    List<CriteriaCategoryResponse> getAllCriteriaHierarchy();
+    List<CriteriaGroupResponse> getAllCriteriaHierarchy();
 
     /**
      * Get all main criteria (without parent)
@@ -33,14 +32,9 @@ public interface IEvaluationCriteriaService {
     EvaluationCriteriaResponse getCriteriaById(Long id);
 
     /**
-     * Get criteria by category
+     * Get criteria by Group ID
      */
-    List<EvaluationCriteriaResponse> getCriteriaByCategory(CriteriaCategory category);
-
-    /**
-     * Get all categories
-     */
-    List<CriteriaCategoryResponse> getAllCategories();
+    List<EvaluationCriteriaResponse> getCriteriaByGroupId(Long groupId);
 
     /**
      * Get all score labels

@@ -7,8 +7,9 @@ import com.rikai.backend.model.Users;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring", uses = { DepartmentMapper.class })
+@Mapper(componentModel = "spring", uses = { DepartmentMapper.class } , nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface UserMapper {
 
     @Mapping(target = "isActive", source = "isActive")

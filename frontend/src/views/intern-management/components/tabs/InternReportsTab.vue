@@ -15,8 +15,55 @@ const props = defineProps({
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Raw data from API
+const criteriaGroups = ref([])
+
+// Flat list of all child criteria (only children have scoreDefinitions)
+const allCriteria = computed(() => {
+  const criteria = []
+  criteriaGroups.value.forEach(group => {
+    (group.mainCriteria || []).forEach(main => {
+      (main.children || []).forEach(child => {
+        criteria.push({
+          ...child,
+          parentId: main.id,
+          groupId: group.id,
+          groupName: group.name,
+          parentName: main.name
+        })
+      })
+    })
+  })
+  return criteria
+})
+
+// Group criteria by their group for display
+const criteriaByGroup = computed(() => {
+  const grouped = {}
+  criteriaGroups.value.forEach(group => {
+    const children = []
+    ;(group.mainCriteria || []).forEach(main => {
+      (main.children || []).forEach((child, index) => {
+        children.push({
+          ...child,
+          parentName: main.name,
+          isParentStart: index === 0,
+          parentRowSpan: main.children.length
+        })
+      })
+    })
+    if (children.length > 0) {
+      grouped[group.id] = {
+        name: group.name,
+        displayOrder: group.displayOrder,
+        criteria: children
+      }
+    }
+  })
+  return grouped
+})
+
 // Weekly Report data
-const evaluationCriteria = ref([])
 const weeklyReports = ref([])
 const selectedReportId = ref(null)
 const reportLoading = ref(false)
@@ -33,18 +80,7 @@ const reportForm = reactive({
   details: []
 })
 
-// Group criteria by category
-const criteriaByCategory = computed(() => {
-  const grouped = { EXPERTISE: [], MINDSET: [], SKILLS: [] }
-  evaluationCriteria.value.forEach(c => {
-    if (grouped[c.category]) {
-      grouped[c.category].push(c)
-    }
-  })
-  return grouped
-})
-
-// Get score definition by label
+// Get score definition by label (UPPERCASE)
 const getScoreDefinition = (criteria, label) => {
   return criteria.scoreDefinitions?.find(sd => sd.scoreLabel === label)
 }
@@ -70,7 +106,7 @@ const initReportForm = (report = null) => {
     reportForm.tasksCompleted = report.tasksCompleted || ''
     reportForm.issuesRisks = report.issuesRisks || ''
     reportForm.mentorOverallComment = report.mentorOverallComment || ''
-    reportForm.details = evaluationCriteria.value.map(c => {
+    reportForm.details = allCriteria.value.map(c => {
       const existing = report.details?.find(d => d.criteriaId === c.id)
       return {
         criteriaId: c.id,
@@ -88,7 +124,7 @@ const initReportForm = (report = null) => {
     reportForm.tasksCompleted = ''
     reportForm.issuesRisks = ''
     reportForm.mentorOverallComment = ''
-    reportForm.details = evaluationCriteria.value.map(c => ({
+    reportForm.details = allCriteria.value.map(c => ({
       criteriaId: c.id,
       score: null,
       comment: ''
@@ -109,11 +145,11 @@ function updateEndDate() {
   }
 }
 
-// Fetch evaluation criteria
+// Fetch evaluation criteria (hierarchy structure)
 async function fetchEvaluationCriteria() {
   try {
     const res = await getEvaluationCriteria()
-    evaluationCriteria.value = res.data?.data || []
+    criteriaGroups.value = res.data?.data || []
   } catch (error) {
     console.error("Failed to load criteria:", error)
   }
@@ -146,6 +182,23 @@ function editReport(report) {
   selectedReportId.value = report.id
   initReportForm(report)
   showReportForm.value = true
+}
+
+
+const objectSpanMethod = ({ row, column, rowIndex, columnIndex }) => {
+  if (columnIndex === 0) {
+    if (row.isParentStart) {
+      return {
+        rowspan: row.parentRowSpan,
+        colspan: 1,
+      }
+    } else {
+      return {
+        rowspan: 0,
+        colspan: 0,
+      }
+    }
+  }
 }
 
 // Cancel report form
@@ -213,6 +266,15 @@ function formatDate(date) {
   return d.toLocaleDateString('en-GB')
 }
 
+// Get status type for el-tag
+function getStatusType(status) {
+  switch(status) {
+    case 'SUBMITTED': return 'success'
+    case 'PENDING': return 'warning'
+    default: return 'info'
+  }
+}
+
 // Initialize
 onMounted(async () => {
     await fetchEvaluationCriteria()
@@ -249,13 +311,6 @@ onMounted(async () => {
             <template #default="{ row }">
               <el-tag :type="row.averageScore >= 7 ? 'success' : row.averageScore >= 5 ? 'warning' : 'danger'">
                 {{ row.averageScore?.toFixed(1) || '-' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="status" :label="t('internManagement.table.status')" width="120">
-            <template #default="{ row }">
-              <el-tag :type="row.status === 'SUBMITTED' ? 'success' : 'info'">
-                {{ t('weeklyReport.status.' + row.status) || row.status }}
               </el-tag>
             </template>
           </el-table-column>
@@ -339,47 +394,53 @@ onMounted(async () => {
           </div>
         </el-card>
 
-        
-        <template v-for="(categoryKey, index) in ['EXPERTISE', 'SKILLS', 'MINDSET']" :key="categoryKey">
+        <!-- Criteria grouped by Group -->
+        <template v-for="(group, groupId) in criteriaByGroup" :key="groupId">
           <el-card class="category-card" shadow="never">
             <template #header>
               <div class="category-header">
-                <span class="category-number">{{ ['I', 'II', 'III'][index] }}.</span>
-                <span class="category-title">{{ t('weeklyReport.category.' + categoryKey) }}</span>
+                <span class="category-title">{{ group.name }}</span>
               </div>
             </template>
 
-            <el-table :data="criteriaByCategory[categoryKey]" border class="criteria-table">
-              <el-table-column :label="t('weeklyReport.table.criteria')" width="180">
+            <el-table :data="group.criteria" border class="criteria-table" :span-method="objectSpanMethod">
+              <el-table-column :label="t('weeklyReport.table.criteriaParent')" width="100" header-align="center">
                 <template #default="{ row }">
-                  <div class="criteria-name">{{ row.name }}</div>
+                  <div class="parent-criteria-name" style="font-size: 12px">
+                    {{ row.parentName }}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('weeklyReport.table.criteriaChild')" width="100" header-align="center">
+                <template #default="{ row }">
+                  <div class="child-criteria-name" style="font-size: 12px">{{ row.name }}</div>
                 </template>
               </el-table-column>
               <el-table-column :label="t('weeklyReport.table.excellent')">
                 <template #default="{ row }">
                   <div class="score-def excellent">
-                    {{ getScoreDefinition(row, 'Excellent')?.description || '-' }}
+                    {{ getScoreDefinition(row, 'EXCELLENT')?.description || '-' }}
                   </div>
                 </template>
               </el-table-column>
               <el-table-column :label="t('weeklyReport.table.good')">
                 <template #default="{ row }">
                   <div class="score-def good">
-                    {{ getScoreDefinition(row, 'Good')?.description || '-' }}
+                    {{ getScoreDefinition(row, 'GOOD')?.description || '-' }}
                   </div>
                 </template>
               </el-table-column>
               <el-table-column :label="t('weeklyReport.table.average')">
                 <template #default="{ row }">
                   <div class="score-def average">
-                    {{ getScoreDefinition(row, 'Average')?.description || '-' }}
+                    {{ getScoreDefinition(row, 'AVERAGE')?.description || '-' }}
                   </div>
                 </template>
               </el-table-column>
               <el-table-column :label="t('weeklyReport.table.weak')">
                 <template #default="{ row }">
                   <div class="score-def weak">
-                    {{ getScoreDefinition(row, 'Weak')?.description || '-' }}
+                    {{ getScoreDefinition(row, 'WEAK')?.description || '-' }}
                   </div>
                 </template>
               </el-table-column>
@@ -542,11 +603,6 @@ onMounted(async () => {
   gap: 8px;
 }
 
-.category-number {
-  font-weight: 700;
-  font-size: 16px;
-}
-
 .category-title {
   font-weight: 600;
   font-size: 15px;
@@ -566,6 +622,12 @@ onMounted(async () => {
   font-weight: 600;
   font-size: 13px;
   color: #2c3e50;
+}
+
+.criteria-parent {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
 }
 
 .score-def {

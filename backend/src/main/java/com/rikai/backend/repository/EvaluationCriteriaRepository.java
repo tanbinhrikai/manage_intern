@@ -1,7 +1,6 @@
 package com.rikai.backend.repository;
 
 import com.rikai.backend.model.EvaluationCriteria;
-import com.rikai.backend.model.Enum.CriteriaCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,7 +21,7 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
     @Query("SELECT DISTINCT ec FROM EvaluationCriteria ec " +
            "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.isActive = true " +
-           "ORDER BY ec.category, ec.displayOrder")
+           "ORDER BY ec.group.displayOrder, ec.displayOrder")
     List<EvaluationCriteria> findAll();
 
     /**
@@ -30,16 +29,16 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
      */
     @Query("SELECT ec FROM EvaluationCriteria ec " +
            "WHERE ec.parent IS NULL AND ec.isActive = true " +
-           "ORDER BY ec.category, ec.displayOrder")
+           "ORDER BY ec.group.displayOrder, ec.displayOrder")
     List<EvaluationCriteria> findAllMainCriteria();
 
     /**
-     * Get all main criteria by category
+     * Get all main criteria by group id
      */
     @Query("SELECT ec FROM EvaluationCriteria ec " +
-           "WHERE ec.parent IS NULL AND ec.category = :category AND ec.isActive = true " +
-           "ORDER BY ec.displayOrder")
-    List<EvaluationCriteria> findMainCriteriaByCategory(@Param("category") CriteriaCategory category);
+            "WHERE ec.parent IS NULL AND ec.group.id = :groupId AND ec.isActive = true " +
+            "ORDER BY ec.displayOrder")
+    List<EvaluationCriteria> findMainCriteriaByGroupId(@Param("groupId") Long groupId);
 
     /**
      * Get all sub-criteria by parent id
@@ -56,16 +55,16 @@ public interface EvaluationCriteriaRepository extends JpaRepository<EvaluationCr
     @Query("SELECT ec FROM EvaluationCriteria ec " +
            "LEFT JOIN FETCH ec.scoreDefinitions " +
            "WHERE ec.parent IS NOT NULL AND ec.isActive = true " +
-           "ORDER BY ec.category, ec.parent.displayOrder, ec.displayOrder")
+           "ORDER BY ec.group.displayOrder, ec.parent.displayOrder, ec.displayOrder")
     List<EvaluationCriteria> findAllSubCriteria();
 
     /**
      * Get all criteria by category
      */
     @Query("SELECT ec FROM EvaluationCriteria ec " +
-           "WHERE ec.category = :category AND ec.isActive = true " +
+           "WHERE ec.group.id = :groupId AND ec.isActive = true " +
            "ORDER BY ec.displayOrder")
-    List<EvaluationCriteria> findByCategory(@Param("category") CriteriaCategory category);
+    List<EvaluationCriteria> findByGroupId(@Param("groupId") Long groupId);
 
     /**
      * Get criteria by id with children and score definitions

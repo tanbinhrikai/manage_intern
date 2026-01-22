@@ -5,8 +5,9 @@ import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.model.Position;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring" , nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface PositionMapper {
 
     PositionResponse toPositionResponse(Position position);

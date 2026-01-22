@@ -126,7 +126,6 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .tasksAssigned(createDTO.getTasksAssigned())
                 .tasksCompleted(createDTO.getTasksCompleted())
                 .mentorOverallComment(createDTO.getMentorOverallComment())
-                .status(StatusWeeklyReport.SUBMITTED)
                 .build();
 
         if (createDTO.getDetails() != null) {
@@ -220,9 +219,6 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
         if (updateDTO.getMentorOverallComment() != null) {
             report.setMentorOverallComment(updateDTO.getMentorOverallComment());
-        }
-        if (updateDTO.getStatus() != null) {
-            report.setStatus(updateDTO.getStatus());
         }
 
         WeeklyReport updatedReport = weeklyReportRepository.save(report);

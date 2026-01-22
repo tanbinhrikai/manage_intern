@@ -30,9 +30,11 @@ public class FlywayConfig {
                 .baselineOnMigrate(true)
                 .baselineVersion("0")
                 .load();
+        flyway.repair();
         flyway.migrate();
         return flyway;
     }
+
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();

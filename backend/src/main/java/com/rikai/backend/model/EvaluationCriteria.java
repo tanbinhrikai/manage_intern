@@ -1,9 +1,9 @@
 package com.rikai.backend.model;
 
-import com.rikai.backend.model.Enum.CriteriaCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -21,9 +21,9 @@ public class EvaluationCriteria {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false, length = 50)
-    CriteriaCategory category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", referencedColumnName = "id")
+    CriteriaGroup group;
 
     @Column(name = "name", nullable = false, length = 255)
     String name;
@@ -42,6 +42,7 @@ public class EvaluationCriteria {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @BatchSize(size = 20)
     List<EvaluationCriteria> children = new ArrayList<>();
 
     @Column(name = "display_order", nullable = false)
@@ -55,6 +56,7 @@ public class EvaluationCriteria {
 
     @OneToMany(mappedBy = "criteria", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @BatchSize(size = 20)
     List<CriteriaScoreDefinition> scoreDefinitions = new ArrayList<>();
 
     public boolean isMainCriteria() {

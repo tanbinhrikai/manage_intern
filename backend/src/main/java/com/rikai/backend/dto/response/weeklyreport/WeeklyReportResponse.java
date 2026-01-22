@@ -1,5 +1,6 @@
 package com.rikai.backend.dto.response.weeklyreport;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import com.rikai.backend.model.WeeklyReport;
 import lombok.*;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class WeeklyReportResponse {
     private Integer id;
     private Long internId;
@@ -66,7 +68,6 @@ public class WeeklyReportResponse {
                 .averageScore(report.getAverageScore())
                 .issuesRisks(report.getIssuesRisks())
                 .mentorOverallComment(report.getMentorOverallComment())
-                .status(report.getStatus())
                 .details(detailResponses)
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())

@@ -291,6 +291,7 @@
             "ACTIVE": "アクティブ",
             "WARNING": "警告",
             "COMPLETE": "完了",
+            "COMPLETED": "完了",
             "DROPPED": "中断"
         },
         "messages": {
@@ -406,31 +407,47 @@
     "evaluationCriteria": {
         "title": "評価基準",
         "addNew": "基準を追加",
+        "addChild": "子を追加",
         "table": {
             "id": "ID",
-            "category": "カテゴリー",
+            "group": "グループ",
+            "criteria": "基準",
             "name": "基準名",
             "weight": "重み",
             "isActive": "アクティブ",
+            "active": "有効",
+            "inactive": "無効",
             "order": "順序",
             "actions": "アクション"
         },
         "messages": {
             "loadError": "基準の読み込みに失敗しました",
+            "noData": "このグループに基準がありません",
             "createSuccess": "基準を作成しました！",
             "updateSuccess": "基準を更新しました！",
             "deleteSuccess": "基準を削除しました！",
-            "saveError": "エラーが発生しました。もう一度お試しください。"
+            "saveError": "エラーが発生しました。もう一度お試しください。",
+            "confirmDelete": "この基準を削除してもよろしいですか？",
+            "validationError": "必須項目をすべて入力してください！"
         },
         "form": {
             "createTitle": "評価基準を作成",
-            "editTitle": "評価基準を編集",
-            "category": "カテゴリー (専門知識, マインドセット, スキル)",
+            "createParentTitle": "親基準を作成",
+            "editTitle": "子基準を編集",
+            "editParentTitle": "親基準を編集",
+            "createChildTitle": "子基準を作成",
+            "parentInfo": "これは親基準です。基本情報のみ編集できます。スコア定義は子基準で管理されます。",
+            "basicInfo": "基本情報",
+            "group": "グループ",
+            "selectGroup": "グループを選択",
+            "parentCriteria": "親基準",
+            "selectParent": "親を選択（サブ基準の場合）",
             "name": "名前",
+            "namePlaceholder": "基準名を入力",
             "description": "説明",
             "weight": "重み",
             "displayOrder": "表示順",
-            "isActive": "アクティブ状態",
+            "isActive": "有効状態",
             "save": "変更を保存",
             "create": "基準を作成",
             "cancel": "キャンセル"
@@ -442,12 +459,6 @@
             "scoreRange": "スコア範囲",
             "description": "説明",
             "actions": "アクション",
-            "labels": {
-                "Excellent": "優秀",
-                "Good": "良い",
-                "Average": "普通",
-                "Weak": "苦手"
-            },
             "form": {
                 "addTitle": "スコア定義を追加",
                 "editTitle": "スコア定義を編集",
@@ -459,6 +470,21 @@
                 "updateSuccess": "定義を更新しました！",
                 "deleteSuccess": "定義を削除しました！"
             }
+        },
+        "group": {
+            "tag": "グループ",
+            "addNew": "グループを追加",
+            "addTitle": "グループを追加",
+            "editTitle": "グループを編集",
+            "name": "グループ名",
+            "namePlaceholder": "グループ名を入力",
+            "displayOrder": "表示順",
+            "create": "グループを作成",
+            "createSuccess": "グループを作成しました！",
+            "updateSuccess": "グループを更新しました！",
+            "deleteSuccess": "グループを削除しました！",
+            "confirmDelete": "このグループとすべての基準を削除しますか？",
+            "validationError": "グループ名を入力してください"
         }
     },
     "weeklyReport": {
@@ -475,6 +501,8 @@
         },
         "table": {
             "criteria": "評価基準",
+            "criteriaParent": "親基準",
+            "criteriaChild": "子基準",
             "excellent": "優秀 (9-10)",
             "good": "良好 (7-8)",
             "average": "普通 (5-6)",
@@ -494,7 +522,7 @@
             "commentPlaceholder": "コメントを入力..."
         },
         "actions": {
-            "save": "下書き保存",
+            "save": "保存",
             "submit": "レポート提出",
             "cancel": "キャンセル",
             "edit": "編集",

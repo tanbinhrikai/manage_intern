@@ -40,14 +40,12 @@ public enum SuccessCode {
 
     GET_ALL_DEPARTMENTS_SUCCESSFUL("Get all departments successful", HttpStatus.OK),
 
-    // Weekly Report success codes
     CREATE_WEEKLY_REPORT_SUCCESSFUL("Create weekly report successful", HttpStatus.CREATED),
     GET_WEEKLY_REPORT_SUCCESSFUL("Get weekly report successful", HttpStatus.OK),
     GET_ALL_WEEKLY_REPORTS_SUCCESSFUL("Get all weekly reports successful", HttpStatus.OK),
     UPDATE_WEEKLY_REPORT_SUCCESSFUL("Update weekly report successful", HttpStatus.OK),
     DELETE_WEEKLY_REPORT_SUCCESSFUL("Delete weekly report successful", HttpStatus.OK),
 
-    // Intern success codes
     CREATE_DEPARTMENT_SUCCESSFUL("Create department successful", HttpStatus.CREATED),
     GET_DEPARTMENT_SUCCESSFUL("Get department successful", HttpStatus.OK),
     UPDATE_DEPARTMENT_SUCCESSFUL("Update department successful", HttpStatus.OK),
@@ -68,7 +66,11 @@ public enum SuccessCode {
     GET_ALL_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Get all criteria score definitions successful", HttpStatus.OK),
     UPDATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Update criteria score definition successful", HttpStatus.OK),
     DELETE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Delete criteria score definition successful", HttpStatus.OK),
-    ;
+
+    CREATE_CRITERIA_GROUP_SUCCESSFUL("Create criteria group successful", HttpStatus.CREATED),
+    GET_CRITERIA_GROUP_SUCCESSFUL("Get criteria group successful", HttpStatus.OK),
+    UPDATE_CRITERIA_GROUP_SUCCESSFUL("Update criteria group successful", HttpStatus.OK),
+    DELETE_CRITERIA_GROUP_SUCCESSFUL("Delete criteria group successful", HttpStatus.OK);
 
     SuccessCode(String message, HttpStatusCode statusCode) {
         this.message = message;

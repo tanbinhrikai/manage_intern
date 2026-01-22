@@ -1,5 +1,26 @@
 import http from "./http"
 
+// Criteria Groups
+export function getCriteriaGroups() {
+    return http.get("/criteria-groups")
+}
+
+export function getCriteriaGroupById(id) {
+    return http.get(`/criteria-groups/${id}`)
+}
+
+export function createCriteriaGroup(data) {
+    return http.post("/criteria-groups", data)
+}
+
+export function updateCriteriaGroup(id, data) {
+    return http.put(`/criteria-groups/${id}`, data)
+}
+
+export function deleteCriteriaGroup(id) {
+    return http.delete(`/criteria-groups/${id}`)
+}
+
 // Evaluation Criteria
 export function getEvaluationCriteria() {
     return http.get("/evaluation-criteria")
@@ -7,6 +28,22 @@ export function getEvaluationCriteria() {
 
 export function getEvaluationCriteriaById(id) {
     return http.get(`/evaluation-criteria/${id}`)
+}
+
+export function getMainCriteria() {
+    return http.get("/evaluation-criteria/main")
+}
+
+export function getSubCriteria() {
+    return http.get("/evaluation-criteria/sub")
+}
+
+export function getSubCriteriaByParentId(parentId) {
+    return http.get(`/evaluation-criteria/${parentId}/sub-criteria`)
+}
+
+export function getCriteriaByGroupId(groupId) {
+    return http.get(`/evaluation-criteria/group/${groupId}`)
 }
 
 export function createEvaluationCriteria(data) {
@@ -19,6 +56,11 @@ export function updateEvaluationCriteria(id, data) {
 
 export function deleteEvaluationCriteria(id) {
     return http.delete(`/evaluation-criteria/${id}`)
+}
+
+// Score Labels
+export function getScoreLabels() {
+    return http.get("/evaluation-criteria/score-labels")
 }
 
 // Score Definitions
