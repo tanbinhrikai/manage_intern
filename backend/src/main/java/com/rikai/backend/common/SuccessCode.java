@@ -77,6 +77,13 @@ public enum SuccessCode {
     DELETE_EVALUATION_SESSION_SUCCESSFUL("Delete evaluation session successful", HttpStatus.OK),
     GENERATE_EVALUATION_SESSION_SUCCESSFUL("Generate evaluation session successful", HttpStatus.CREATED),
     GET_INTERN_EVALUATION_SUMMARY_SUCCESSFUL("Get intern evaluation summary successful", HttpStatus.OK),
+
+    // Internship Batch success codes
+    CREATE_BATCH_SUCCESSFUL("Create internship batch successful", HttpStatus.CREATED),
+    GET_BATCH_SUCCESSFUL("Get internship batch successful", HttpStatus.OK),
+    GET_ALL_BATCHES_SUCCESSFUL("Get all internship batches successful", HttpStatus.OK),
+    UPDATE_BATCH_SUCCESSFUL("Update internship batch successful", HttpStatus.OK),
+    DELETE_BATCH_SUCCESSFUL("Delete internship batch successful", HttpStatus.OK),
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {

@@ -1,5 +1,6 @@
 package com.rikai.backend.model;
 
+import com.rikai.backend.model.Enum.BatchStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Data
@@ -18,7 +20,7 @@ import java.time.LocalDate;
 public class InternshipBatch {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @Column(name = "name", nullable = false)
     String name;
@@ -32,7 +34,15 @@ public class InternshipBatch {
     @Column(name = "description", columnDefinition = "TEXT")
     String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    @Builder.Default
+    BatchStatus status = BatchStatus.DRAFT;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;
+
+    @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL)
+    List<Intern> interns;
 }
