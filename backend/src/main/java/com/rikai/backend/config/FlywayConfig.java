@@ -26,13 +26,16 @@ public class FlywayConfig {
     public Flyway flyway() {
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource())
+                .outOfOrder(true)
                 .locations(flywayLocations)
                 .baselineOnMigrate(true)
                 .baselineVersion("0")
                 .load();
+        flyway.repair();
         flyway.migrate();
         return flyway;
     }
+
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();

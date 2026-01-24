@@ -9,8 +9,9 @@ import com.rikai.backend.model.Position;
 import com.rikai.backend.model.Users;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface InternMapper {
 
     @Mapping(target = "position", source = "position")

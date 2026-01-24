@@ -5,8 +5,9 @@ import com.rikai.backend.dto.response.department.DepartmentResponse;
 import com.rikai.backend.model.Department;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring" , nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface DepartmentMapper {
 
     DepartmentResponse toDepartmentResponse(Department department);

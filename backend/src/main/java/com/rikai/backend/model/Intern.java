@@ -25,14 +25,19 @@ public class Intern {
     @Column(name = "full_name", nullable = false)
     String fullName;
 
-    @ManyToOne
+    private String email;
 
+    @ManyToOne
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
     Position position;
 
     @ManyToOne
     @JoinColumn(name = "mentor_id", referencedColumnName = "id", nullable = false)
     Users mentor;
+
+    @ManyToOne
+    @JoinColumn(name = "batch_id", referencedColumnName = "id", nullable = false)
+    InternshipBatch internshipBatch;
 
     @Column(name = "start_date", nullable = false)
     LocalDate startDate;

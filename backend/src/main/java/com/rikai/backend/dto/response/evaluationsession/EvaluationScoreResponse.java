@@ -29,7 +29,7 @@ public class EvaluationScoreResponse {
                             .id(es.getId())
                             .criteriaId(es.getCriteria().getId())
                             .criteriaName(es.getCriteria().getName())
-                            .criteriaCategory(es.getCriteria().getCategory().name())
+                            .criteriaCategory(es.getCriteria().getGroup().getName())
                             .score(es.getScore())
                             .comment(es.getComment())
                             .build())

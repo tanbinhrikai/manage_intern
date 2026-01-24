@@ -78,4 +78,6 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
             """)
     Page<Intern> findAllInternsNotEvaluatedThisWeek(@Param("weekStartDate") LocalDate weekStartDate,
                                                     Pageable pageable);
+
+    boolean existsByEmail(String email);
 }

@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS weekly_reports (
 -- =====================================================
 CREATE TABLE IF NOT EXISTS evaluation_criteria (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    category VARCHAR(50) NOT NULL,
+    category VARCHAR(50),
     name VARCHAR(255) NOT NULL,
     description TEXT,
     weight DECIMAL(5,2) DEFAULT 1.00,
@@ -351,99 +351,10 @@ INSERT INTO roles (role_name) VALUES
 ('MENTOR'),
 ('HR');
 -- =====================================================
--- END OF SCHEMA
--- =====================================================
-INSERT INTO interns (id,full_name, email, phone, position_id, batch_id, mentor_id, start_date,
-end_date, intern_status, offer_status, offer_date, offer_notes, created_at, updated_at)
-VALUES
-(1,'Nguyễn Văn An', 'an.nguyen@rikai.technology', '0901000001', 1, 1, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a',
-'2025-01-01', '2025-06-30', 'COMPLETED', 'ACCEPTED', '2025-07-07', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-('2', 'Trần Thị Bình', 'binh.tran@rikai.technology', '0901000002', '1', '1', '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b',
-'2025-01-01', '2025-06-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(3, 'Lê Văn Cường', 'cuong.le@rikai.technology', '0901000003', 2, 1, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-01-01', '2025-06-30',
-'COMPLETED', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(4, 'Phạm Thị Dung', 'dung.pham@rikai.technology', '0901000004', 2, 1,
-'2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-01-01', '2025-02-28', 'DROPPED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(5, 'Hoàng Văn Em', 'em.hoang@rikai.technology', '0901000005', 3, 1, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a',
-'2025-01-01', '2025-06-30', 'COMPLETED', 'ACCEPTED', '2025-07-07', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(6, 'Vũ Thị Giang', 'giang.vu@rikai.technology', '0901000006', 3, 1, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-01-01',
-'2025-06-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(7, 'Đặng Văn Hùng', 'hung.dang@rikai.technology', '0901000007', 4, 1, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b',
-'2025-01-01', '2025-06-30', 'COMPLETED', 'REJECTED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(8, 'Bùi Thị Khanh', 'khanh.bui@rikai.technology', '0901000008', 4, 1, '2c638c0d-f4bc-4a53-b88d-1a75e9620830',
-'2025-01-01', '2025-06-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(9, 'Cao Văn Lâm', 'lam.cao@rikai.technology', '0902000001', 1, 2, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'ACCEPTED', '2025-08-10', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(10, 'Đỗ Thị Mai', 'mai.do@rikai.technology', '0902000002', 1, 2, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b',
-'2025-02-01', '2025-07-31', 'WARNING', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(11, 'Ngô Văn Nam', 'nam.ngo@rikai.technology', '0902000003', 2, 2, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'ACCEPTED', '2025-08-05', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(12, 'Hồ Thị Oanh', 'oanh.ho@rikai.technology', '0902000004', 2, 2, '2c638c0d-f4bc-4a53-b88d-1a75e9620830',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(13, 'Dương Văn Phú', 'phu.duong@rikai.technology', '0902000005', 3, 2, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a',
-'2025-02-01', '2025-04-15', 'DROPPED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(14, 'Lý Thị Quyên', 'quyen.ly@rikai.technology', '0902000006', 3, 2, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(15, 'Mai Văn Duyên', 'duyen.mai@rikai.technology', '0902000007', 4, 2, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'ACCEPTED', '2025-08-12', NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(16, 'Trương Thị Sương', 'suong.truong@rikai.technology', '0902000008', 4, 2, '2c638c0d-f4bc-4a53-b88d-1a75e9620830',
-'2025-02-01', '2025-07-31', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(17, 'Võ Văn Tài', 'tai.vo@rikai.technology', '0903000001', 1, 3, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-03-01',
-'2025-08-31', 'COMPLETED', 'ACCEPTED', '2025-09-10', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(18, 'Đinh Thị Uyên', 'uyen.dinh@rikai.technology', '0903000002', 1, 3, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-03-01',
-'2025-08-31', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(19, 'Bạch Văn Vinh', 'vinh.bach@rikai.technology', '0903000003', 2, 3, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-03-01',
-'2025-08-31', 'COMPLETED', 'ACCEPTED', '2025-09-07', NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(20, 'Phùng Thanh Tài', 'tai.phung@rikai.technology', '0903000004', 2, 3, '2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-03-01',
-'2025-08-31', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(21, 'Đoàn Văn Ý', 'y.doan@rikai.technology', '0903000005', 3, 3, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-03-01',
-'2025-08-31', 'COMPLETED', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(22, 'Hà Thị Xuân', 'xuan.ha@rikai.technology', '0903000006', 3, 3, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-03-01',
-'2025-08-31', 'WARNING', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(23, 'Lê Văn Anh', 'anh.le@rikai.technology', '0903000007', 4, 3, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-03-01',
-'2025-05-15', 'DROPPED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(24, 'Lâm Thị Bích Ngọc', 'ngoc.lam@rikai.technology', '0903000008', 4, 3, '2c638c0d-f4bc-4a53-b88d-1a75e9620830',
-'2025-03-01', '2025-08-31', 'COMPLETED', 'ACCEPTED', '2025-09-05', NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(25, 'Mạc Văn Chiến', 'chien.mac@rikai.technology', '0904000001', 1, 4, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(26, 'Ninh Thị Duyên', 'duyen.ninh@rikai.technology', '0904000002', 1, 4, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(27, 'Ông Cao Thắng', 'thang.ong@rikai.technology', '0904000003', 2, 4, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'ACCEPTED', '2025-10-10', NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(28, 'Quách Ngọc Tuyên', 'tuyen.quach@rikai.technology', '0904000004', 2, 4, '2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-04-01',
-'2025-09-30', 'WARNING', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(29, 'Phạm Lê Tú', 'tu.pham@rikai.technology', '0904000005', 3, 4, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(30, 'Lê Thị Hoa', 'hoa.le@rikai.technology', '0904000006', 3, 4, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'ACCEPTED', '2025-10-07', NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(31, 'Đoàn Văn Hậu', 'hau.doan@rikai.technology', '0904000007', 4, 4, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(32, 'Vũ Thị Kim', 'kim.vu@rikai.technology', '0904000008', 4, 4, '2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-04-01',
-'2025-09-30', 'COMPLETED', 'REJECTED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(33, 'Vương Văn Lộc', 'loc.vuong@rikai.technology', '0905000001', 1, 5, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(34, 'Cao Thị Minh', 'minh.cao@rikai.technology', '0905000002', 1, 5, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(35, 'Đoàn Trung Sơn', 'son.doan@rikai.technology', '0905000003', 2, 5, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'PROPOSED', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(36, 'Châu Thị Ngọc', 'ngoc.chau@rikai.technology', '0905000004', 2, 5, '2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(37, 'Đàm Văn Phúc', 'phuc.dam@rikai.technology', '0905000005', 3, 5, '5e3ba91a-126b-42bb-b8ce-4a09cc2abf7a', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(38, 'Nguyễn Thị Quỳnh', 'quynh.nguyen@rikai.technology', '0905000006', 3, 5, '536e0b3a-9974-4a46-9c08-22b6a3ae1f9b', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'ACCEPTED', '2025-11-10', NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14'),
-(39, 'Lại Văn Sang', 'sang.lai@rikai.technology', '0905000007', 4, 5, 'c8412e92-4541-4af1-a1b7-3e9e4e32477b', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:50:23'),
-(40, 'Trần Thị Thảo', 'thao.tran@rikai.technology', '0905000008', 4, 5, '2c638c0d-f4bc-4a53-b88d-1a75e9620830', '2025-05-01',
-'2025-10-31', 'ACTIVE', 'NONE', NULL, NULL, '2026-01-16 02:50:23', '2026-01-16 02:54:14');
--- =====================================================
--- UPDATE EVALUATION CRITERIA CONSTRAINT
+-- UPDATE WEEKLY REPORTS TABLE
 -- =====================================================
 ALTER TABLE weekly_reports
     ADD COLUMN average_score DECIMAL(4,2) DEFAULT 0 AFTER status;
-
-ALTER TABLE evaluation_criteria ADD CONSTRAINT chk_criteria_category
-    CHECK (category IN ('WORK_PERFORMANCE', 'ATTITUDE_SOFT_SKILLS', 'KNOWLEDGE_APPLICATION'));
 
 -- =====================================================
 -- CRITERIA SCORE DEFINITIONS TABLE
@@ -474,4 +385,6 @@ CREATE TABLE IF NOT EXISTS weekly_report_details (
     UNIQUE KEY uk_report_criteria (weekly_report_id, criteria_id),
     CONSTRAINT chk_detail_score CHECK (score >= 0 AND score <= 10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+alter table weekly_reports drop column status;
 

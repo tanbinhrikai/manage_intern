@@ -21,5 +21,5 @@ public class EvaluationSessionCreateRequest {
 
     private String overallComment;
 
-    private List<EvaluationScoreRequest> scores; // Optional: for manual override
+    private List<EvaluationScoreRequest> scores;
 }

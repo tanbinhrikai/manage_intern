@@ -1,7 +1,7 @@
 package com.rikai.backend.dto.response.evaluation_criteria;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.dto.response.criteria.CriteriaScoreDefinitionResponse;
-import com.rikai.backend.model.Enum.CriteriaCategory;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -13,11 +13,11 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class EvaluationCriteriaResponse {
     Long id;
-    CriteriaCategory category;
-    String categoryDisplayName;
-    String categoryDescription;
+    Long groupId;
+    String groupName;
     String name;
     String description;
     BigDecimal weight;

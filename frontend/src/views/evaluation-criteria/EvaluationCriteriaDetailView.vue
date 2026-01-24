@@ -1,19 +1,17 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { 
-  getEvaluationCriteriaById, 
+import { getEvaluationCriteriaById, 
   createEvaluationCriteria, 
   updateEvaluationCriteria,
-  getScoreDefinitionsByCriteriaId,
-  createScoreDefinition,
-  updateScoreDefinition,
-  deleteScoreDefinition
+  getCriteriaGroups,
+  getMainCriteria
 } from '@/api/evaluation-criteria'
+import EvaluationCriteriaScoreDefinitions from './EvaluationCriteriaScoreDefinitions.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,51 +23,82 @@ const isEdit = computed(() => !!criteriaId)
 const loading = ref(false)
 const saving = ref(false)
 
+// Check if this is a parent criteria (no parentId)
+const isParentCriteria = computed(() => isEdit.value && !formData.parentId)
+
+// Check if creating a child (has parentId in query)
+const isCreatingChild = computed(() => !isEdit.value && !!route.query.parentId)
+
+// Check if creating a parent (no parentId in query)
+const isCreatingParent = computed(() => !isEdit.value && !route.query.parentId)
+
+// Check if editing a child criteria
+const isChildCriteria = computed(() => isEdit.value && !!formData.parentId)
+
+
+
 const formData = reactive({
-  category: 'SKILLS',
+  groupId: null,
   name: '',
   description: '',
-  weight: 1,
-
-  scoreDefinitions: [] 
+  weight: 1.0,
+  parentId: null,
+  displayOrder: 1,
+  isActive: true,
+  scoreDefinitions: []
 })
 
-const categories = ['EXPERTISE', 'MINDSET', 'SKILLS']
+// Dropdown options
+const criteriaGroups = ref([])
+const mainCriteriaList = ref([])
 
-const showScoreDialog = ref(false)
-const scoreForm = reactive({
-  id: null,
-  criteriaId: null,
-  scoreLabel: 'Average',
-  description: ''
+// Filtered main criteria based on selected group
+const filteredMainCriteria = computed(() => {
+  if (!formData.groupId) return []
+  return mainCriteriaList.value.filter(c => c.groupId === formData.groupId)
 })
-const scoreLabels = ['Excellent', 'Good', 'Average', 'Weak']
-const isScoreEdit = computed(() => !!scoreForm.id)
-const savingScore = ref(false)
 
-const scoreLabelRanges = {
-  Excellent: { min: 9, max: 10 },
-  Good: { min: 7, max: 8 },
-  Average: { min: 5, max: 6 },
-  Weak: { min: 0, max: 4 }
-}
-
-const getScoreRange = (label) => {
-  const range = scoreLabelRanges[label]
-  return range ? `${range.min}-${range.max}` : '-'
+async function loadDropdownData() {
+  try {
+    const [groupsRes, mainRes] = await Promise.all([
+      getCriteriaGroups(),
+      getMainCriteria()
+    ])
+    criteriaGroups.value = groupsRes.data?.data || []
+    mainCriteriaList.value = mainRes.data?.data || []
+  } catch (error) {
+   
+  }
 }
 
 async function fetchCriteria() {
-  if (!isEdit.value) return
+  if (!isEdit.value) {
+    console.log("route.query", route.query)
+    if (route.query.parentId) {
+      formData.parentId = parseInt(route.query.parentId)
+    }
+    if (route.query.groupId) {
+      formData.groupId = parseInt(route.query.groupId)
+    }
+    return
+  }
+  
   loading.value = true
   try {
     const res = await getEvaluationCriteriaById(criteriaId)
     const data = res.data?.data
-    Object.assign(formData, data)
+    if (data) {
+      Object.assign(formData, {
+        groupId: data.groupId,
+        name: data.name,
+        description: data.description || '',
+        weight: data.weight || 1.0,
+        parentId: data.parentId || null,
+        displayOrder: data.displayOrder || 1,
+        isActive: data.isActive !== false
+      })
+    }
     
-  
-    const scoreRes = await getScoreDefinitionsByCriteriaId(criteriaId)
-    formData.scoreDefinitions = scoreRes.data?.data || []
   } catch (error) {
     ElMessage.error(t.value('evaluationCriteria.messages.loadError'))
     router.push('/admin/evaluation-criteria')
@@ -79,14 +108,31 @@ async function fetchCriteria() {
 }
 
 async function handleSaveCriteria() {
+  console.log("parent", formData.parentId)
+  if (!formData.groupId || !formData.name.trim()) {
+    ElMessage.warning(t.value('evaluationCriteria.messages.validationError') || 'Please fill required fields')
+    return
+  }
+  
   saving.value = true
   try {
+    const payload = {
+      groupId: formData.groupId,
+      name: formData.name,
+      description: formData.description,
+      weight: formData.weight,
+      parentId: formData.parentId,
+      displayOrder: formData.displayOrder,
+      isActive: formData.isActive
+    }
+    console.log("payload", payload)
+    
     if (isEdit.value) {
-      await updateEvaluationCriteria(criteriaId, formData)
+      await updateEvaluationCriteria(criteriaId, payload)
       ElMessage.success(t.value('evaluationCriteria.messages.updateSuccess'))
-      fetchCriteria() 
+      fetchCriteria()
     } else {
-      const res = await createEvaluationCriteria(formData)
+      const res = await createEvaluationCriteria(payload)
       ElMessage.success(t.value('evaluationCriteria.messages.createSuccess'))
       const newId = res.data?.data?.id
       if (newId) {
@@ -96,61 +142,16 @@ async function handleSaveCriteria() {
       }
     }
   } catch (error) {
-    ElMessage.error(t.value('evaluationCriteria.messages.saveError'))
+    
   } finally {
     saving.value = false
   }
 }
 
-function openAddScore() {
-  Object.assign(scoreForm, {
-    id: null,
-    criteriaId: parseInt(criteriaId),
-    scoreLabel: 'Average',
-    description: ''
-  })
-  showScoreDialog.value = true
-}
-
-function openEditScore(def) {
-  Object.assign(scoreForm, { ...def })
-  showScoreDialog.value = true
-}
-
-async function handleSaveScore() {
-  savingScore.value = true
-  try {
-    if (isScoreEdit.value) {
-      await updateScoreDefinition(scoreForm.id, scoreForm)
-      ElMessage.success(t.value('evaluationCriteria.scoreDefinitions.messages.updateSuccess'))
-    } else {
-      await createScoreDefinition(scoreForm)
-      ElMessage.success(t.value('evaluationCriteria.scoreDefinitions.messages.createSuccess'))
-    }
-    showScoreDialog.value = false
-    fetchCriteria()
-  } catch (error) {
-     console.error(error)
-     ElMessage.error(t.value('evaluationCriteria.messages.saveError'))
-  } finally {
-    savingScore.value = false
-  }
-}
-
-async function handleDeleteScore(id) {
-    try {
-        await ElMessageBox.confirm(t.value('evaluationCriteria.messages.confirmDelete') || 'Delete this definition?', 'Warning', {
-             type: 'warning'
-        })
-        await deleteScoreDefinition(id)
-        ElMessage.success(t.value('evaluationCriteria.scoreDefinitions.messages.deleteSuccess'))
-        fetchCriteria()
-    } catch (e) {
-      
-    }
-}
-
-onMounted(fetchCriteria)
+onMounted(async () => {
+  await loadDropdownData()
+  await fetchCriteria()
+})
 </script>
 
 <template>
@@ -158,35 +159,82 @@ onMounted(fetchCriteria)
     <div class="evaluation-detail-view" v-loading="loading">
       <div class="header-section">
         <h2 class="page-title">
-          {{ isEdit ? t('evaluationCriteria.form.editTitle') : t('evaluationCriteria.form.createTitle') }}
+          <template v-if="isEdit">
+            {{ isParentCriteria ? t('evaluationCriteria.form.editParentTitle') || 'Edit Parent Criteria' : t('evaluationCriteria.form.editTitle') }}
+          </template>
+          <template v-else>
+            {{ isCreatingChild ? t('evaluationCriteria.form.createChildTitle') || 'Create Child Criteria' : t('evaluationCriteria.form.createParentTitle') || 'Create Parent Criteria' }}
+          </template>
         </h2>
         <el-button @click="router.push('/admin/evaluation-criteria')">
-           {{ t('evaluationCriteria.form.cancel') }}
+          {{ t('evaluationCriteria.form.cancel') }}
         </el-button>
       </div>
+
+      <!-- Info alert for parent criteria -->
+      <el-alert 
+        v-if="isParentCriteria" 
+        :title="t('evaluationCriteria.form.parentInfo') || 'This is a parent criteria. You can only edit basic info. Score definitions are managed on child criteria.'"
+        type="info"
+        show-icon
+        :closable="false"
+        style="margin-bottom: 20px;"
+      />
 
       <div class="content-grid">
         <!-- Main Form -->
         <el-card shadow="never" class="form-card">
           <template #header>
-            <div class="card-title">Basic Information</div>
+            <div class="card-title">{{ t('evaluationCriteria.form.basicInfo') || 'Basic Information' }}</div>
           </template>
           
           <el-form label-position="top" :model="formData">
             <el-row :gutter="20">
               <el-col :span="12">
-                <el-form-item :label="t('evaluationCriteria.form.name')" required>
-                  <el-input v-model="formData.name" />
+                <el-form-item :label="t('evaluationCriteria.form.group')" required>
+                  <el-select 
+                    v-model="formData.groupId" 
+                    :placeholder="t('evaluationCriteria.form.selectGroup')" 
+                    :disabled="isCreatingChild || isChildCriteria"
+                    style="width: 100%"
+                    @change="formData.parentId = null"
+                  >
+                    <el-option 
+                      v-for="group in criteriaGroups" 
+                      :key="group.id" 
+                      :label="group.name" 
+                      :value="group.id" 
+                    />
+                  </el-select>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item :label="t('evaluationCriteria.form.category')" required>
-                  <el-select v-model="formData.category" style="width: 100%">
-                    <el-option v-for="cat in categories" :key="cat" :label="cat" :value="cat" />
+                <!-- Parent selection: only for child criteria (creating or editing) -->
+                <el-form-item 
+                  v-if="isCreatingChild || isChildCriteria" 
+                  :label="t('evaluationCriteria.form.parentCriteria')"
+                  required
+                >
+                  <el-select 
+                    v-model="formData.parentId" 
+                    :placeholder="t('evaluationCriteria.form.selectParent')" 
+                    :disabled="isCreatingChild"
+                    style="width: 100%"
+                  >
+                    <el-option 
+                      v-for="main in filteredMainCriteria" 
+                      :key="main.id" 
+                      :label="main.name" 
+                      :value="main.id" 
+                    />
                   </el-select>
                 </el-form-item>
               </el-col>
             </el-row>
+
+            <el-form-item :label="t('evaluationCriteria.form.name')" required>
+              <el-input v-model="formData.name" :placeholder="t('evaluationCriteria.form.namePlaceholder') || 'Enter criteria name'" />
+            </el-form-item>
             
             <el-form-item :label="t('evaluationCriteria.form.description')">
               <el-input v-model="formData.description" type="textarea" :rows="3" />
@@ -195,68 +243,35 @@ onMounted(fetchCriteria)
             <el-row :gutter="20">
               <el-col :span="8">
                 <el-form-item :label="t('evaluationCriteria.form.weight')">
-                  <el-input-number v-model="formData.weight" :min="0" :precision="2" :step="0.1" style="width: 100%"/>
+                  <el-input-number v-model="formData.weight" :min="0" :max="10" :precision="2" :step="0.1" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item :label="t('evaluationCriteria.form.displayOrder')">
+                  <el-input-number v-model="formData.displayOrder" :min="1" :step="1" style="width: 100%"/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item :label="t('evaluationCriteria.form.isActive')">
+                  <el-switch v-model="formData.isActive" />
                 </el-form-item>
               </el-col>
             </el-row>
             
             <div class="form-actions">
-               <el-button type="primary" @click="handleSaveCriteria" :loading="saving">
-                 {{ isEdit ? t('evaluationCriteria.form.save') : t('evaluationCriteria.form.create') }}
-               </el-button>
+              <el-button type="primary" @click="handleSaveCriteria" :loading="saving">
+                {{ isEdit ? t('evaluationCriteria.form.save') : t('evaluationCriteria.form.create') }}
+              </el-button>
             </div>
           </el-form>
         </el-card>
 
-      
-        <el-card v-if="isEdit" shadow="never" class="definitions-card">
-           <template #header>
-            <div class="card-header">
-              <div class="card-title">{{ t('evaluationCriteria.scoreDefinitions.title') }}</div>
-              <el-button type="primary" size="small" :icon="Plus" @click="openAddScore">
-                {{ t('evaluationCriteria.scoreDefinitions.add') }}
-              </el-button>
-            </div>
-          </template>
-
-          <el-table :data="formData.scoreDefinitions" stripe>
-             <el-table-column prop="scoreLabel" :label="t('evaluationCriteria.scoreDefinitions.scoreLabel')" width="120">
-               <template #default="{ row }">
-                 <el-tag>{{ row.scoreLabel }}</el-tag>
-               </template>
-             </el-table-column>
-             <el-table-column :label="t('evaluationCriteria.scoreDefinitions.scoreRange')" width="120" align="center">
-                <template #default="{ row }">{{ getScoreRange(row.scoreLabel) }}</template>
-             </el-table-column>
-             <el-table-column prop="description" :label="t('evaluationCriteria.scoreDefinitions.description')" min-width="200" show-overflow-tooltip/>
-             
-             <el-table-column :label="t('evaluationCriteria.scoreDefinitions.actions')" width="120" fixed="right">
-                <template #default="{ row }">
-                   <el-button :icon="Edit" circle size="small" @click="openEditScore(row)"/>
-                   <el-button type="danger" :icon="Delete" circle size="small" @click="handleDeleteScore(row.id)"/>
-                </template>
-             </el-table-column>
-          </el-table>
-        </el-card>
+        <!-- Score Definitions: Only show for child criteria (has parentId) -->
+        <EvaluationCriteriaScoreDefinitions 
+          v-if="isEdit && !isParentCriteria" 
+          :criteriaId="criteriaId" 
+        />
       </div>
-
-      <!-- Score Definition Dialog -->
-      <el-dialog v-model="showScoreDialog" :title="isScoreEdit ? t('evaluationCriteria.scoreDefinitions.form.editTitle') : t('evaluationCriteria.scoreDefinitions.form.addTitle')" width="500px">
-         <el-form label-position="top" :model="scoreForm">
-            <el-form-item :label="t('evaluationCriteria.scoreDefinitions.scoreLabel')" required>
-               <el-select v-model="scoreForm.scoreLabel" style="width: 100%">
-                 <el-option v-for="label in scoreLabels" :key="label" :label="`${label} (${getScoreRange(label)})`" :value="label"/>
-               </el-select>
-            </el-form-item>
-             <el-form-item :label="t('evaluationCriteria.scoreDefinitions.description')">
-               <el-input v-model="scoreForm.description" type="textarea" :rows="3"/>
-            </el-form-item>
-         </el-form>
-         <template #footer>
-            <el-button @click="showScoreDialog = false">{{ t('evaluationCriteria.scoreDefinitions.form.cancel') }}</el-button>
-            <el-button type="primary" @click="handleSaveScore" :loading="savingScore">{{ t('evaluationCriteria.scoreDefinitions.form.save') }}</el-button>
-         </template>
-      </el-dialog>
     </div>
   </AdminLayout>
 </template>
@@ -303,5 +318,14 @@ onMounted(fetchCriteria)
   display: flex;
   justify-content: flex-end;
   margin-top: 24px;
+}
+
+:deep(.el-card) {
+  border-radius: 12px;
+}
+
+:deep(.el-card__header) {
+  padding: 16px 20px;
+  background: #f9fafb;
 }
 </style>

@@ -69,6 +69,11 @@ public enum SuccessCode {
     UPDATE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Update criteria score definition successful", HttpStatus.OK),
     DELETE_CRITERIA_SCORE_DEFINITION_SUCCESSFUL("Delete criteria score definition successful", HttpStatus.OK),
 
+    CREATE_CRITERIA_GROUP_SUCCESSFUL("Create criteria group successful", HttpStatus.CREATED),
+    GET_CRITERIA_GROUP_SUCCESSFUL("Get criteria group successful", HttpStatus.OK),
+    UPDATE_CRITERIA_GROUP_SUCCESSFUL("Update criteria group successful", HttpStatus.OK),
+    DELETE_CRITERIA_GROUP_SUCCESSFUL("Delete criteria group successful", HttpStatus.OK),
+
     // Evaluation Session success codes
     CREATE_EVALUATION_SESSION_SUCCESSFUL("Create evaluation session successful", HttpStatus.CREATED),
     GET_EVALUATION_SESSION_SUCCESSFUL("Get evaluation session successful", HttpStatus.OK),
@@ -77,7 +82,8 @@ public enum SuccessCode {
     DELETE_EVALUATION_SESSION_SUCCESSFUL("Delete evaluation session successful", HttpStatus.OK),
     GENERATE_EVALUATION_SESSION_SUCCESSFUL("Generate evaluation session successful", HttpStatus.CREATED),
     GET_INTERN_EVALUATION_SUMMARY_SUCCESSFUL("Get intern evaluation summary successful", HttpStatus.OK),
-    ;
+
+    GET_ALL_INTERNSHIP_BATCHES_SUCCESSFUL("Get all internship batches successful", HttpStatus.OK);
 
     SuccessCode(String message, HttpStatusCode statusCode) {
         this.message = message;

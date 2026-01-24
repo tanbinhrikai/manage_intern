@@ -1,6 +1,5 @@
 package com.rikai.backend.dto.request.evaluation_criteria;
 
-import com.rikai.backend.model.Enum.CriteriaCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +14,8 @@ import java.math.BigDecimal;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EvaluationCriteriaCreationRequest {
-    @NotNull(message = "CRITERIA_CATEGORY_REQUIRED")
-    CriteriaCategory category;
+    @NotNull(message = "CRITERIA_GROUP_REQUIRED")
+    Long groupId;
 
     @NotBlank(message = "CRITERIA_NAME_REQUIRED")
     String name;
@@ -26,7 +25,7 @@ public class EvaluationCriteriaCreationRequest {
     @Builder.Default
     BigDecimal weight = BigDecimal.ONE;
     Long parentId;
-    @Min(value = 0, message = "DISPLAY_ORDER_INVALID")
+    @Min(value = 1, message = "DISPLAY_ORDER_INVALID")
     Integer displayOrder;
     Boolean isActive;
 }

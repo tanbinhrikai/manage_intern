@@ -10,9 +10,11 @@ import com.rikai.backend.dto.response.intern.InternResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.InternMapper;
 import com.rikai.backend.model.Intern;
+import com.rikai.backend.model.InternshipBatch;
 import com.rikai.backend.model.Position;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.InternRepository;
+import com.rikai.backend.repository.InternshipBatchRepository;
 import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.AuthenticationService;
@@ -25,10 +27,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +40,7 @@ import java.util.UUID;
 public class InternService implements IInternService {
     InternRepository internRepository;
     PositionRepository positionRepository;
+    InternshipBatchRepository internshipBatchRepository;
     UsersRepository usersRepository;
     InternMapper internMapper;
     AuthenticationService authenticationService;
@@ -80,10 +85,15 @@ public class InternService implements IInternService {
         validateDateRange(request.getStartDate(), request.getEndDate());
         Position position = getPosition(request.getPositionId());
         Users mentor = getMentor(request.getMentorId());
+        InternshipBatch internshipBatch = getBatch(request.getInternshipBatchId());
 
         Intern intern = internMapper.toIntern(request);
+
+        String uniqueEmail = handleEmailGeneration(request.getFullName());
+        intern.setEmail(uniqueEmail);
         intern.setPosition(position);
         intern.setMentor(mentor);
+        intern.setInternshipBatch(internshipBatch);
 
         Intern saved = internRepository.save(intern);
         return internMapper.toInternResponse(saved);
@@ -230,5 +240,56 @@ public class InternService implements IInternService {
     private Users getMentor(UUID mentorId) {
         return usersRepository.findById(mentorId)
                 .orElseThrow(() -> new AppException(ErrorCode.MENTOR_NOT_EXISTED));
+    }
+
+    private InternshipBatch getBatch(Long batchId) {
+        return internshipBatchRepository.findById(batchId)
+                .orElseThrow(() -> new AppException(ErrorCode.BATCH_NOT_EXISTED));
+    }
+
+    private String handleEmailGeneration(String fullName) {
+        String domain = "@rikai.technology";
+
+        // 1. Pick email prefix from full name
+        String basePrefix = getEmailPrefixFromFullName(fullName);
+
+        // 2. Initialize email
+        String finalEmail = basePrefix + domain;
+        int count = 1;
+
+        // 3. Loop to check uniqueness
+        // if database has "vinh.nguyen@...", then try "vinh.nguyen1@...", "vinh.nguyen2@...", etc.
+        while (internRepository.existsByEmail(finalEmail)) {
+            finalEmail = basePrefix + count + domain;
+            count++;
+        }
+
+        return finalEmail;
+    }
+
+    // Function to get email prefix from full name
+    private String getEmailPrefixFromFullName(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) return "unknown";
+
+        String normalized = removeAccent(fullName).toLowerCase().trim();
+        String[] parts = normalized.split("\\s+");
+
+        if (parts.length < 1) return "unknown";
+
+        String firstName = parts[parts.length - 1];
+        String lastName = parts[0];
+
+        if (parts.length > 1) {
+            return firstName + "." + lastName;
+        } else {
+            return firstName;
+        }
+    }
+
+    // Function to remove accents from a string
+    private String removeAccent(String s) {
+        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("").replace('đ', 'd').replace('Đ', 'D');
     }
 }

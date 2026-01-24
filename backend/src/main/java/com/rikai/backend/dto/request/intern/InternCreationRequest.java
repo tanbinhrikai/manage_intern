@@ -29,4 +29,7 @@ public class InternCreationRequest {
 
     @NotNull(message = "END_DATE_REQUIRED")
     LocalDate endDate;
+
+    @NotNull(message = "BATCH_ID_REQUIRED")
+    Long internshipBatchId;
 }

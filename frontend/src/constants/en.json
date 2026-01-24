@@ -291,6 +291,7 @@
             "ACTIVE": "Active",
             "WARNING": "Warning",
             "COMPLETE": "Completed",
+            "COMPLETED": "Completed",
             "DROPPED": "Dropped"
         },
         "messages": {
@@ -406,27 +407,43 @@
     "evaluationCriteria": {
         "title": "Evaluation Criteria",
         "addNew": "Add Criteria",
+        "addChild": "Add Child",
         "table": {
             "id": "ID",
-            "category": "Category",
+            "group": "Group",
+            "criteria": "criteria",
             "name": "Criteria Name",
             "weight": "Weight",
             "isActive": "Active",
+            "active": "Active",
+            "inactive": "Inactive",
             "order": "Order",
             "actions": "Actions"
         },
         "messages": {
             "loadError": "Failed to load criteria",
+            "noData": "No criteria in this group",
             "createSuccess": "Criteria created successfully!",
             "updateSuccess": "Criteria updated successfully!",
             "deleteSuccess": "Criteria deleted successfully!",
-            "saveError": "An error occurred, please try again."
+            "saveError": "An error occurred, please try again.",
+            "confirmDelete": "Are you sure you want to delete this criteria?",
+            "validationError": "Please fill in all required fields!"
         },
         "form": {
             "createTitle": "Create Evaluation Criteria",
-            "editTitle": "Edit Evaluation Criteria",
-            "category": "Category (EXPERTISE, MINDSET, SKILLS)",
+            "createParentTitle": "Create Parent Criteria",
+            "editTitle": "Edit Child Criteria",
+            "editParentTitle": "Edit Parent Criteria",
+            "createChildTitle": "Create Child Criteria",
+            "parentInfo": "This is a parent criteria. You can only edit basic info. Score definitions are managed on child criteria.",
+            "basicInfo": "Basic Information",
+            "group": "Group",
+            "selectGroup": "Select a group",
+            "parentCriteria": "Parent Criteria",
+            "selectParent": "Select parent (optional, for sub-criteria)",
             "name": "Name",
+            "namePlaceholder": "Enter criteria name",
             "description": "Description",
             "weight": "Weight",
             "displayOrder": "Display Order",
@@ -442,12 +459,6 @@
             "scoreRange": "Score Range",
             "description": "Description",
             "actions": "Actions",
-            "labels": {
-                "Excellent": "Excellent",
-                "Good": "Good",
-                "Average": "Average",
-                "Weak": "Weak"
-            },
             "form": {
                 "addTitle": "Add Score Definition",
                 "editTitle": "Edit Score Definition",
@@ -459,6 +470,21 @@
                 "updateSuccess": "Definition updated successfully!",
                 "deleteSuccess": "Definition deleted successfully!"
             }
+        },
+        "group": {
+            "tag": "Group",
+            "addNew": "Add Group",
+            "addTitle": "Add Group",
+            "editTitle": "Edit Group",
+            "name": "Group Name",
+            "namePlaceholder": "Enter group name",
+            "displayOrder": "Display Order",
+            "create": "Create Group",
+            "createSuccess": "Group created successfully!",
+            "updateSuccess": "Group updated successfully!",
+            "deleteSuccess": "Group deleted successfully!",
+            "confirmDelete": "Delete this group and all its criteria?",
+            "validationError": "Please enter group name"
         }
     },
     "weeklyReport": {
@@ -475,6 +501,8 @@
         },
         "table": {
             "criteria": "Criteria",
+            "criteriaParent": "Parent Criteria",
+            "criteriaChild": "Child Criteria",
             "excellent": "Excellent (9-10)",
             "good": "Good (7-8)",
             "average": "Average (5-6)",
@@ -494,7 +522,7 @@
             "commentPlaceholder": "Enter comment..."
         },
         "actions": {
-            "save": "Save Draft",
+            "save": "Save",
             "submit": "Submit Report",
             "cancel": "Cancel",
             "edit": "Edit",

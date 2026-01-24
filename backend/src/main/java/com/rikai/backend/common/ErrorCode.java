@@ -1,9 +1,8 @@
 package com.rikai.backend.common;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-
-import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
@@ -39,7 +38,6 @@ public enum ErrorCode {
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED),
     USERNAME_OR_PASSWORD_INCORRECT("Incorrect username or password.", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
-    // Weekly Report errors
     WEEKLY_REPORT_NOT_EXISTED("Weekly report not found", HttpStatus.NOT_FOUND),
     WEEKLY_REPORT_DUPLICATE("Weekly report already exists for this intern and week", HttpStatus.BAD_REQUEST),
     INTERN_ID_REQUIRED("Intern ID is required", HttpStatus.BAD_REQUEST),
@@ -52,13 +50,13 @@ public enum ErrorCode {
     INVALID_CRITERIA_PARENT("Invalid parent criteria", HttpStatus.BAD_REQUEST),
     INVALID_CRITERIA_CATEGORY("Criteria category does not match parent category", HttpStatus.BAD_REQUEST),
 
-    // Validation keys (DTO)
     CRITERIA_CATEGORY_REQUIRED("Criteria category is required", HttpStatus.BAD_REQUEST),
     CRITERIA_NAME_REQUIRED("Criteria name is required", HttpStatus.BAD_REQUEST),
     DISPLAY_ORDER_INVALID("Display order must be >= 0", HttpStatus.BAD_REQUEST),
     CRITERIA_ID_REQUIRED("Criteria id is required", HttpStatus.BAD_REQUEST),
     SCORE_LABEL_REQUIRED("Score label is required", HttpStatus.BAD_REQUEST),
     INVALID_FULLNAME("Full name is required", HttpStatus.BAD_REQUEST),
+    BATCH_ID_REQUIRED("Batch ID is required", HttpStatus.BAD_REQUEST),
     ROLE_REQUIRED("Role is required", HttpStatus.BAD_REQUEST),
     DEPARTMENT_REQUIRED("Department is required", HttpStatus.BAD_REQUEST),
     POSITION_TITLE_REQUIRED("Position title is required", HttpStatus.BAD_REQUEST),
@@ -72,6 +70,9 @@ public enum ErrorCode {
     FORBIDDEN("You are not allowed to perform this action", HttpStatus.FORBIDDEN),
     INVALID_INTERN_STATUS("Invalid intern status", HttpStatus.BAD_REQUEST),
 
+    BATCH_NOT_EXISTED("Internship Batch not found", HttpStatus.NOT_FOUND),
+
+
     // Evaluation Session errors
     EVALUATION_SESSION_NOT_EXISTED("Evaluation session not found", HttpStatus.NOT_FOUND),
     EVALUATION_SESSION_ALREADY_EXISTS("Evaluation session already exists for this intern and session type", HttpStatus.BAD_REQUEST),
@@ -80,7 +81,11 @@ public enum ErrorCode {
     INVALID_EVALUATION_DATE("Evaluation date must be within intern's internship period", HttpStatus.BAD_REQUEST),
     NO_WEEKLY_REPORTS_FOUND("No weekly reports found for the evaluation period", HttpStatus.BAD_REQUEST),
     SESSION_TYPE_REQUIRED("Session type is required", HttpStatus.BAD_REQUEST),
-    EVALUATION_DATE_REQUIRED("Evaluation date is required", HttpStatus.BAD_REQUEST);
+    EVALUATION_DATE_REQUIRED("Evaluation date is required", HttpStatus.BAD_REQUEST),
+    CRITERIA_GROUP_NOT_EXISTED("Criteria group not found", HttpStatus.NOT_FOUND),
+    CRITERIA_GROUP_REQUIRED("Criteria group is required", HttpStatus.BAD_REQUEST),
+    GROUP_NAME_REQUIRED("Group name is required", HttpStatus.BAD_REQUEST),
+    INVALID_CRITERIA_GROUP("Criteria group does not match parent group", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;
