@@ -23,6 +23,13 @@ public class Position {
     @Column(name = "title" , nullable = false)
     String title;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    Department department;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    String description;
+
     @OneToMany(mappedBy = "position")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

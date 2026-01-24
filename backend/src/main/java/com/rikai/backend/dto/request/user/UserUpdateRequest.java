@@ -1,6 +1,5 @@
 package com.rikai.backend.dto.request.user;
 
-import com.rikai.backend.validation.DobConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -41,6 +41,9 @@ public class AuditLog {
     @Column(name = "details", columnDefinition = "TEXT")
     String details;
 
+    @Column(name = "ip_address")
+    String ipAddress;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;

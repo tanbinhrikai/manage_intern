@@ -18,7 +18,7 @@ import java.time.Instant;
 public class InternshipRoadmap {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)

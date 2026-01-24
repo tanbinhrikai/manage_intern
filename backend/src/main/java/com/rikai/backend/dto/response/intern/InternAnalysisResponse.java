@@ -11,10 +11,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class InternAnalysisResponse {
-    long totalInterns;
-    long totalMentors;
-    long activeInterns;
-    long warningInterns;
-    long droppedInterns;
-    long completedInterns;
+    Long totalInterns;
+    Long totalMentors;
+    Long activeInterns;
+    Long warningInterns;
+    Long droppedInterns;
+    Long completedInterns;
 }

@@ -1,6 +1,7 @@
 package com.rikai.backend.model;
 
 import com.rikai.backend.common.InternStatus;
+import com.rikai.backend.model.Enum.OfferStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -25,8 +26,6 @@ public class Intern {
     @Column(name = "full_name", nullable = false)
     String fullName;
 
-    private String email;
-
     @ManyToOne
     @JoinColumn(name = "position_id", referencedColumnName = "id", nullable = false)
     Position position;
@@ -35,7 +34,7 @@ public class Intern {
     @JoinColumn(name = "mentor_id", referencedColumnName = "id", nullable = false)
     Users mentor;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", referencedColumnName = "id", nullable = false)
     InternshipBatch internshipBatch;
 
@@ -48,6 +47,22 @@ public class Intern {
     @Enumerated(EnumType.STRING)
     @Column(name = "intern_status", nullable = false)
     InternStatus internStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "offer_status")
+    OfferStatus offerStatus;
+
+    @Column(name = "offer_date")
+    LocalDate offerDate;
+
+    @Column(name = "offer_notes")
+    String offerNotes;
+
+    @Column(name = "email", unique = true)
+    String email;
+
+    @Column(name = "phone")
+    String phone;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
