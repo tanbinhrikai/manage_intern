@@ -30,10 +30,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -134,18 +131,27 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .build();
 
         if (createDTO.getDetails() != null) {
-            List<WeeklyReportDetail> details = createDTO.getDetails().stream().map(detailReq -> {
+            List<WeeklyReportDetail> details = new ArrayList<>();
+            for (WeeklyReportDetailRequest detailReq : createDTO.getDetails()) {
                 EvaluationCriteria criteria = evaluationCriteriaRepository.findById(detailReq.getCriteriaId())
                         .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
-                return WeeklyReportDetail.builder()
+                if (criteria.getParent() == null) {
+                    // Parent criteria scores are calculated server-side.
+                    continue;
+                }
+                details.add(WeeklyReportDetail.builder()
                         .weeklyReport(report)
                         .criteria(criteria)
                         .score(detailReq.getScore())
                         .comment(detailReq.getComment())
-                        .build();
-            }).collect(Collectors.toList());
-            report.setDetails(details);
-            recalculateMainScores(report);
+                        .build());
+            }
+            if (!details.isEmpty()) {
+                report.setDetails(details);
+                recalculateMainScores(report);
+                // Manually trigger averageScore calculation
+                report.updateAverageScore();
+            }
         }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
@@ -155,7 +161,8 @@ public class WeeklyReportService implements IWeeklyReportService {
     @Override
     @Transactional
     public WeeklyReportResponse updateReport(Integer id, WeeklyReportUpdateDTO updateDTO) {
-        WeeklyReport report = weeklyReportRepository.findById(id)
+        // Fetch report with details to ensure averageScore calculation works correctly
+        WeeklyReport report = weeklyReportRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new AppException(ErrorCode.WEEKLY_REPORT_NOT_EXISTED));
 
         Users currentUser = authenticationService.getCurrentUser();
@@ -189,36 +196,55 @@ public class WeeklyReportService implements IWeeklyReportService {
                 report.setDetails(new ArrayList<>());
             }
 
-            List<Long> requestCriteriaIds = updateDTO.getDetails().stream()
-                    .map(WeeklyReportDetailRequest::getCriteriaId).toList();
+            Map<Long, WeeklyReportDetail> existingDetailMap = report.getDetails().stream()
+                    .filter(detail -> detail.getCriteria() != null)
+                    .collect(Collectors.toMap(
+                            detail -> detail.getCriteria().getId(),
+                            detail -> detail,
+                            (existing, replacement) -> existing
+                    ));
 
-            report.getDetails().removeIf(
-                    weeklyReportDetail -> !requestCriteriaIds.contains(weeklyReportDetail.getCriteria().getId()));
-
-            for (WeeklyReportDetailRequest weeklyReportDetailRequest : updateDTO.getDetails()) {
-                WeeklyReportDetail existingDetail = report.getDetails().stream()
-                        .filter(detail -> detail.getCriteria().getId()
-                                .equals(weeklyReportDetailRequest.getCriteriaId()))
-                        .findFirst()
-                        .orElse(null);
-
-                if (existingDetail != null) {
-                    existingDetail.setScore(weeklyReportDetailRequest.getScore());
-                    existingDetail.setComment(weeklyReportDetailRequest.getComment());
-                } else {
-                    EvaluationCriteria criteria = evaluationCriteriaRepository
-                            .findById(weeklyReportDetailRequest.getCriteriaId())
-                            .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
-
-                    WeeklyReportDetail newDetail = WeeklyReportDetail.builder()
-                            .weeklyReport(report)
-                            .criteria(criteria)
-                            .score(weeklyReportDetailRequest.getScore())
-                            .comment(weeklyReportDetailRequest.getComment())
-                            .build();
-                    report.getDetails().add(newDetail);
+            Set<Long> requestCriteriaIds = new HashSet<>();
+            for (WeeklyReportDetailRequest requestItem : updateDTO.getDetails()) {
+                if (requestItem.getCriteriaId() == null) {
+                    continue;
                 }
+
+                WeeklyReportDetail existingDetail = existingDetailMap.get(requestItem.getCriteriaId());
+                if (existingDetail != null) {
+                    if (existingDetail.getCriteria() != null && existingDetail.getCriteria().getParent() == null) {
+                        // Parent criteria scores are calculated server-side.
+                        continue;
+                    }
+                    existingDetail.setScore(requestItem.getScore());
+                    existingDetail.setComment(requestItem.getComment());
+                    requestCriteriaIds.add(requestItem.getCriteriaId());
+                    continue;
+                }
+
+                EvaluationCriteria criteria = evaluationCriteriaRepository
+                        .findById(requestItem.getCriteriaId())
+                        .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+                if (criteria.getParent() == null) {
+                    // Parent criteria scores are calculated server-side.
+                    continue;
+                }
+
+                WeeklyReportDetail newDetail = WeeklyReportDetail.builder()
+                        .weeklyReport(report)
+                        .criteria(criteria)
+                        .score(requestItem.getScore())
+                        .comment(requestItem.getComment())
+                        .build();
+                report.getDetails().add(newDetail);
+                requestCriteriaIds.add(requestItem.getCriteriaId());
             }
+
+            report.getDetails().removeIf(detail ->
+                    detail.getCriteria() != null
+                            && detail.getCriteria().getParent() != null
+                            && !requestCriteriaIds.contains(detail.getCriteria().getId()));
+
             recalculateMainScores(report);
         }
         if (updateDTO.getIssuesRisks() != null) {
@@ -228,12 +254,21 @@ public class WeeklyReportService implements IWeeklyReportService {
             report.setMentorOverallComment(updateDTO.getMentorOverallComment());
         }
 
+        // Manually trigger averageScore calculation to ensure it's updated
+        // @PreUpdate might not be triggered if only collection changes
+        report.updateAverageScore();
+        
+        // Force Hibernate to detect the change by touching a field
+        // This ensures @PreUpdate is called
+        report.setUpdatedAt(java.time.Instant.now());
+
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
 
     /**
      * Delete weekly report by ID
+     *
      * @param id
      */
 
@@ -256,6 +291,7 @@ public class WeeklyReportService implements IWeeklyReportService {
 
     /**
      * Get weekly reports by intern ID with pagination
+     *
      * @param internId
      * @param pageRequest
      * @return
@@ -310,6 +346,7 @@ public class WeeklyReportService implements IWeeklyReportService {
 
     /**
      * Recalculate main scores based on sub-criteria scores and weights
+     *
      * @param report
      */
     private void recalculateMainScores(WeeklyReport report) {
@@ -318,8 +355,27 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
 
         List<WeeklyReportDetail> details = report.getDetails();
-        // Delete parent criteria details to recalculate
-        details.removeIf(detail -> detail.getCriteria() != null && detail.getCriteria().getParent() == null);
+        Set<Long> seenParentIds = new HashSet<>();
+        details.removeIf(detail -> {
+            if (detail.getCriteria() != null && detail.getCriteria().getParent() == null) {
+                Long criteriaId = detail.getCriteria().getId();
+                if (criteriaId != null) {
+                    if (seenParentIds.contains(criteriaId)) {
+                        return true;
+                    }
+                    seenParentIds.add(criteriaId);
+                }
+            }
+            return false;
+        });
+
+        Map<Long, WeeklyReportDetail> parentDetailMap = details.stream()
+                .filter(detail -> detail.getCriteria() != null && detail.getCriteria().getParent() == null)
+                .collect(Collectors.toMap(
+                        detail -> detail.getCriteria().getId(),
+                        detail -> detail,
+                        (existing, replacement) -> existing
+                ));
 
         // Group sub-criteria by their parent criteria
         Map<EvaluationCriteria, List<WeeklyReportDetail>> subCriteriaByParent = new LinkedHashMap<>();
@@ -373,12 +429,25 @@ public class WeeklyReportService implements IWeeklyReportService {
                 finalScore = BigDecimal.TEN;
             }
 
-            WeeklyReportDetail mainDetail = WeeklyReportDetail.builder()
-                    .weeklyReport(report)
-                    .criteria(parent)
-                    .score(finalScore)
-                    .build();
-            details.add(mainDetail);
+            WeeklyReportDetail mainDetail = parentDetailMap.get(parent.getId());
+            if (mainDetail != null) {
+                mainDetail.setScore(finalScore);
+            } else {
+                WeeklyReportDetail newDetail = WeeklyReportDetail.builder()
+                        .weeklyReport(report)
+                        .criteria(parent)
+                        .score(finalScore)
+                        .build();
+                details.add(newDetail);
+            }
         }
+
+        Set<Long> parentIdsWithSubCriteria = subCriteriaByParent.keySet().stream()
+                .map(EvaluationCriteria::getId)
+                .collect(Collectors.toSet());
+        details.removeIf(detail ->
+                detail.getCriteria() != null
+                        && detail.getCriteria().getParent() == null
+                        && !parentIdsWithSubCriteria.contains(detail.getCriteria().getId()));
     }
 }

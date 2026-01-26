@@ -12,24 +12,33 @@ import {
   deleteCriteriaGroup
 } from '@/api/evaluation-criteria'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useLoading, useApi } from '@/composables'
+import { createCriteriaGroupCreationRequest, createCriteriaGroupUpdateRequest } from '@/types/evaluationCriteria'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 const router = useRouter()
 
-const loading = ref(false)
+// Composables
+const { loading, withLoading, setLoadingState, isLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+})
+
+// Data
 const treeData = ref([])
 
 // Group dialog state
 const groupDialogVisible = ref(false)
 const groupDialogMode = ref('create') // 'create' or 'edit'
-const groupSaving = ref(false)
-const groupForm = reactive({
-  id: null,
-  name: '',
-  displayOrder: 1
-})
+const groupForm = reactive(createCriteriaGroupCreationRequest())
 
+/**
+ * Transform criteria groups into tree structure for el-tree component
+ * @param {CriteriaGroup[]} groups - Criteria groups from backend
+ * @returns {Array} Transformed tree data
+ */
 function transformToTreeData(groups) {
   return groups.map(group => ({
     id: `group-${group.id}`,
@@ -60,27 +69,33 @@ function transformToTreeData(groups) {
   }))
 }
 
+/** Default props for el-tree component */
 const defaultProps = {
   children: 'children',
   label: 'label'
 }
 
+/**
+ * Fetch evaluation criteria groups from backend
+ */
 async function fetchCriteria() {
-  loading.value = true
-  try {
-    const res = await getEvaluationCriteria()
+  await withLoading(async () => {
+    const res = await executeApi(
+      () => getEvaluationCriteria(),
+      null,
+      'evaluationCriteria.messages.loadError'
+    )
     const groups = res.data?.data || []
     treeData.value = transformToTreeData(groups)
-  } catch (error) {
-    ElMessage.error(t.value('evaluationCriteria.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 // ========== Criteria Handlers ==========
+/**
+ * Handle add criteria - navigate to create page
+ * @param {Object} data - Group or criteria data
+ */
 function handleAddCriteria(data) {
-  console.log(data)
   if(data.isGroup) {
     router.push(`/admin/evaluation-criteria/create?groupId=${data.rawId}`)
     return
@@ -88,10 +103,19 @@ function handleAddCriteria(data) {
   router.push('/admin/evaluation-criteria/create')
 }
 
+/**
+ * Handle add child criteria - navigate to create page with parent info
+ * @param {Object} parentData - Parent criteria data
+ */
 function handleAddChild(parentData) {
   router.push(`/admin/evaluation-criteria/create?parentId=${parentData.id}&groupId=${parentData.groupId}`)
 }
 
+/**
+ * Handle edit criteria or group
+ * @param {Object} node - Tree node
+ * @param {Object} data - Criteria or group data
+ */
 function handleEdit(node, data) {
   if (data.isGroup) {
     openGroupDialog('edit', data)
@@ -111,27 +135,37 @@ async function handleDelete(node, data) {
       'Warning',
       { confirmButtonText: 'OK', cancelButtonText: 'Cancel', type: 'warning' }
     )
-    await deleteEvaluationCriteria(data.id)
-    ElMessage.success(t.value('evaluationCriteria.messages.deleteSuccess'))
+    await executeApi(
+      () => deleteEvaluationCriteria(data.id),
+      'evaluationCriteria.messages.deleteSuccess',
+      true
+    )
     fetchCriteria()
   } catch (error) {
     if (error !== 'cancel') {
-      //console.error(error)
+      // Error already handled by useApi
     }
   }
 }
 
 // ========== Group Handlers ==========
+/**
+ * Open group dialog for create or edit
+ * @param {'create'|'edit'} mode - Dialog mode
+ * @param {Object|null} data - Group data for edit mode
+ */
 function openGroupDialog(mode, data = null) {
   groupDialogMode.value = mode
   if (mode === 'edit' && data) {
-    groupForm.id = data.rawId
-    groupForm.name = data.label
-    groupForm.displayOrder = data.displayOrder || 1
+    Object.assign(groupForm, {
+      ...createCriteriaGroupUpdateRequest(),
+      id: data.rawId,
+      name: data.label,
+      displayOrder: data.displayOrder || 1
+    })
   } else {
+    Object.assign(groupForm, createCriteriaGroupCreationRequest(treeData.value.length + 1))
     groupForm.id = null
-    groupForm.name = ''
-    groupForm.displayOrder = treeData.value.length + 1
   }
   groupDialogVisible.value = true
 }
@@ -142,7 +176,7 @@ async function handleSaveGroup() {
     return
   }
   
-  groupSaving.value = true
+  setLoadingState('groupSaving', true)
   try {
     const payload = {
       name: groupForm.name,
@@ -150,19 +184,25 @@ async function handleSaveGroup() {
     }
     
     if (groupDialogMode.value === 'edit') {
-      await updateCriteriaGroup(groupForm.id, payload)
-      ElMessage.success(t.value('evaluationCriteria.group.updateSuccess') || 'Group updated successfully!')
+      await executeApi(
+        () => updateCriteriaGroup(groupForm.id, payload),
+        'evaluationCriteria.group.updateSuccess',
+        true
+      )
     } else {
-      await createCriteriaGroup(payload)
-      ElMessage.success(t.value('evaluationCriteria.group.createSuccess') || 'Group created successfully!')
+      await executeApi(
+        () => createCriteriaGroup(payload),
+        'evaluationCriteria.group.createSuccess',
+        true
+      )
     }
     
     groupDialogVisible.value = false
     fetchCriteria()
   } catch (error) {
-    // Error handled by global handler
+    // Error already handled by useApi
   } finally {
-    groupSaving.value = false
+    setLoadingState('groupSaving', false)
   }
 }
 
@@ -173,12 +213,15 @@ async function handleDeleteGroup(data) {
       'Warning',
       { confirmButtonText: 'OK', cancelButtonText: 'Cancel', type: 'warning' }
     )
-    await deleteCriteriaGroup(data.rawId)
-    ElMessage.success(t.value('evaluationCriteria.group.deleteSuccess') || 'Group deleted successfully!')
+    await executeApi(
+      () => deleteCriteriaGroup(data.rawId),
+      'evaluationCriteria.group.deleteSuccess',
+      true
+    )
     fetchCriteria()
   } catch (error) {
     if (error !== 'cancel') {
-      //console.error(error)
+      // Error already handled by useApi
     }
   }
 }
@@ -274,7 +317,7 @@ onMounted(fetchCriteria)
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="groupDialogVisible = false">{{ t('evaluationCriteria.form.cancel') }}</el-button>
-          <el-button type="primary" :loading="groupSaving" @click="handleSaveGroup">
+          <el-button type="primary" :loading="isLoading('groupSaving')" @click="handleSaveGroup">
             {{ groupDialogMode === 'edit' ? t('evaluationCriteria.form.save') : (t('evaluationCriteria.group.create') || 'Create') }}
           </el-button>
         </div>

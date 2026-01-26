@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
+import { createUserCreationRequest, createUserUpdateRequest } from '@/types/user'
 
 const props = defineProps({
   visible: {
@@ -37,14 +38,7 @@ const loading = ref(false)
 
 const isEdit = computed(() => !!props.mentor)
 
-const formData = reactive({
-  fullName: '',
-  email: '',
-  password: '',
-  dateOfBirth: '',
-  departmentId: '',
-  isActive: true
-})
+const formData = reactive(createUserCreationRequest(props.userType))
 
 const formRules = computed(() => ({
   fullName: [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'blur' }],
@@ -70,21 +64,19 @@ const defaultDate = computed(() => {
 })
 
 function resetForm() {
-  formData.fullName = ''
-  formData.email = ''
-  formData.password = ''
-  formData.dateOfBirth = ''
-  formData.departmentId = ''
-  formData.isActive = true
+  Object.assign(formData, createUserCreationRequest(props.userType))
 }
 
 function fillForm(mentor) {
-  formData.fullName = mentor.fullName || ''
-  formData.email = mentor.email || ''
-  formData.dateOfBirth = mentor.dateOfBirth || ''
-  formData.departmentId = mentor.department?.id || ''
-  formData.isActive = mentor.active ?? true
-  formData.password = ''
+  Object.assign(formData, {
+    ...createUserUpdateRequest(mentor.department?.id),
+    fullName: mentor.fullName || '',
+    email: mentor.email || '',
+    dateOfBirth: mentor.dateOfBirth || '',
+    departmentId: mentor.department?.id || '',
+    isActive: mentor.active ?? true,
+    password: ''
+  })
 }
 
 watch(() => props.visible, (newVal) => {
@@ -94,6 +86,10 @@ watch(() => props.visible, (newVal) => {
     } else {
       resetForm()
     }
+  } else {
+    // Reset form when dialog closes
+    resetForm()
+    formRef.value?.resetFields()
   }
 })
 
@@ -101,7 +97,7 @@ watch(() => props.mentor, (newVal) => {
   if (newVal && props.visible) {
     fillForm(newVal)
   }
-}, { immediate: true })
+})
 
 function handleClose() {
   emit('update:visible', false)

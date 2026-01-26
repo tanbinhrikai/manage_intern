@@ -1,91 +1,128 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { onBeforeRouteLeave } from "vue-router"
 import { Search, Plus, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import { getPositions, createPosition, updatePosition } from '@/api/position'
+import { usePagination, useLoading, useApi, useDialog } from '@/composables'
+import { createPositionCreationRequest, createPositionUpdateRequest } from '@/types/position'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchPositions()
+})
+
+const { loading, withLoading, setLoadingState, isLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+})
+
+// Data
 const positions = ref([])
 const searchName = ref("")
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
-const loading = ref(false)
-const showForm = ref(false)
-const selectedPosition = ref(null)
-const formData = ref({ title: '' })
-const saving = ref(false)
+const formDialog = useDialog()
+const formData = ref(createPositionCreationRequest())
 
-const isEdit = computed(() => !!selectedPosition.value)
+/** Check if form is in edit mode */
+const isEdit = computed(() => formDialog.isEdit)
 
+/**
+ * Fetch positions from backend with current filters and pagination
+ */
 async function fetchPositions() {
-  loading.value = true
-  try {
-    const res = await getPositions({ 
-      page: currentPage.value - 1, 
-      limit: pageSize,
+  await withLoading(async () => {
+    const params = {
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined
-    })
+    }
+    
+    const res = await executeApi(
+      () => getPositions(params),
+      null,
+      'positionManagement.messages.loadError'
+    )
+    
     positions.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('positionManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+    pagination.setTotalItems(res.data?.data?.totalItems || 0)
+  })
 }
 
+/**
+ * Open form dialog for creating a new position
+ */
 function openAdd() {
-  selectedPosition.value = null
-  formData.value = { title: '' }
-  showForm.value = true
+  formData.value = createPositionCreationRequest()
+  formDialog.open()
 }
 
+/**
+ * Open form dialog for editing an existing position
+ * @param {Position} pos - Position to edit
+ */
 function openEdit(pos) {
-  selectedPosition.value = pos
-  formData.value = { title: pos.title || '' }
-  showForm.value = true
+  formData.value = {
+    ...createPositionUpdateRequest(),
+    title: pos.title || ''
+  }
+  formDialog.open(pos)
 }
 
+/**
+ * Close form dialog and reset form data
+ */
 function closeForm() {
-  showForm.value = false
-  selectedPosition.value = null
-  formData.value = { title: '' }
+  formData.value = createPositionCreationRequest()
+  formDialog.close()
 }
 
+/**
+ * Handle save position (create or update)
+ */
 async function handleSave() {
   if (!formData.value.title.trim()) return
   
-  saving.value = true
+  setLoadingState('saving', true)
   try {
     if (isEdit.value) {
-      await updatePosition(selectedPosition.value.id, formData.value)
-      ElMessage.success(t.value('positionManagement.messages.updateSuccess'))
+      await executeApi(
+        () => updatePosition(formDialog.selectedItem.id, formData.value),
+        'positionManagement.messages.updateSuccess',
+        'positionManagement.messages.saveError'
+      )
     } else {
-      await createPosition(formData.value)
-      ElMessage.success(t.value('positionManagement.messages.createSuccess'))
+      await executeApi(
+        () => createPosition(formData.value),
+        'positionManagement.messages.createSuccess',
+        'positionManagement.messages.saveError'
+      )
     }
     closeForm()
     fetchPositions()
-  } catch (error) {
-    console.error("Save error:", error)
-    ElMessage.error(t.value('positionManagement.messages.saveError'))
   } finally {
-    saving.value = false
+    setLoadingState('saving', false)
   }
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchPositions()
+  pagination.setPage(page)
 }
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
+  pagination.firstPage()
   fetchPositions()
 }
 
@@ -94,6 +131,18 @@ watch(searchName, () => {
 })
 
 onMounted(fetchPositions)
+
+onBeforeUnmount(() => {
+  formDialog.reset()
+})
+
+onDeactivated(() => {
+  formDialog.reset()
+})
+
+onBeforeRouteLeave(() => {
+  formDialog.reset()
+})
 </script>
 
 <template>
@@ -158,11 +207,11 @@ onMounted(fetchPositions)
           </el-table-column>
         </el-table>
 
-        <div class="pagination-wrapper" v-if="totalItems > pageSize">
+        <div class="pagination-wrapper" v-if="pagination.totalItems.value > pagination.pageSize.value">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"
@@ -171,7 +220,7 @@ onMounted(fetchPositions)
       </el-card>
 
       <el-dialog 
-        v-model="showForm" 
+        v-model="formDialog.visible" 
         :title="isEdit ? t('positionManagement.form.editTitle') : t('positionManagement.form.addTitle')"
         width="400px"
         :close-on-click-modal="false"
@@ -189,7 +238,7 @@ onMounted(fetchPositions)
           <el-button @click="closeForm">
             {{ t('positionManagement.form.cancel') }}
           </el-button>
-          <el-button type="primary" @click="handleSave" :loading="saving" :disabled="!formData.title.trim()">
+          <el-button type="primary" @click="handleSave" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
             {{ isEdit ? t('positionManagement.form.save') : t('positionManagement.form.create') }}
           </el-button>
         </template>

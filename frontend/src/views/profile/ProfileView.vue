@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 import { getMyInfo } from '@/api/user'
+import { useDateFormat } from '@/composables'
 
 const localeStore = useLocaleStore()
 const authStore = useAuthStore()
@@ -18,15 +19,7 @@ const error = ref('')
 const isMentor = computed(() => authStore.userRole === 'MENTOR')
 const LayoutComponent = computed(() => isMentor.value ? MentorLayout : AdminLayout)
 
-const formatDate = (date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString()
-}
-
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  return new Date(dateTime).toLocaleString()
-}
+const { formatDate, formatDateTime } = useDateFormat()
 
 async function fetchProfile() {
   loading.value = true

@@ -9,8 +9,10 @@ export function getWeeklyReportById(id) {
     return http.get(`/weekly-reports/${id}`)
 }
 
-export function getWeeklyReportsByInternId(internId) {
-    return http.get(`/weekly-reports/intern/${internId}`)
+export function getWeeklyReportsByInternId(internId, params) {
+    return http.get(`/weekly-reports/intern/${internId}`, {
+        params: params 
+    })
 }
 
 export function createWeeklyReport(data) {

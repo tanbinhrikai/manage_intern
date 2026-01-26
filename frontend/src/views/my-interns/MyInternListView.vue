@@ -1,75 +1,88 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
-import { ElMessage } from 'element-plus'
 import { Search, View, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
 import { useRouter } from 'vue-router'
 import { getMyIntern } from '@/api/intern'
+import { usePagination, useLoading, useApi, useStatus, useDateFormat } from '@/composables'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchMyInterns()
+})
+
+const { loading, withLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: false
+})
+const { getStatusType } = useStatus()
+const { formatDate } = useDateFormat()
+
 const interns = ref([])
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
 const searchName = ref("")
 const selectedIntern = ref(null)
-const loading = ref(false)
 
-const getStatusType = (status) => {
-  const map = {
-    ACTIVE: 'success',
-    WARNING: 'warning',
-    COMPLETE: 'primary',
-    DROPPED: 'danger'
-  }
-  return map[status] || 'info'
-}
-
+/**
+ * Fetch interns assigned to current mentor
+ */
 async function fetchMyInterns() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const params = {
-      page: currentPage.value - 1,
-      limit: pageSize,
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined
     }
-    const res = await getMyIntern(params)
+    
+    const res = await executeApi(
+      () => getMyIntern(params),
+      null,
+      'internManagement.messages.loadError'
+    )
+    
     interns.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('internManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+    pagination.setTotalItems(res.data?.data?.totalItems || 0)
+  })
 }
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
+  pagination.firstPage()
   fetchMyInterns()
 }
 
+/**
+ * Navigate to detail page for an intern
+ * @param {Intern} intern - Intern to view
+ */
 function openDetailIntern(intern) {
   router.push(`/mentor/my-interns/${intern.id}`)
 }
 
+/**
+ * Navigate to edit page for an intern
+ * @param {Intern} intern - Intern to edit
+ */
 function openEditIntern(intern) {
   router.push(`/mentor/my-interns/${intern.id}/edit`)
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchMyInterns()
+  pagination.setPage(page)
 }
 
-
-function formatDate(date) {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString()
-}
 
 watch([searchName], () => {
   handleSearch()
@@ -178,9 +191,9 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"

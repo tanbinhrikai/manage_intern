@@ -33,6 +33,7 @@
         "departments": "部署",
         "positions": "ポジション",
         "evaluationCriteria": "評価基準",
+        "evaluationSessions": "評価セッション",
         "systemConfig": "システム設定",
         "auditLog": "監査ログ",
         "myInterns": "担当インターン",
@@ -315,6 +316,8 @@
             "fullNamePlaceholder": "山田太郎",
             "position": "ポジション",
             "selectPosition": "ポジションを選択",
+            "internshipBatch": "実習バッチ",
+            "selectInternshipBatch": "実習バッチを選択",
             "mentor": "メンター",
             "selectMentor": "メンターを選択",
             "startDate": "開始日",
@@ -538,6 +541,119 @@
             "createSuccess": "レポートを作成しました！",
             "updateSuccess": "レポートを更新しました！",
             "saveError": "レポートの保存に失敗しました。もう一度お試しください。"
+        }
+    },
+    "evaluationSession": {
+        "title": "評価セッション",
+        "addNew": "セッションを追加",
+        "generate": "セッションを生成",
+        "searchByKeyword": "キーワードで検索",
+        "allInterns": "すべてのインターン",
+        "allSessionTypes": "すべてのセッションタイプ",
+        "sessionType": {
+            "firstTerm": "前期",
+            "midTerm": "中期",
+            "final": "最終"
+        },
+        "conclusion": {
+            "pass": "合格",
+            "needImprovement": "要改善",
+            "fail": "不合格"
+        },
+        "table": {
+            "internName": "インターン名",
+            "sessionType": "セッションタイプ",
+            "evaluationDate": "評価日",
+            "finalScore": "最終スコア",
+            "conclusion": "結論",
+            "mentorName": "メンター名",
+            "actions": "アクション"
+        },
+        "messages": {
+            "loadError": "評価セッションの読み込みに失敗しました",
+            "createSuccess": "評価セッションを作成しました！",
+            "updateSuccess": "評価セッションを更新しました！",
+            "deleteSuccess": "評価セッションを削除しました！",
+            "generateSuccess": "評価セッションを生成しました！",
+            "selectInternFirst": "まず、インターンシップ情報セクションからインターンを選択してください"
+        },
+        "confirm": {
+            "title": "確認",
+            "delete": "{internName} ({sessionType}) の評価セッションを削除してもよろしいですか？",
+            "ok": "OK",
+            "cancel": "キャンセル"
+        },
+        "detail": {
+            "title": "評価セッション詳細",
+            "backToList": "リストに戻る",
+            "edit": "編集",
+            "delete": "削除",
+            "levelAssessment": "レベル評価",
+            "createdAt": "作成日時",
+            "updatedAt": "更新日時",
+            "sections": {
+                "basicInfo": "基本情報",
+                "overallComment": "総合コメント",
+                "metadata": "メタデータ"
+            },
+            "categories": {
+                "workPerformance": "業務実績",
+                "attitudeSoftSkills": "態度・ソフトスキル",
+                "knowledgeApplication": "知識の応用"
+            },
+            "table": {
+                "criteriaName": "基準",
+                "score": "スコア",
+                "comment": "コメント"
+            }
+        },
+        "create": {
+            "title": "評価セッションを作成",
+            "backToList": "リストに戻る",
+            "selectIntern": "インターンを選択",
+            "selectInternPlaceholder": "インターンを選択してください",
+            "mode": {
+                "autoGenerate": "自動生成",
+                "manual": "手動作成"
+            },
+            "sections": {
+                "internshipInfo": "インターンシップ情報",
+                "timeline": "評価タイムライン"
+            },
+            "internInfo": {
+                "startDate": "開始日",
+                "endDate": "終了日",
+                "mentor": "メンター"
+            },
+            "milestone": {
+                "completed": "完了",
+                "due": "期限",
+                "upcoming": "予定"
+            },
+            "form": {
+                "intern": "インターン",
+                "sessionType": "セッションタイプ",
+                "evaluationDate": "評価日",
+                "overallComment": "総合コメント",
+                "overallCommentPlaceholder": "総合コメントを入力...",
+                "scores": "スコア",
+                "scorePlaceholder": "スコア",
+                "commentPlaceholder": "コメント..."
+            },
+            "generate": "セッションを生成",
+            "create": "セッションを作成",
+            "cancel": "キャンセル",
+            "validation": {
+                "selectInternAndType": "インターンとセッションタイプを選択してください",
+                "fillRequired": "必須項目を入力してください"
+            },
+            "messages": {
+                "sessionExists": "このインターンには既にこのセッションタイプが存在します"
+            }
+        },
+        "edit": {
+            "update": "セッションを更新",
+            "cannotChangeSessionType": "セッションタイプは作成後に変更できません"
         }
     }
 }

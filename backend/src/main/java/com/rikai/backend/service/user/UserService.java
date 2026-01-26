@@ -15,6 +15,7 @@ import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
+import com.rikai.backend.validation.AutoGenerateEmail;
 import com.rikai.backend.validation.PasswordValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -98,37 +99,45 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional
-    public UserResponse createUser(UserCreationRequest userCreateDTO) {
-        if (usersRepository.findByEmail(userCreateDTO.getEmail()).isPresent()) {
-            throw new AppException(ErrorCode.USER_EXISTED);
-        }
-        Users user = userMapper.toUser(userCreateDTO);
-        user.setIsActive(true);
-        Roles role = null;
-        if (userCreateDTO.getRoleName().equals(RoleType.MENTOR)) {
-            role = rolesRepository.findByRoleName("MENTOR")
-                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-        }
-        if (userCreateDTO.getRoleName().equals(RoleType.HR)) {
-            role = rolesRepository.findByRoleName("HR")
-                    .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
-        }
-        String rawPassword = userCreateDTO.getPassword();
-        if (rawPassword == null || rawPassword.isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode("Abc123456@"));
+    public UserResponse createUser(UserCreationRequest request) {
+        // 1. Define Role and Email Suffix
+        // Note: request.getRoleName() returns Enum RoleType
+        Roles role = rolesRepository.findByRoleName(request.getRoleName().name()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
+        String emailSuffix = "";
+        if (request.getRoleName() == RoleType.MENTOR) {
+            emailSuffix = "mentor";
+        } else if (request.getRoleName() == RoleType.HR) {
+            emailSuffix = "hr";
+        }
+
+        // 2. Automatically generate emails (Ignore emails from requests if any)
+        // Call a new Utils function with 3 parameters
+        String generatedEmail = AutoGenerateEmail.generateUniqueEmail(request.getFullName(), emailSuffix, usersRepository::existsByEmail);
+
+        // 3. Map request to entity
+        Users user = userMapper.toUser(request);
+        user.setEmail(generatedEmail);
+        user.setRole(role);
+        user.setIsActive(true);
+
+        // 4. Handle password
+        String rawPassword = request.getPassword();
+        if (rawPassword == null || rawPassword.isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode("Abc123456@")); // Default pass
         } else {
             if (!PasswordValidator.isValid(rawPassword)) {
                 throw new AppException(ErrorCode.PASSWORD_WEAK);
             }
             user.setPasswordHash(passwordEncoder.encode(rawPassword));
         }
-        user.setRole(role);
-        if (userCreateDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(userCreateDTO.getDepartmentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+
+        // 5. Handle Department
+        if (request.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(request.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
             user.setDepartment(department);
         }
+
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
@@ -136,8 +145,7 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
-        Users user = usersRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateUser(user, userUpdateDTO);
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
@@ -145,8 +153,7 @@ public class UserService implements IUserService {
         }
 
         if (userUpdateDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
             user.setDepartment(department);
         }
 
@@ -158,8 +165,7 @@ public class UserService implements IUserService {
     public UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO) {
         Users currentUser = authenticationService.getCurrentUser();
         currentUser.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
-        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
         currentUser.setDepartment(department);
         Users savedUser = usersRepository.save(currentUser);
         return userMapper.toUserResponse(savedUser);
@@ -167,8 +173,7 @@ public class UserService implements IUserService {
 
     @Override
     public UserResponse toggleStatus(UUID id) {
-        Users user = usersRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         user.setIsActive(!user.getIsActive());
         Users savedUser = usersRepository.save(user);
         return UserResponse.fromUser(savedUser);

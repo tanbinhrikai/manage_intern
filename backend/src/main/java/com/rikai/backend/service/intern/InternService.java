@@ -18,6 +18,7 @@ import com.rikai.backend.repository.InternshipBatchRepository;
 import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.AuthenticationService;
+import com.rikai.backend.validation.AutoGenerateEmail;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -89,7 +90,11 @@ public class InternService implements IInternService {
 
         Intern intern = internMapper.toIntern(request);
 
-        String uniqueEmail = handleEmailGeneration(request.getFullName());
+        String uniqueEmail = AutoGenerateEmail.generateUniqueEmail(
+                request.getFullName(),
+                internRepository::existsByEmail
+        );
+        intern.setEmail(uniqueEmail);
         intern.setEmail(uniqueEmail);
         intern.setPosition(position);
         intern.setMentor(mentor);
@@ -247,49 +252,4 @@ public class InternService implements IInternService {
                 .orElseThrow(() -> new AppException(ErrorCode.BATCH_NOT_EXISTED));
     }
 
-    private String handleEmailGeneration(String fullName) {
-        String domain = "@rikai.technology";
-
-        // 1. Pick email prefix from full name
-        String basePrefix = getEmailPrefixFromFullName(fullName);
-
-        // 2. Initialize email
-        String finalEmail = basePrefix + domain;
-        int count = 1;
-
-        // 3. Loop to check uniqueness
-        // if database has "vinh.nguyen@...", then try "vinh.nguyen1@...", "vinh.nguyen2@...", etc.
-        while (internRepository.existsByEmail(finalEmail)) {
-            finalEmail = basePrefix + count + domain;
-            count++;
-        }
-
-        return finalEmail;
-    }
-
-    // Function to get email prefix from full name
-    private String getEmailPrefixFromFullName(String fullName) {
-        if (fullName == null || fullName.trim().isEmpty()) return "unknown";
-
-        String normalized = removeAccent(fullName).toLowerCase().trim();
-        String[] parts = normalized.split("\\s+");
-
-        if (parts.length < 1) return "unknown";
-
-        String firstName = parts[parts.length - 1];
-        String lastName = parts[0];
-
-        if (parts.length > 1) {
-            return firstName + "." + lastName;
-        } else {
-            return firstName;
-        }
-    }
-
-    // Function to remove accents from a string
-    private String removeAccent(String s) {
-        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        return pattern.matcher(temp).replaceAll("").replace('đ', 'd').replace('Đ', 'D');
-    }
 }

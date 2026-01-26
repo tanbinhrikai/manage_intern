@@ -66,16 +66,6 @@ const userInitials = computed(() => {
         <span>{{ t('sidebar.' + item.key) }}</span>
       </router-link>
     </nav>
-    
-    <div class="sidebar-footer">
-      <div class="user-profile">
-        <div class="avatar">{{ userInitials }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ authStore.user?.fullName || 'Mentor' }}</span>
-          <span class="user-role">{{ authStore.user?.department?.title || 'Mentor' }}</span>
-        </div>
-      </div>
-    </div>
   </aside>
 </template>
 

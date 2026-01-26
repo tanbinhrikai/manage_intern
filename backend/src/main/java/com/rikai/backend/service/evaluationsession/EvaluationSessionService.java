@@ -2,7 +2,6 @@ package com.rikai.backend.service.evaluationsession;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.PageResponse;
-import com.rikai.backend.dto.request.evaluationsession.EvaluationScoreRequest;
 import com.rikai.backend.dto.request.evaluationsession.EvaluationSessionCreateRequest;
 import com.rikai.backend.dto.request.evaluationsession.EvaluationSessionUpdateRequest;
 import com.rikai.backend.dto.response.evaluationsession.EvaluationScoreResponse;
@@ -12,22 +11,13 @@ import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Enum.EvaluationConclusion;
 import com.rikai.backend.model.Enum.ScoreLabel;
 import com.rikai.backend.model.Enum.SessionType;
-import com.rikai.backend.model.EvaluationCriteria;
-import com.rikai.backend.model.EvaluationScore;
-import com.rikai.backend.model.EvaluationSession;
-import com.rikai.backend.model.Intern;
-import com.rikai.backend.model.Users;
-import com.rikai.backend.model.WeeklyReport;
-import com.rikai.backend.model.WeeklyReportDetail;
-import com.rikai.backend.repository.EvaluationCriteriaRepository;
-import com.rikai.backend.repository.EvaluationScoreRepository;
-import com.rikai.backend.repository.EvaluationSessionRepository;
-import com.rikai.backend.repository.InternRepository;
-import com.rikai.backend.repository.WeeklyReportRepository;
+import com.rikai.backend.model.*;
+import com.rikai.backend.repository.*;
 import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,9 +28,11 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EvaluationSessionService implements IEvaluationSessionService {
@@ -416,16 +408,25 @@ public class EvaluationSessionService implements IEvaluationSessionService {
 
     /**
      * Calculate evaluation date based on session type and intern's internship period
+     * <p>
+     * Logic:
+     * - FIRST_TERM: 60 days from start date (day 1 to day 60)
+     * - MID_TERM: 60 days starting from the end of FIRST_TERM (day 61 to day 120)
+     * - FINAL: Remaining days until end date (day 121 to end)
      */
     private LocalDate calculateEvaluationDate(Intern intern, SessionType sessionType) {
         LocalDate startDate = intern.getStartDate();
         LocalDate endDate = intern.getEndDate();
         long totalDays = ChronoUnit.DAYS.between(startDate, endDate);
 
+        // Each term is approximately 60 days (1/3 of 180 days)
+        long daysPerTerm = totalDays / 3;
+
         return switch (sessionType) {
-            case FIRST_TERM -> startDate.plusDays(totalDays / 3); // ~2 months (1/3 of 6 months)
-            case MID_TERM -> startDate.plusDays(totalDays * 2 / 3); // ~4 months (2/3 of 6 months)
-            case FINAL -> endDate; // End of internship
+            case FIRST_TERM -> startDate.plusDays(daysPerTerm); // Day 60 (end of first 60 days)
+            case MID_TERM ->
+                    startDate.plusDays(daysPerTerm * 2); // Day 120 (end of second 60 days, starting from day 61)
+            case FINAL -> endDate; // End of internship (remaining days from day 121)
         };
     }
 
@@ -434,14 +435,40 @@ public class EvaluationSessionService implements IEvaluationSessionService {
      */
     private void generateScoresFromWeeklyReports(EvaluationSession session) {
         Intern intern = session.getIntern();
-        LocalDate startDate = intern.getStartDate();
-        LocalDate endDate = session.getEvaluationDate();
+        LocalDate reportEndDate = session.getEvaluationDate();
+        LocalDate reportStartDate;
+
+        switch (session.getSessionType()) {
+            case FIRST_TERM:
+                // Phase 1: From start date to evaluation date
+                reportStartDate = intern.getStartDate();
+                break;
+
+            case MID_TERM:
+                // Phase 2: From after First Term end date + 1 day to Mid Term evaluation date
+                LocalDate firstTermEndDate = calculateEvaluationDate(intern, SessionType.FIRST_TERM);
+                reportStartDate = firstTermEndDate.plusDays(1);
+                break;
+
+            case FINAL:
+                // Phase 3: From after Mid Term end date + 1 day to Final evaluation date
+                LocalDate midTermEndDate = calculateEvaluationDate(intern, SessionType.MID_TERM);
+                reportStartDate = midTermEndDate.plusDays(1);
+                break;
+            default:
+                throw new AppException(ErrorCode.INVALID_SESSION_TYPE);
+        }
+
+        // Logging để debug (khuyên dùng)
+        log.info("Fetching reports for {} from {} to {}", session.getSessionType(), reportStartDate, reportEndDate);
 
         // Get weekly reports in the evaluation period
         List<WeeklyReport> weeklyReports = weeklyReportRepository.findByInternIdAndDateRange(
-                intern.getId(), startDate, endDate);
+                intern.getId(), reportStartDate, reportEndDate);
 
         if (weeklyReports.isEmpty()) {
+            // Consideration: Should report the bug or just reset the score to 0?
+            // What if mentor too lazy to write a report at this stage?
             throw new AppException(ErrorCode.NO_WEEKLY_REPORTS_FOUND);
         }
 
@@ -538,40 +565,4 @@ public class EvaluationSessionService implements IEvaluationSessionService {
             }
         }
     }
-
-    /**
-     * Convert EvaluationSession to Response DTO
-     */
-//    private EvaluationSessionResponse toResponse(EvaluationSession session) {
-//        List<EvaluationScoreResponse> scoreResponses = new ArrayList<>();
-//        if (session.getScores() != null) {
-//            scoreResponses = session.getScores().stream()
-//                    .map(es -> EvaluationScoreResponse.builder()
-//                            .id(es.getId())
-//                            .criteriaId(es.getCriteria().getId())
-//                            .criteriaName(es.getCriteria().getName())
-//                            .criteriaCategory(es.getCriteria().getCategory().name())
-//                            .score(es.getScore())
-//                            .comment(es.getComment())
-//                            .build())
-//                    .collect(Collectors.toList());
-//        }
-//
-//        return EvaluationSessionResponse.builder()
-//                .id(session.getId())
-//                .internId(session.getIntern().getId())
-//                .internName(session.getIntern().getFullName())
-//                .mentorId(session.getMentor().getId().toString())
-//                .mentorName(session.getMentor().getFullName())
-//                .sessionType(session.getSessionType())
-//                .evaluationDate(session.getEvaluationDate())
-//                .finalScore(session.getFinalScore())
-//                .levelAssessment(session.getLevelAssessment())
-//                .conclusion(session.getConclusion())
-//                .overallComment(session.getOverallComment())
-//                .scores(scoreResponses)
-//                .createdAt(session.getCreatedAt())
-//                .updatedAt(session.getUpdatedAt())
-//                .build();
-//    }
 }

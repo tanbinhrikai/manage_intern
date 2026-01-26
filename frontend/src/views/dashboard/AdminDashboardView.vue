@@ -6,9 +6,15 @@ import StatCard from '@/components/dashboard/StatCard.vue'
 import DonutChart from '@/components/dashboard/DonutChart.vue'
 import ActivityList from '@/components/dashboard/ActivityList.vue'
 import { getInternsAnalysis } from '@/api/intern'
+import { useLoading, useApi } from '@/composables'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
+
+const { loading, withLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: false
+})
 
 const analysisData = ref({
   totalInterns: 0,
@@ -34,14 +40,12 @@ const chartData = computed(() => [
 ])
 
 async function fetchAnalysis() {
-  try {
-    const res = await getInternsAnalysis()
-    if (res.data && res.data.data) {
+  await withLoading(async () => {
+    const res = await executeApi(() => getInternsAnalysis())
+    if (res.data?.data) {
       analysisData.value = res.data.data
     }
-  } catch (error) {
-    console.error("Failed to load dashboard analysis:", error)
-  }
+  })
 }
 
 const activities = computed(() => [
@@ -79,7 +83,7 @@ onMounted(() => {
 
 <template>
   <AdminLayout>
-    <div class="dashboard-page">
+    <div class="dashboard-page" v-loading="loading">
       <h1 class="page-title">{{ t('dashboard.title') }}</h1>
 
       <el-row :gutter="20" class="stats-row">

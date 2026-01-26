@@ -33,6 +33,7 @@
         "departments": "Departments",
         "positions": "Positions",
         "evaluationCriteria": "Evaluation Criteria",
+        "evaluationSessions": "Evaluation Sessions",
         "systemConfig": "System Config",
         "auditLog": "Audit Log",
         "myInterns": "My Interns",
@@ -315,6 +316,8 @@
             "fullNamePlaceholder": "John Doe",
             "position": "Position",
             "selectPosition": "Select position",
+            "internshipBatch": "Internship Batch",
+            "selectInternshipBatch": "Select internship batch",
             "mentor": "Mentor",
             "selectMentor": "Select mentor",
             "startDate": "Start Date",
@@ -538,6 +541,119 @@
             "createSuccess": "Report created successfully!",
             "updateSuccess": "Report updated successfully!",
             "saveError": "Failed to save report. Please try again."
+        }
+    },
+    "evaluationSession": {
+        "title": "Evaluation Sessions",
+        "addNew": "Add Session",
+        "generate": "Generate Session",
+        "searchByKeyword": "Search by keyword",
+        "allInterns": "All Interns",
+        "allSessionTypes": "All Session Types",
+        "sessionType": {
+            "firstTerm": "First Term",
+            "midTerm": "Mid Term",
+            "final": "Final"
+        },
+        "conclusion": {
+            "pass": "Pass",
+            "needImprovement": "Need Improvement",
+            "fail": "Fail"
+        },
+        "table": {
+            "internName": "Intern Name",
+            "sessionType": "Session Type",
+            "evaluationDate": "Evaluation Date",
+            "finalScore": "Final Score",
+            "conclusion": "Conclusion",
+            "mentorName": "Mentor Name",
+            "actions": "Actions"
+        },
+        "messages": {
+            "loadError": "Failed to load evaluation sessions",
+            "createSuccess": "Evaluation session created successfully!",
+            "updateSuccess": "Evaluation session updated successfully!",
+            "deleteSuccess": "Evaluation session deleted successfully!",
+            "generateSuccess": "Evaluation session generated successfully!",
+            "selectInternFirst": "Please select an intern from the Internship Information section first"
+        },
+        "confirm": {
+            "title": "Confirm",
+            "delete": "Are you sure you want to delete evaluation session for {internName} ({sessionType})?",
+            "ok": "OK",
+            "cancel": "Cancel"
+        },
+        "detail": {
+            "title": "Evaluation Session Details",
+            "backToList": "Back to List",
+            "edit": "Edit",
+            "delete": "Delete",
+            "levelAssessment": "Level Assessment",
+            "createdAt": "Created At",
+            "updatedAt": "Updated At",
+            "sections": {
+                "basicInfo": "Basic Information",
+                "overallComment": "Overall Comment",
+                "metadata": "Metadata"
+            },
+            "categories": {
+                "workPerformance": "Work Performance",
+                "attitudeSoftSkills": "Attitude & Soft Skills",
+                "knowledgeApplication": "Knowledge Application"
+            },
+            "table": {
+                "criteriaName": "Criteria",
+                "score": "Score",
+                "comment": "Comment"
+            }
+        },
+        "create": {
+            "title": "Create Evaluation Session",
+            "backToList": "Back to List",
+            "selectIntern": "Select Intern",
+            "selectInternPlaceholder": "Choose an intern",
+            "mode": {
+                "autoGenerate": "Auto-Generate",
+                "manual": "Manual Create"
+            },
+            "sections": {
+                "internshipInfo": "Internship Information",
+                "timeline": "Evaluation Timeline"
+            },
+            "internInfo": {
+                "startDate": "Start Date",
+                "endDate": "End Date",
+                "mentor": "Mentor"
+            },
+            "milestone": {
+                "completed": "Completed",
+                "due": "Due",
+                "upcoming": "Upcoming"
+            },
+            "form": {
+                "intern": "Intern",
+                "sessionType": "Session Type",
+                "evaluationDate": "Evaluation Date",
+                "overallComment": "Overall Comment",
+                "overallCommentPlaceholder": "Enter overall comment...",
+                "scores": "Scores",
+                "scorePlaceholder": "Score",
+                "commentPlaceholder": "Comment..."
+            },
+            "generate": "Generate Session",
+            "create": "Create Session",
+            "cancel": "Cancel",
+            "validation": {
+                "selectInternAndType": "Please select intern and session type",
+                "fillRequired": "Please fill all required fields"
+            },
+            "messages": {
+                "sessionExists": "This session type already exists for this intern"
+            }
+        },
+        "edit": {
+            "update": "Update Session",
+            "cannotChangeSessionType": "Session type cannot be changed after creation"
         }
     }
 }

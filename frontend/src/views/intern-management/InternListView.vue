@@ -1,169 +1,225 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, View, Edit, Delete, Calendar, ArrowDown, ArrowUp, Filter } from '@element-plus/icons-vue'
-import { useLocaleStore } from '@/locales/locale'
-import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
-import InternFormDialog from "@/components/intern/InternFormDialog.vue"
-import { getInterns, createIntern, updateIntern, deleteIntern } from '@/api/intern'
-import { getPositions } from '@/api/position'
-import { getMentors } from '@/api/user'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue";
+import { useRouter, onBeforeRouteLeave } from "vue-router";
+import { ElMessageBox } from "element-plus";
+import {
+  Search,
+  Plus,
+  View,
+  Edit,
+  Delete,
+  Calendar,
+  ArrowDown,
+  ArrowUp,
+  Filter,
+} from "@element-plus/icons-vue";
+import { useLocaleStore } from "@/locales/locale";
+import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
+import InternFormDialog from "@/components/intern/InternFormDialog.vue";
+import {
+  getInterns,
+  createIntern,
+  updateIntern,
+  deleteIntern,
+} from "@/api/intern";
+import { usePagination, useLoading, useApi, useDropdownData, useDialog, useStatus, useDateFormat } from "@/composables";
 
-const localeStore = useLocaleStore()
-const router = useRouter()
-const t = computed(() => localeStore.t)
+const localeStore = useLocaleStore();
+const router = useRouter();
+const t = computed(() => localeStore.t);
 
-const interns = ref([])
-const positions = ref([])
-const mentors = ref([])
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
-const searchName = ref("")
-const filterStatus = ref("")
-const filterPosition = ref("")
-const filterMentor = ref("")
-const filterStartDate = ref(null)
-const filterEndDate = ref(null)
-const showInternForm = ref(false)
-const showInternDetail = ref(false)
-const selectedIntern = ref(null)
-const loading = ref(false)
-const showAdvancedFilters = ref(false)
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchInterns()
+});
 
-const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETED', 'DROPPED']
+const { loading, withLoading } = useLoading();
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+});
 
-const getStatusType = (status) => {
-  const map = {
-    ACTIVE: 'success',
-    WARNING: 'warning',
-    COMPLETE: 'primary',
-    DROPPED: 'danger'
-  }
-  return map[status] || 'info'
-}
+// Composables
+const { positions, mentors, internshipBatches, fetchPositions, fetchMentors, fetchInternshipBatches } = useDropdownData()
+const internFormDialog = useDialog()
+const internDetailDialog = useDialog()
+const { getStatusType, statusOptions } = useStatus()
+const { formatDate } = useDateFormat()
 
+// Data
+const interns = ref([]);
+const searchName = ref("");
+const filterStatus = ref("");
+const filterPosition = ref("");
+const filterMentor = ref("");
+const filterStartDate = ref(null);
+const filterEndDate = ref(null);
+const showAdvancedFilters = ref(false);
+
+/**
+ * Fetch interns from backend with current filters and pagination
+ */
 async function fetchInterns() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const params = {
-      page: currentPage.value - 1,
-      limit: pageSize,
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined,
       status: filterStatus.value || undefined,
       position_id: filterPosition.value || undefined,
       mentor_id: filterMentor.value || undefined,
       start_date: filterStartDate.value || undefined,
-      end_date: filterEndDate.value || undefined
-    }
-    const res = await getInterns(params)
-    interns.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('internManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+      end_date: filterEndDate.value || undefined,
+    };
+    
+    const res = await executeApi(
+      () => getInterns(params),
+      null,
+      "internManagement.messages.loadError"
+    );
+    
+    interns.value = res.data?.data?.items || [];
+    pagination.setTotalItems(res.data?.data?.totalItems || 0);
+  });
 }
 
-async function fetchPositions() {
-  try {
-    const res = await getPositions({ limit: 100 })
-    positions.value = res.data?.data?.items || []
-  } catch (error) {
-    console.error("Failed to load positions:", error)
-  }
-}
-
-async function fetchMentors() {
-  try {
-    const res = await getMentors({ limit: 100, is_active: true })
-    mentors.value = res.data?.data?.items || []
-  } catch (error) {
-    console.error("Failed to load mentors:", error)
-  }
-}
-
+/**
+ * Open form dialog for creating a new intern
+ */
 function openAddIntern() {
-  selectedIntern.value = null
-  showInternForm.value = true
+  internFormDialog.open();
 }
 
+/**
+ * Navigate to edit page for an intern
+ * @param {Intern} intern - Intern to edit
+ */
 function openEditIntern(intern) {
-  router.push(`/admin/interns/${intern.id}/edit`)
+  router.push(`/admin/interns/${intern.id}/edit`);
 }
 
+/**
+ * Navigate to detail page for an intern
+ * @param {Intern} intern - Intern to view
+ */
 function openDetailIntern(intern) {
-  router.push(`/admin/interns/${intern.id}`)
+  router.push(`/admin/interns/${intern.id}`);
 }
 
-
+/**
+ * Handle save intern (create or update)
+ * @param {Object} payload - Intern data to save
+ * @param {Function} done - Callback function
+ */
 async function handleSaveIntern(payload, done) {
   try {
-    if (selectedIntern.value) {
-      await updateIntern(selectedIntern.value.id, payload)
-      ElMessage.success(t.value('internManagement.messages.updateSuccess'))
+    if (internFormDialog.selectedItem) {
+      await executeApi(
+        () => updateIntern(internFormDialog.selectedItem.id, payload),
+        "internManagement.messages.updateSuccess",
+        false
+      );
     } else {
-      await createIntern(payload)
-      ElMessage.success(t.value('internManagement.messages.createSuccess'))
+      await executeApi(
+        () => createIntern(payload),
+        "internManagement.messages.createSuccess",
+        false
+      );
     }
-    fetchInterns()
-    showInternForm.value = false
+    fetchInterns();
+    internFormDialog.close();
   } catch (error) {
-    //console.error("Save error:", error)
+    // Error already handled by useApi
   } finally {
-    done?.()
+    done?.();
   }
 }
 
+/**
+ * Handle delete intern with confirmation
+ * @param {Intern} intern - Intern to delete
+ */
 async function handleDeleteIntern(intern) {
-  const confirmMessage = t.value('internManagement.confirm.delete').replace('{name}', intern.fullName)
-  
+  const confirmMessage = t
+    .value("internManagement.confirm.delete")
+    .replace("{name}", intern.fullName);
+
   try {
     await ElMessageBox.confirm(
       confirmMessage,
-      t.value('internManagement.confirm.title'),
-      { 
-        confirmButtonText: t.value('internManagement.confirm.ok'), 
-        cancelButtonText: t.value('internManagement.confirm.cancel'), 
-        type: 'warning' 
+      t.value("internManagement.confirm.title"),
+      {
+        confirmButtonText: t.value("internManagement.confirm.ok"),
+        cancelButtonText: t.value("internManagement.confirm.cancel"),
+        type: "warning",
       }
-    )
-    await deleteIntern(intern.id)
-    ElMessage.success(t.value('internManagement.messages.deleteSuccess'))
-    fetchInterns()
+    );
+    await executeApi(
+      () => deleteIntern(intern.id),
+      "internManagement.messages.deleteSuccess",
+      true // Show error if delete fails
+    );
+    fetchInterns();
   } catch (error) {
-    if (error !== 'cancel') {
-      //console.error("Delete error:", error)
+    if (error !== "cancel") {
+      // Error already handled by useApi
     }
   }
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchInterns()
+  pagination.setPage(page);
 }
 
-function formatDate(date) {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString()
-}
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
-  fetchInterns()
+  pagination.firstPage();
+  fetchInterns();
 }
 
-watch([searchName, filterStatus, filterPosition, filterMentor, filterStartDate, filterEndDate], () => {
-  handleSearch()
-})
+watch(
+  [
+    searchName,
+    filterStatus,
+    filterPosition,
+    filterMentor,
+    filterStartDate,
+    filterEndDate,
+  ],
+  () => {
+    handleSearch();
+  }
+);
 
 onMounted(() => {
-  fetchInterns()
-  fetchPositions()
-  fetchMentors()
-})
+  fetchInterns();
+  fetchPositions();
+  fetchMentors({ is_active: true });
+  fetchInternshipBatches();
+});
+
+onBeforeUnmount(() => {
+  internFormDialog.reset();
+  internDetailDialog.reset();
+});
+
+onDeactivated(() => {
+  internFormDialog.reset();
+  internDetailDialog.reset();
+});
+
+onBeforeRouteLeave(() => {
+  internFormDialog.reset();
+  internDetailDialog.reset();
+});
 </script>
 
 <template>
@@ -172,21 +228,21 @@ onMounted(() => {
       <el-card class="main-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <h2 class="page-title">{{ t('internManagement.title') }}</h2>
+            <h2 class="page-title">{{ t("internManagement.title") }}</h2>
           </div>
         </template>
 
         <div class="toolbar">
           <div class="basic-filters">
-            <el-input 
-              v-model="searchName" 
+            <el-input
+              v-model="searchName"
               :placeholder="t('internManagement.searchByName')"
               :prefix-icon="Search"
               clearable
               class="search-input"
             />
-            <el-select 
-              v-model="filterPosition" 
+            <el-select
+              v-model="filterPosition"
               :placeholder="t('internManagement.allPositions')"
               clearable
               class="filter-select"
@@ -199,8 +255,8 @@ onMounted(() => {
                 :value="pos.id"
               />
             </el-select>
-            <el-select 
-              v-model="filterMentor" 
+            <el-select
+              v-model="filterMentor"
               :placeholder="t('internManagement.allMentors')"
               clearable
               class="filter-select"
@@ -213,29 +269,29 @@ onMounted(() => {
                 :value="mentor.id"
               />
             </el-select>
-            <el-button 
-              text 
+            <el-button
+              text
               :icon="showAdvancedFilters ? ArrowUp : ArrowDown"
               @click="showAdvancedFilters = !showAdvancedFilters"
               class="toggle-filters-btn"
             >
-              {{ showAdvancedFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+              {{
+                showAdvancedFilters
+                  ? t("internManagement.hideFilters")
+                  : t("internManagement.moreFilters")
+              }}
             </el-button>
           </div>
-          
-          <el-button 
-            type="primary"
-            :icon="Plus"
-            @click="openAddIntern"
-          >
-            {{ t('internManagement.addNew') }}
+
+          <el-button type="primary" :icon="Plus" @click="openAddIntern">
+            {{ t("internManagement.addNew") }}
           </el-button>
         </div>
 
         <el-collapse-transition>
           <div v-show="showAdvancedFilters" class="advanced-filters">
-            <el-select 
-              v-model="filterStatus" 
+            <el-select
+              v-model="filterStatus"
               :placeholder="t('internManagement.allStatus')"
               clearable
               class="filter-select"
@@ -267,19 +323,19 @@ onMounted(() => {
           </div>
         </el-collapse-transition>
 
-        <el-table 
-          :data="interns" 
-          stripe 
+        <el-table
+          :data="interns"
+          stripe
           style="width: 100%"
           v-loading="loading"
         >
-          <el-table-column 
-            prop="fullName" 
-            :label="t('internManagement.table.fullName')" 
-            min-width="150" 
+          <el-table-column
+            prop="fullName"
+            :label="t('internManagement.table.fullName')"
+            min-width="150"
           />
-          <el-table-column 
-            :label="t('internManagement.table.position')" 
+          <el-table-column
+            :label="t('internManagement.table.position')"
             min-width="140"
           >
             <template #default="scope">
@@ -289,66 +345,66 @@ onMounted(() => {
               <span v-else class="text-muted">-</span>
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.mentor')" 
+          <el-table-column
+            :label="t('internManagement.table.mentor')"
             min-width="150"
           >
             <template #default="scope">
-              {{ scope.row.mentor?.fullName || '-' }}
+              {{ scope.row.mentor?.fullName || "-" }}
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.startDate')" 
+          <el-table-column
+            :label="t('internManagement.table.startDate')"
             min-width="120"
           >
             <template #default="scope">
               {{ formatDate(scope.row.startDate) }}
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.endDate')" 
+          <el-table-column
+            :label="t('internManagement.table.endDate')"
             min-width="120"
           >
             <template #default="scope">
               {{ formatDate(scope.row.endDate) }}
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.status')" 
-            min-width="120" 
+          <el-table-column
+            :label="t('internManagement.table.status')"
+            min-width="120"
             align="center"
           >
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.internStatus)">
-                {{ t('internManagement.status.' + scope.row.internStatus) }}
+                {{ t("internManagement.status." + scope.row.internStatus) }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.actions')" 
-            min-width="150" 
-            fixed="right" 
+          <el-table-column
+            :label="t('internManagement.table.actions')"
+            min-width="150"
+            fixed="right"
             align="center"
           >
             <template #default="scope">
-              <el-button 
-                type="primary" 
-                :icon="View" 
-                size="small" 
+              <el-button
+                type="primary"
+                :icon="View"
+                size="small"
                 circle
                 @click="openDetailIntern(scope.row)"
               />
-              <el-button 
-                type="warning" 
-                :icon="Edit" 
-                size="small" 
+              <el-button
+                type="warning"
+                :icon="Edit"
+                size="small"
                 circle
                 @click="openEditIntern(scope.row)"
               />
-              <el-button 
-                type="danger" 
-                :icon="Delete" 
-                size="small" 
+              <el-button
+                type="danger"
+                :icon="Delete"
+                size="small"
                 circle
                 @click="handleDeleteIntern(scope.row)"
               />
@@ -358,9 +414,9 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"
@@ -369,14 +425,14 @@ onMounted(() => {
       </el-card>
 
       <InternFormDialog
-        v-model:visible="showInternForm"
-        :intern="selectedIntern"
+        :visible="internFormDialog.visible"
+        :intern="internFormDialog.selectedItem"
+        :internshipBatches="internshipBatches"
         :positions="positions"
         :mentors="mentors"
+        @update:visible="internFormDialog.visible = $event"
         @save="handleSaveIntern"
       />
-
-
     </div>
   </AdminLayout>
 </template>

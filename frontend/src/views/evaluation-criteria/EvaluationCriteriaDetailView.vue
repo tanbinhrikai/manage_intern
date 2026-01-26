@@ -12,6 +12,7 @@ import { getEvaluationCriteriaById,
   getMainCriteria
 } from '@/api/evaluation-criteria'
 import EvaluationCriteriaScoreDefinitions from './EvaluationCriteriaScoreDefinitions.vue'
+import { createEvaluationCriteriaCreationRequest, createEvaluationCriteriaUpdateRequest } from '@/types/evaluationCriteria'
 
 const route = useRoute()
 const router = useRouter()
@@ -37,16 +38,7 @@ const isChildCriteria = computed(() => isEdit.value && !!formData.parentId)
 
 
 
-const formData = reactive({
-  groupId: null,
-  name: '',
-  description: '',
-  weight: 1.0,
-  parentId: null,
-  displayOrder: 1,
-  isActive: true,
-  scoreDefinitions: []
-})
+const formData = reactive(createEvaluationCriteriaCreationRequest())
 
 // Dropdown options
 const criteriaGroups = ref([])
@@ -73,13 +65,9 @@ async function loadDropdownData() {
 
 async function fetchCriteria() {
   if (!isEdit.value) {
-    console.log("route.query", route.query)
-    if (route.query.parentId) {
-      formData.parentId = parseInt(route.query.parentId)
-    }
-    if (route.query.groupId) {
-      formData.groupId = parseInt(route.query.groupId)
-    }
+    const parentId = route.query.parentId ? parseInt(route.query.parentId) : null
+    const groupId = route.query.groupId ? parseInt(route.query.groupId) : null
+    Object.assign(formData, createEvaluationCriteriaCreationRequest(groupId, parentId))
     return
   }
   
@@ -89,6 +77,7 @@ async function fetchCriteria() {
     const data = res.data?.data
     if (data) {
       Object.assign(formData, {
+        ...createEvaluationCriteriaUpdateRequest(),
         groupId: data.groupId,
         name: data.name,
         description: data.description || '',

@@ -4,12 +4,19 @@ import { useRouter } from 'vue-router'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 import { getInternsNotEvaluatedThisWeek, getMyIntern } from '@/api/intern'
+import { useLoading, useApi } from '@/composables'
+import { useStatus } from '@/composables'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
-const loading = ref(false)
+const { loading, withLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: false
+})
+const { getStatusType } = useStatus()
+
 const internsNeedEvaluation = ref([])
 const internsUnderSupervision = ref([])
 
@@ -25,15 +32,6 @@ const progressPercentage = computed(() => {
   return (evaluationProgress.value.completed / evaluationProgress.value.total) * 100
 })
 
-const getStatusType = (status) => {
-  const statusMap = {
-    ACTIVE: 'success',
-    WARNING: 'warning',
-    COMPLETED: 'primary',
-    DROPPED: 'danger'
-  }
-  return statusMap[status] || 'info'
-}
 
 const calculateWeekNumber = (startDate) => {
   if (!startDate) return 1
@@ -62,20 +60,15 @@ const handleViewDetails = (intern) => {
 }
 
 async function fetchData() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const [notEvalRes, myInternsRes] = await Promise.all([
-      getInternsNotEvaluatedThisWeek({ limit: 20 }),
-      getMyIntern({ limit: 100 })
+      executeApi(() => getInternsNotEvaluatedThisWeek({ limit: 20 })),
+      executeApi(() => getMyIntern({ limit: 100 }))
     ])
     
     internsNeedEvaluation.value = notEvalRes.data?.data?.items || []
     internsUnderSupervision.value = myInternsRes.data?.data?.items || []
-  } catch (error) {
-    console.error('Failed to load dashboard data:', error)
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(fetchData)

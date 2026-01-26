@@ -32,10 +32,14 @@ public class Intern {
 
     @ManyToOne
     @JoinColumn(name = "mentor_id", referencedColumnName = "id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     Users mentor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batch_id", referencedColumnName = "id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     InternshipBatch internshipBatch;
 
     @Column(name = "start_date", nullable = false)

@@ -62,4 +62,6 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
     List<Users> findByIsActive(boolean isActive);
 
     Optional<Users> findByEmail(String email);
+
+    boolean existsByEmail(String email);
 }

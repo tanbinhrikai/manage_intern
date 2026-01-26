@@ -10,6 +10,7 @@ import {
   updateScoreDefinition,
   deleteScoreDefinition
 } from '@/api/evaluation-criteria'
+import { createCriteriaScoreDefinitionCreationRequest, createCriteriaScoreDefinitionUpdateRequest } from '@/types/evaluationCriteria'
 
 const props = defineProps({
   criteriaId: {
@@ -28,9 +29,7 @@ const scoreDefinitions = ref([])
 const showScoreDialog = ref(false)
 const scoreForm = reactive({
   id: null,
-  criteriaId: null,
-  scoreLabel: 'AVERAGE',
-  description: ''
+  ...createCriteriaScoreDefinitionCreationRequest(null)
 })
 const isScoreEdit = computed(() => !!scoreForm.id)
 const savingScore = ref(false)
@@ -82,21 +81,19 @@ async function fetchScoreDefinitions() {
 }
 
 function openAddScore() {
-  // Get first available label
   const firstAvailable = availableScoreLabels.value[0]?.value || 'AVERAGE'
   Object.assign(scoreForm, {
     id: null,
-    criteriaId: parseInt(props.criteriaId),
-    scoreLabel: firstAvailable,
-    description: ''
+    ...createCriteriaScoreDefinitionCreationRequest(parseInt(props.criteriaId)),
+    scoreLabel: firstAvailable
   })
   showScoreDialog.value = true
 }
 
 function openEditScore(def) {
-  Object.assign(scoreForm, { 
+  Object.assign(scoreForm, {
     id: def.id,
-    criteriaId: def.criteriaId,
+    ...createCriteriaScoreDefinitionUpdateRequest(def.criteriaId),
     scoreLabel: def.scoreLabel,
     description: def.description || ''
   })

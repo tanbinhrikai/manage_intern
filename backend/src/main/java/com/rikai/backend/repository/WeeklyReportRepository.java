@@ -49,4 +49,7 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Inte
     @NonNull
     @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr")
     Page<WeeklyReport> findAll(@NonNull Pageable pageable);
+
+    @Query("SELECT wr FROM WeeklyReport wr LEFT JOIN FETCH wr.details d LEFT JOIN FETCH d.criteria WHERE wr.id = :id")
+    Optional<WeeklyReport> findByIdWithDetails(@Param("id") Integer id);
 }

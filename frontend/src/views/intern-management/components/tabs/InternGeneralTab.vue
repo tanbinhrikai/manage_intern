@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/auth'
 import { updateIntern } from '@/api/intern'
 import { getPositions } from '@/api/position'
 import { getMentors } from '@/api/user'
+import { createInternUpdateRequest } from '@/types/intern'
+import { useStatus, useDateFormat } from '@/composables'
 
 const props = defineProps({
   intern: {
@@ -27,25 +29,22 @@ const saving = ref(false)
 
 const isAdmin = computed(() => authStore.userRole === 'ADMIN')
 
-const statusOptions = ['ACTIVE', 'WARNING', 'COMPLETE', 'DROPPED']
+const { statusOptions } = useStatus()
+const { formatDate } = useDateFormat()
 
-const formData = reactive({
-  fullName: '',
-  positionId: '',
-  mentorId: '',
-  startDate: '',
-  endDate: '',
-  internStatus: ''
-})
+const formData = reactive(createInternUpdateRequest())
 
 watch(() => props.intern, (newVal) => {
   if (newVal) {
-    formData.fullName = newVal.fullName || ''
-    formData.positionId = newVal.position?.id || ''
-    formData.mentorId = newVal.mentor?.id || ''
-    formData.startDate = newVal.startDate || ''
-    formData.endDate = newVal.endDate || ''
-    formData.internStatus = newVal.internStatus || 'ACTIVE'
+    Object.assign(formData, {
+      ...createInternUpdateRequest(),
+      fullName: newVal.fullName || '',
+      positionId: newVal.position?.id || '',
+      mentorId: newVal.mentor?.id || '',
+      startDate: newVal.startDate || '',
+      endDate: newVal.endDate || '',
+      internStatus: newVal.internStatus || 'ACTIVE'
+    })
   }
 }, { immediate: true, deep: true })
 
@@ -92,15 +91,7 @@ async function handleSave() {
   }
 }
 
-const getStatusType = (status) => {
-  const map = {
-    ACTIVE: 'success',
-    WARNING: 'warning',
-    COMPLETE: 'primary',
-    DROPPED: 'danger'
-  }
-  return map[status] || 'info'
-}
+const { getStatusType } = useStatus()
 
 const calculateDuration = (start, end) => {
   if (!start || !end) return ''
@@ -109,13 +100,7 @@ const calculateDuration = (start, end) => {
   const diffTime = Math.abs(endDate - startDate)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) 
   const weeks = Math.floor(diffDays / 7)
-  return `${weeks} ${t.value('common.weeks')} (${formatDate(start)} - ${formatDate(end)})`
-}
-
-function formatDate(date) {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString('en-GB')
+  return `${weeks} ${t.value('common.weeks')} (${formatDate(start, 'en-GB', '')} - ${formatDate(end, 'en-GB', '')})`
 }
 
 onMounted(() => {

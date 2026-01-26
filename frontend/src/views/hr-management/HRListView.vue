@@ -1,97 +1,130 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { onBeforeRouteLeave } from "vue-router"
+import { ElMessageBox } from 'element-plus'
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
 import { getHRs, createUser, updateUser, toggleUserStatus } from '@/api/user'
-import { getDepartments } from '@/api/department'
+import { usePagination, useLoading, useApi, useDropdownData, useDialog } from '@/composables'
+
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchHRs()
+})
+
+const { loading, withLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+})
+
+// Composables
+const { departments, fetchDepartments } = useDropdownData()
+const hrFormDialog = useDialog()
+const hrDetailDialog = useDialog()
+
+// Data
 const hrs = ref([])
-const departments = ref([])
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
 const searchName = ref("")
 const filterStatus = ref("")
 const filterDepartment = ref("")
-const showHRForm = ref(false)
-const showHRDetail = ref(false)
-const selectedHR = ref(null)
-const loading = ref(false)
 
+/**
+ * Fetch HR users from backend with current filters and pagination
+ */
 async function fetchHRs() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const params = {
-      page: currentPage.value - 1,
-      limit: pageSize,
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined,
       department_id: filterDepartment.value || undefined,
       is_active: filterStatus.value === 'ACTIVE' ? true : filterStatus.value === 'LOCKED' ? false : undefined
     }
-    const res = await getHRs(params)
+    
+    const res = await executeApi(
+      () => getHRs(params),
+      null,
+      'hrManagement.messages.loadError'
+    )
+    
     hrs.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('hrManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+    pagination.setTotalItems(res.data?.data?.totalItems || 0)
+  })
 }
 
-async function fetchDepartments() {
-  try {
-    const res = await getDepartments({ limit: 100 })
-    departments.value = res.data?.data?.items || []
-  } catch (error) {
-    console.error("Failed to load departments:", error)
-  }
-}
-
+/**
+ * Open form dialog for creating a new HR user
+ */
 function openAddHR() {
-  selectedHR.value = null
-  showHRForm.value = true
+  hrFormDialog.open()
 }
 
+/**
+ * Open form dialog for editing an existing HR user
+ * @param {User} hr - HR user to edit
+ */
 function openEditHR(hr) {
-  selectedHR.value = hr
-  showHRForm.value = true
+  hrFormDialog.open(hr)
 }
 
+/**
+ * Open detail dialog for an HR user
+ * @param {User} hr - HR user to view
+ */
 function openDetailHR(hr) {
-  selectedHR.value = hr
-  showHRDetail.value = true
+  hrDetailDialog.open(hr)
 }
 
+/**
+ * Close HR detail dialog
+ */
 function closeHRDetail() {
-  showHRDetail.value = false
+  hrDetailDialog.close()
 }
 
+/**
+ * Handle save HR user (create or update)
+ * @param {Object} payload - HR user data to save
+ * @param {Function} done - Callback function
+ */
 async function handleSaveHR(payload, done) {
   try {
-    if (selectedHR.value) {
-      await updateUser(selectedHR.value.id, payload)
-      ElMessage.success(t.value('hrManagement.messages.updateSuccess'))
+    if (hrFormDialog.selectedItem) {
+      await executeApi(
+        () => updateUser(hrFormDialog.selectedItem.id, payload),
+        'hrManagement.messages.updateSuccess',
+        false // Don't show error here, let form handle it
+      )
     } else {
-      await createUser(payload)
-      ElMessage.success(t.value('hrManagement.messages.createSuccess'))
+      await executeApi(
+        () => createUser(payload),
+        'hrManagement.messages.createSuccess',
+        false // Don't show error here, let form handle it
+      )
     }
     fetchHRs()
-    showHRForm.value = false
+    hrFormDialog.close()
   } catch (error) {
-    console.error("Save error:", error)
+    // Error already handled by useApi (if enabled)
   } finally {
     done?.()
   }
 }
 
+/**
+ * Handle toggle HR user active status with confirmation
+ * @param {User} hr - HR user to toggle status
+ */
 async function handleToggleStatus(hr) {
-  const confirmMessage = hr.active 
+  const confirmMessage = hr.isActive 
     ? t.value('hrManagement.confirm.lockAccount').replace('{name}', hr.fullName)
     : t.value('hrManagement.confirm.unlockAccount').replace('{name}', hr.fullName)
   
@@ -105,28 +138,37 @@ async function handleToggleStatus(hr) {
         type: 'warning' 
       }
     )
-    const res = await toggleUserStatus(hr.id)
+    const res = await executeApi(
+      () => toggleUserStatus(hr.id),
+      'hrManagement.messages.toggleSuccess',
+      true
+    )
     if (res.data && res.data.data) {
       const index = hrs.value.findIndex(h => h.id === hr.id)
       if (index !== -1) {
         hrs.value[index] = res.data.data
       }
     }
-    ElMessage.success(t.value('hrManagement.messages.toggleSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
-      console.error("Toggle status error:", error)
+      // Error already handled by useApi
     }
   }
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchHRs()
+  pagination.setPage(page)
 }
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
+  pagination.firstPage()
   fetchHRs()
 }
 
@@ -137,6 +179,21 @@ watch([searchName, filterStatus, filterDepartment], () => {
 onMounted(() => {
   fetchHRs()
   fetchDepartments()
+})
+
+onBeforeUnmount(() => {
+  hrFormDialog.reset()
+  hrDetailDialog.reset()
+})
+
+onDeactivated(() => {
+  hrFormDialog.reset()
+  hrDetailDialog.reset()
+})
+
+onBeforeRouteLeave(() => {
+  hrFormDialog.reset()
+  hrDetailDialog.reset()
 })
 </script>
 
@@ -268,9 +325,9 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"
@@ -279,34 +336,35 @@ onMounted(() => {
       </el-card>
 
       <MentorFormDialog
-        v-model:visible="showHRForm"
-        :mentor="selectedHR"
+        :visible="hrFormDialog.visible"
+        :mentor="hrFormDialog.selectedItem"
         :departments="departments"
         user-type="HR"
+        @update:visible="hrFormDialog.visible = $event"
         @save="handleSaveHR"
       />
 
       <el-dialog 
-        v-model="showHRDetail" 
+        v-model="hrDetailDialog.visible" 
         :title="t('hrManagement.detail.title')"
         width="450px"
       >
         <el-descriptions :column="1" border>
           <el-descriptions-item :label="t('hrManagement.detail.hrName')">
-            {{ selectedHR?.fullName }}
+            {{ hrDetailDialog.selectedItem?.fullName }}
           </el-descriptions-item>
           <el-descriptions-item :label="t('hrManagement.table.email')">
-            {{ selectedHR?.email }}
+            {{ hrDetailDialog.selectedItem?.email }}
           </el-descriptions-item>
           <el-descriptions-item :label="t('hrManagement.detail.department')">
-            <el-tag type="info" v-if="selectedHR?.department">
-              {{ selectedHR.department.title }}
+            <el-tag type="info" v-if="hrDetailDialog.selectedItem?.department">
+              {{ hrDetailDialog.selectedItem?.department?.title }}
             </el-tag>
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item :label="t('hrManagement.table.status')">
-            <el-tag :type="selectedHR?.active ? 'success' : 'danger'">
-              {{ selectedHR?.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
+            <el-tag :type="hrDetailDialog.selectedItem?.isActive ? 'success' : 'danger'">
+              {{ hrDetailDialog.selectedItem?.isActive ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>

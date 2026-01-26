@@ -15,6 +15,8 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "evaluation_criteria")
+@EqualsAndHashCode(exclude = {"children", "scoreDefinitions", "parent"})
+@ToString(exclude = {"children", "scoreDefinitions", "parent"})
 public class EvaluationCriteria {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

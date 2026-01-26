@@ -1,91 +1,127 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { onBeforeRouteLeave } from "vue-router"
 import { Search, Plus, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import { getDepartments, createDepartment, updateDepartment } from '@/api/department'
+import { usePagination, useLoading, useApi, useDialog } from '@/composables'
+import { createDepartmentCreationRequest, createDepartmentUpdateRequest } from '@/types/department'
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchDepartments()
+})
+
+const { loading, withLoading, setLoadingState, isLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+})
+
 const departments = ref([])
 const searchName = ref("")
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
-const loading = ref(false)
-const showForm = ref(false)
-const selectedDepartment = ref(null)
-const formData = ref({ title: '' })
-const saving = ref(false)
+const formDialog = useDialog()
+const formData = ref(createDepartmentCreationRequest())
 
-const isEdit = computed(() => !!selectedDepartment.value)
+/** Check if form is in edit mode */
+const isEdit = computed(() => formDialog.isEdit)
 
+/**
+ * Fetch departments from backend with current filters and pagination
+ */
 async function fetchDepartments() {
-  loading.value = true
-  try {
-    const res = await getDepartments({ 
-      page: currentPage.value - 1, 
-      limit: pageSize,
+  await withLoading(async () => {
+    const params = {
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined
-    })
+    }
+    
+    const res = await executeApi(
+      () => getDepartments(params),
+      null,
+      'departmentManagement.messages.loadError'
+    )
+    
     departments.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('departmentManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+    pagination.setTotalItems(res.data?.data?.totalItems || 0)
+  })
 }
 
+/**
+ * Open form dialog for creating a new department
+ */
 function openAdd() {
-  selectedDepartment.value = null
-  formData.value = { title: '' }
-  showForm.value = true
+  formData.value = createDepartmentCreationRequest()
+  formDialog.open()
 }
 
+/**
+ * Open form dialog for editing an existing department
+ * @param {Department} dept - Department to edit
+ */
 function openEdit(dept) {
-  selectedDepartment.value = dept
-  formData.value = { title: dept.title || '' }
-  showForm.value = true
+  formData.value = {
+    ...createDepartmentUpdateRequest(),
+    title: dept.title || ''
+  }
+  formDialog.open(dept)
 }
 
+/**
+ * Close form dialog and reset form data
+ */
 function closeForm() {
-  showForm.value = false
-  selectedDepartment.value = null
-  formData.value = { title: '' }
+  formData.value = createDepartmentCreationRequest()
+  formDialog.close()
 }
 
+/**
+ * Handle save department (create or update)
+ */
 async function handleSave() {
   if (!formData.value.title.trim()) return
   
-  saving.value = true
+  setLoadingState('saving', true)
   try {
     if (isEdit.value) {
-      await updateDepartment(selectedDepartment.value.id, formData.value)
-      ElMessage.success(t.value('departmentManagement.messages.updateSuccess'))
+      await executeApi(
+        () => updateDepartment(formDialog.selectedItem.id, formData.value),
+        'departmentManagement.messages.updateSuccess',
+        'departmentManagement.messages.saveError'
+      )
     } else {
-      await createDepartment(formData.value)
-      ElMessage.success(t.value('departmentManagement.messages.createSuccess'))
+      await executeApi(
+        () => createDepartment(formData.value),
+        'departmentManagement.messages.createSuccess',
+        'departmentManagement.messages.saveError'
+      )
     }
     closeForm()
     fetchDepartments()
-  } catch (error) {
-    console.error("Save error:", error)
-    ElMessage.error(t.value('departmentManagement.messages.saveError'))
   } finally {
-    saving.value = false
+    setLoadingState('saving', false)
   }
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchDepartments()
+  pagination.setPage(page)
 }
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
+  pagination.firstPage()
   fetchDepartments()
 }
 
@@ -94,6 +130,18 @@ watch(searchName, () => {
 })
 
 onMounted(fetchDepartments)
+
+onBeforeUnmount(() => {
+  formDialog.reset()
+})
+
+onDeactivated(() => {
+  formDialog.reset()
+})
+
+onBeforeRouteLeave(() => {
+  formDialog.reset()
+})
 </script>
 
 <template>
@@ -158,11 +206,11 @@ onMounted(fetchDepartments)
           </el-table-column>
         </el-table>
 
-        <div class="pagination-wrapper" v-if="totalItems > pageSize">
+        <div class="pagination-wrapper" v-if="pagination.totalItems.value > pagination.pageSize.value">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"
@@ -171,7 +219,7 @@ onMounted(fetchDepartments)
       </el-card>
 
       <el-dialog 
-        v-model="showForm" 
+        v-model="formDialog.visible" 
         :title="isEdit ? t('departmentManagement.form.editTitle') : t('departmentManagement.form.addTitle')"
         width="400px"
         :close-on-click-modal="false"
@@ -189,7 +237,7 @@ onMounted(fetchDepartments)
           <el-button @click="closeForm">
             {{ t('departmentManagement.form.cancel') }}
           </el-button>
-          <el-button type="primary" @click="handleSave" :loading="saving" :disabled="!formData.title.trim()">
+          <el-button type="primary" @click="handleSave" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
             {{ isEdit ? t('departmentManagement.form.save') : t('departmentManagement.form.create') }}
           </el-button>
         </template>

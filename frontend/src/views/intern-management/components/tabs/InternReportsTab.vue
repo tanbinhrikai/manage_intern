@@ -1,216 +1,245 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useLocaleStore } from '@/locales/locale'
-import { getEvaluationCriteria } from '@/api/evaluation-criteria'
-import { getWeeklyReportsByInternId, createWeeklyReport, updateWeeklyReport } from '@/api/weekly-report'
+import { ref, reactive, computed, onMounted } from "vue";
+import { useLocaleStore } from "@/locales/locale";
+import { getEvaluationCriteria } from "@/api/evaluation-criteria";
+import {
+  getWeeklyReportsByInternId,
+  createWeeklyReport,
+  updateWeeklyReport,
+} from "@/api/weekly-report";
+import {
+  InfoFilled,
+  Calendar,
+  List,
+  ChatLineRound,
+} from "@element-plus/icons-vue";
+import { usePagination, useLoading, useApi, useDateFormat } from "@/composables";
+import { createWeeklyReportRequest, createWeeklyReportDetailRequest } from "@/types/weeklyReport";
 
 const props = defineProps({
   internId: {
     type: [String, Number],
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const localeStore = useLocaleStore()
-const t = computed(() => localeStore.t)
+const localeStore = useLocaleStore();
+const t = computed(() => localeStore.t);
 
-// Raw data from API
-const criteriaGroups = ref([])
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchWeeklyReports(),
+});
 
-// Flat list of all child criteria (only children have scoreDefinitions)
-const allCriteria = computed(() => {
-  const criteria = []
-  criteriaGroups.value.forEach(group => {
-    (group.mainCriteria || []).forEach(main => {
-      (main.children || []).forEach(child => {
-        criteria.push({
-          ...child,
-          parentId: main.id,
-          groupId: group.id,
-          groupName: group.name,
-          parentName: main.name
-        })
-      })
-    })
-  })
-  return criteria
-})
+const {
+  loading: reportLoading,
+  withLoading: withReportLoading,
+  setLoadingState,
+  isLoading,
+} = useLoading();
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true,
+});
+const { formatDate } = useDateFormat();
 
-// Group criteria by their group for display
+const criteriaGroups = ref([]);
+const weeklyReports = ref([]);
+const selectedReportId = ref(null);
+const showReportForm = ref(false);
+
+const reportForm = reactive(createWeeklyReportRequest());
+
 const criteriaByGroup = computed(() => {
-  const grouped = {}
-  criteriaGroups.value.forEach(group => {
-    const children = []
-    ;(group.mainCriteria || []).forEach(main => {
+  const grouped = {};
+  criteriaGroups.value.forEach((group) => {
+    const children = [];
+    (group.mainCriteria || []).forEach((main) => {
       (main.children || []).forEach((child, index) => {
         children.push({
           ...child,
+          parentId: main.id,
           parentName: main.name,
+          // Flag để merge cell (span-method)
           isParentStart: index === 0,
-          parentRowSpan: main.children.length
-        })
-      })
-    })
+          parentRowSpan: main.children.length,
+        });
+      });
+    });
     if (children.length > 0) {
       grouped[group.id] = {
         name: group.name,
-        displayOrder: group.displayOrder,
-        criteria: children
-      }
+        criteria: children,
+      };
     }
-  })
-  return grouped
-})
+  });
+  return grouped;
+});
 
-// Weekly Report data
-const weeklyReports = ref([])
-const selectedReportId = ref(null)
-const reportLoading = ref(false)
-const reportSaving = ref(false)
-const showReportForm = ref(false)
+/**
+ * @returns {Array<import('@/types/evaluationCriteria').EvaluationCriteria & { parentId: number, parentName: string }>}
+ */
+const allCriteria = computed(() => {
+  const list = [];
+  Object.values(criteriaByGroup.value).forEach((group) => {
+    list.push(...group.criteria);
+  });
+  return list;
+});
 
-const reportForm = reactive({
-  weekStartDate: '',
-  weekEndDate: '',
-  tasksAssigned: '',
-  tasksCompleted: '',
-  issuesRisks: '',
-  mentorOverallComment: '',
-  details: []
-})
-
-// Get score definition by label (UPPERCASE)
-const getScoreDefinition = (criteria, label) => {
-  return criteria.scoreDefinitions?.find(sd => sd.scoreLabel === label)
-}
-
-// Calculate overall average score
-const getOverallAverage = computed(() => {
-  let total = 0
-  let count = 0
-  reportForm.details.forEach(d => {
-    if (d.score !== null && d.score !== '') {
-      total += Number(d.score)
-      count++
-    }
-  })
-  return count > 0 ? (total / count).toFixed(1) : '-'
-})
-
-// Initialize report form with criteria
-const initReportForm = (report = null) => {
-  if (report) {
-    reportForm.weekStartDate = report.weekStartDate || ''
-    reportForm.tasksAssigned = report.tasksAssigned || ''
-    reportForm.tasksCompleted = report.tasksCompleted || ''
-    reportForm.issuesRisks = report.issuesRisks || ''
-    reportForm.mentorOverallComment = report.mentorOverallComment || ''
-    reportForm.details = allCriteria.value.map(c => {
-      const existing = report.details?.find(d => d.criteriaId === c.id)
-      return {
-        criteriaId: c.id,
-        score: existing?.score ?? null,
-        comment: existing?.comment || ''
-      }
-    })
-    updateEndDate()
-  } else {
-    const today = new Date()
-    const monday = new Date(today)
-    monday.setDate(today.getDate() - today.getDay() + 1)
-    reportForm.weekStartDate = monday.toISOString().split('T')[0]
-    reportForm.tasksAssigned = ''
-    reportForm.tasksCompleted = ''
-    reportForm.issuesRisks = ''
-    reportForm.mentorOverallComment = ''
-    reportForm.details = allCriteria.value.map(c => ({
-      criteriaId: c.id,
-      score: null,
-      comment: ''
-    }))
-    updateEndDate()
-  }
-}
-
-// Update end date to 5 days after start date
-function updateEndDate() {
-  if (reportForm.weekStartDate) {
-    const startDate = new Date(reportForm.weekStartDate)
-    const endDate = new Date(startDate)
-    endDate.setDate(startDate.getDate() + 5)
-    reportForm.weekEndDate = endDate.toISOString().split('T')[0]
-  } else {
-    reportForm.weekEndDate = ''
-  }
-}
-
-// Fetch evaluation criteria (hierarchy structure)
-async function fetchEvaluationCriteria() {
-  try {
-    const res = await getEvaluationCriteria()
-    criteriaGroups.value = res.data?.data || []
-  } catch (error) {
-    console.error("Failed to load criteria:", error)
-  }
-}
-
-// Fetch weekly reports for intern
-async function fetchWeeklyReports() {
-  if (!props.internId) return
-  reportLoading.value = true
-  try {
-    const res = await getWeeklyReportsByInternId(props.internId)
-    weeklyReports.value = res.data?.data || []
-  } catch (error) {
-    console.error("Failed to load reports:", error)
-    ElMessage.error(t.value('weeklyReport.messages.loadError'))
-  } finally {
-    reportLoading.value = false
-  }
-}
-
-// Open new report form
-function openNewReportForm() {
-  selectedReportId.value = null
-  initReportForm()
-  showReportForm.value = true
-}
-
-// Edit existing report
-function editReport(report) {
-  selectedReportId.value = report.id
-  initReportForm(report)
-  showReportForm.value = true
-}
-
-
+/**
+ * @param {Object} params
+ * @param {Object} params.row
+ * @param {Object} params.column
+ * @param {number} params.rowIndex
+ * @param {number} params.columnIndex
+ * @returns {Object|undefined}
+ */
 const objectSpanMethod = ({ row, column, rowIndex, columnIndex }) => {
   if (columnIndex === 0) {
+    // First column is Parent Name - merge cells for same parent
     if (row.isParentStart) {
-      return {
-        rowspan: row.parentRowSpan,
-        colspan: 1,
-      }
+      return { rowspan: row.parentRowSpan, colspan: 1 };
     } else {
-      return {
-        rowspan: 0,
-        colspan: 0,
-      }
+      return { rowspan: 0, colspan: 0 };
     }
+  }
+};
+
+// --- Helper Functions ---
+/**
+ * @param {import('@/types/evaluationCriteria').EvaluationCriteria} criteria
+ * @param {string} label
+ * @returns {import('@/types/evaluationCriteria').ScoreDefinition|undefined}
+ */
+const getScoreDefinition = (criteria, label) => {
+  return criteria.scoreDefinitions?.find((sd) => sd.scoreLabel === label);
+};
+
+/**
+ * @returns {string}
+ */
+const getOverallAverage = computed(() => {
+  let total = 0;
+  let count = 0;
+  reportForm.details.forEach((d) => {
+    if (d.score !== null && d.score !== "") {
+      total += Number(d.score);
+      count++;
+    }
+  });
+  return count > 0 ? (total / count).toFixed(1) : "-";
+});
+
+/**
+ * @param {import('@/types/weeklyReport').WeeklyReport|null} report
+ */
+const initReportForm = (report = null) => {
+  if (report) {
+    // Edit mode: populate form with existing report data
+    Object.assign(reportForm, {
+      weekStartDate: report.weekStartDate || "",
+      tasksAssigned: report.tasksAssigned || "",
+      tasksCompleted: report.tasksCompleted || "",
+      issuesRisks: report.issuesRisks || "",
+      mentorOverallComment: report.mentorOverallComment || "",
+      details: allCriteria.value.map((c) => {
+        const existing = report.details?.find((d) => d.criteriaId === c.id);
+        return {
+          ...createWeeklyReportDetailRequest(),
+          criteriaId: c.id,
+          score: existing?.score ?? null,
+          comment: existing?.comment || "",
+        };
+      }),
+    });
+    updateEndDate();
+  } else {
+    // Create mode: initialize with default values
+    const today = new Date();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - today.getDay() + 1);
+    Object.assign(reportForm, {
+      ...createWeeklyReportRequest(),
+      weekStartDate: monday.toISOString().split("T")[0],
+      details: allCriteria.value.map((c) => ({
+        ...createWeeklyReportDetailRequest(),
+        criteriaId: c.id,
+      })),
+    });
+    updateEndDate();
+  }
+};
+
+function updateEndDate() {
+  if (reportForm.weekStartDate) {
+    const d = new Date(reportForm.weekStartDate);
+    d.setDate(d.getDate() + 5);
+    reportForm.weekEndDate = d.toISOString().split("T")[0];
   }
 }
 
-// Cancel report form
-function cancelReportForm() {
-  showReportForm.value = false
-  selectedReportId.value = null
+async function fetchEvaluationCriteria() {
+  try {
+    const res = await executeApi(() => getEvaluationCriteria());
+    criteriaGroups.value = res.data?.data || [];
+  } catch (error) {
+    // Error already handled by useApi
+  }
 }
 
-// Save report
+async function fetchWeeklyReports() {
+  if (!props.internId) return;
+  await withReportLoading(async () => {
+    const params = {
+      ...pagination.apiParams.value,
+      sort: "weekStartDate,desc",
+    };
+
+    const res = await executeApi(
+      () => getWeeklyReportsByInternId(props.internId, params),
+      null,
+      true
+    );
+
+    weeklyReports.value = res.data?.data?.items || [];
+    pagination.setTotalItems(res.data?.data?.totalItems || 0);
+  });
+}
+
+/**
+ * @param {number} page
+ */
+function handlePageChange(page) {
+  pagination.setPage(page);
+}
+
+function openNewReportForm() {
+  selectedReportId.value = null;
+  initReportForm();
+  showReportForm.value = true;
+}
+
+/**
+ * @param {import('@/types/weeklyReport').WeeklyReport} report
+ */
+function editReport(report) {
+  selectedReportId.value = report.id;
+  initReportForm(report);
+  showReportForm.value = true;
+}
+
+function cancelReportForm() {
+  showReportForm.value = false;
+  selectedReportId.value = null;
+}
+
 async function saveReport() {
-  reportSaving.value = true
+  setLoadingState("reportSaving", true);
   try {
+    /** @type {WeeklyReportRequest} */
     const payload = {
       internId: Number(props.internId),
       weekStartDate: reportForm.weekStartDate,
@@ -218,486 +247,489 @@ async function saveReport() {
       tasksCompleted: reportForm.tasksCompleted,
       issuesRisks: reportForm.issuesRisks,
       mentorOverallComment: reportForm.mentorOverallComment,
-      details: reportForm.details.filter(d => d.score !== null && d.score !== '')
-    }
+      // Filter out details with no score (not evaluated)
+      details: reportForm.details.filter(
+        (d) => d.score !== null && d.score !== ""
+      ),
+    };
 
     if (selectedReportId.value) {
-      await updateWeeklyReport(selectedReportId.value, payload)
-      ElMessage.success(t.value('weeklyReport.messages.updateSuccess'))
+      await executeApi(
+        () => updateWeeklyReport(selectedReportId.value, payload),
+        "weeklyReport.messages.saveSuccess",
+        "weeklyReport.messages.saveError"
+      );
     } else {
-      await createWeeklyReport(payload)
-      ElMessage.success(t.value('weeklyReport.messages.createSuccess'))
+      await executeApi(
+        () => createWeeklyReport(payload),
+        "weeklyReport.messages.saveSuccess",
+        "weeklyReport.messages.saveError"
+      );
     }
 
-    showReportForm.value = false
-    await fetchWeeklyReports()
+    showReportForm.value = false;
+    await fetchWeeklyReports();
   } catch (error) {
-    console.error("Save report error:", error)
-    ElMessage.error(t.value('weeklyReport.messages.saveError'))
+    // Error already handled by useApi
   } finally {
-    reportSaving.value = false
+    setLoadingState("reportSaving", false);
   }
 }
 
-// Get detail for a criteria
-const getDetailForCriteria = (criteriaId) => {
-  return reportForm.details.find(d => d.criteriaId === criteriaId) || { score: null, comment: '' }
-}
+/**
+ * @param {number} id
+ * @returns {import('@/types/weeklyReport').WeeklyReportDetailRequest}
+ */
+const getDetail = (id) =>
+  reportForm.details.find((d) => d.criteriaId === id) || {
+    criteriaId: id,
+    score: null,
+    comment: "",
+  };
 
-// Update score for criteria
-const updateScore = (criteriaId, score) => {
-  const detail = reportForm.details.find(d => d.criteriaId === criteriaId)
-  if (detail) {
-    detail.score = score
-  }
-}
+/**
+ * @param {number} id
+ * @param {string} field
+ * @param {any} val
+ */
+const updateDetail = (id, field, val) => {
+  const d = reportForm.details.find((item) => item.criteriaId === id);
+  if (d) d[field] = val;
+};
 
-// Update comment for criteria
-const updateComment = (criteriaId, comment) => {
-  const detail = reportForm.details.find(d => d.criteriaId === criteriaId)
-  if (detail) {
-    detail.comment = comment
-  }
-}
 
-function formatDate(date) {
-  if (!date) return ''
-  const d = new Date(date)
-  return d.toLocaleDateString('en-GB')
-}
+/**
+ * @param {number} s
+ * @returns {string}
+ */
+const getScoreColor = (s) =>
+  s >= 9 ? "#67c23a" : s >= 7 ? "#409eff" : s >= 5 ? "#e6a23c" : "#f56c6c";
 
-// Get status type for el-tag
-function getStatusType(status) {
-  switch(status) {
-    case 'SUBMITTED': return 'success'
-    case 'PENDING': return 'warning'
-    default: return 'info'
-  }
-}
-
-// Initialize
 onMounted(async () => {
-    await fetchEvaluationCriteria()
-    await fetchWeeklyReports()
-})
+  await fetchEvaluationCriteria();
+  await fetchWeeklyReports();
+});
 </script>
-
-<template>
-  <div class="tab-content reports-content" v-loading="reportLoading">
-
+  
+  <template>
+  <div class="report-container" v-loading="reportLoading">
     <template v-if="!showReportForm">
-    
-      <div class="reports-header">
-        <h3>{{ t('weeklyReport.title') }}</h3>
-        <el-button type="primary" @click="openNewReportForm">
-          {{ t('weeklyReport.createNew') }}
-        </el-button>
+      <div class="header-actions">
+        <h2 class="page-title">{{ t("weeklyReport.title") }}</h2>
+        <el-button type="primary" :icon="List" @click="openNewReportForm">{{
+          t("weeklyReport.createNew")
+        }}</el-button>
       </div>
 
-      
-      <div v-if="weeklyReports.length > 0" class="reports-list">
-        <el-table :data="weeklyReports" stripe>
-          <el-table-column prop="weekNumber" :label="t('weeklyReport.weekNumber')" width="100">
-            <template #default="{ row }">
-              {{ t('weeklyReport.weekNumber') }} {{ row.weekNumber }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="weekStartDate" :label="t('weeklyReport.weekStartDate')" width="150">
-            <template #default="{ row }">
-              {{ formatDate(row.weekStartDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="averageScore" :label="t('weeklyReport.table.averageScore')" width="120">
-            <template #default="{ row }">
-              <el-tag :type="row.averageScore >= 7 ? 'success' : row.averageScore >= 5 ? 'warning' : 'danger'">
-                {{ row.averageScore?.toFixed(1) || '-' }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column :label="t('internManagement.table.actions')" width="150">
-            <template #default="{ row }">
-              <el-button text type="primary" @click="editReport(row)">
-                {{ t('weeklyReport.actions.edit') }}
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div v-else class="no-reports">
-        <p>{{ t('weeklyReport.noReports') }}</p>
+      <el-table
+        :data="weeklyReports"
+        stripe
+        style="width: 100%"
+        class="shadow-table"
+      >
+        <el-table-column
+          prop="weekNumber"
+          :label="t('weeklyReport.weekNumber')"
+          width="120"
+        />
+        <el-table-column
+          prop="weekStartDate"
+          :label="t('weeklyReport.weekStartDate')"
+        >
+          <template #default="{ row }">{{
+            formatDate(row.weekStartDate)
+          }}</template>
+        </el-table-column>
+        <el-table-column
+          prop="averageScore"
+          :label="t('weeklyReport.table.averageScore')"
+          width="150"
+        >
+          <template #default="{ row }">
+            <span
+              :style="{
+                fontWeight: 'bold',
+                color: getScoreColor(row.averageScore),
+              }"
+              >{{ row.averageScore?.toFixed(1) || "-" }}</span
+            >
+          </template>
+        </el-table-column>
+        <el-table-column label="Actions" width="120" align="right">
+          <template #default="{ row }">
+            <el-button text type="primary" @click="editReport(row)"
+              >Edit</el-button
+            >
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-right" v-if="pagination.totalItems.value > 0">
+        <el-pagination
+          :current-page="pagination.currentPage.value"
+          :page-size="pagination.pageSize.value"
+          :total="pagination.totalItems.value"
+          layout="prev, pager, next"
+          @current-change="handlePageChange"
+        />
       </div>
     </template>
 
-    
     <template v-else>
-      <div class="report-form">
-        <div class="form-header">
-          <h3>{{ selectedReportId ? t('weeklyReport.title') : t('weeklyReport.createNew') }}</h3>
-          <div class="date-range">
-            <div class="date-field">
-              <label>{{ t('weeklyReport.form.startDate') }}</label>
-              <el-date-picker
-                v-model="reportForm.weekStartDate"
-                type="date"
-                :placeholder="t('weeklyReport.form.startDate')"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                @change="updateEndDate"
-              />
-            </div>
-            <div class="date-field">
-              <label>{{ t('weeklyReport.form.endDate') }}</label>
-              <el-date-picker
-                v-model="reportForm.weekEndDate"
-                type="date"
-                :placeholder="t('weeklyReport.form.endDate')"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                disabled
-              />
-            </div>
+      <div class="form-wrapper">
+        <div class="sticky-header">
+          <div class="left">
+            <el-button link @click="cancelReportForm">← Back</el-button>
+            <h3>{{ selectedReportId ? "Edit Report" : "New Report" }}</h3>
+          </div>
+          <div class="right">
+            <span class="avg-score"
+              >Avg:
+              <b :style="{ color: getScoreColor(getOverallAverage) }">{{
+                getOverallAverage
+              }}</b></span
+            >
+            <el-button @click="cancelReportForm">Cancel</el-button>
+            <el-button
+              type="primary"
+              @click="saveReport"
+              :loading="isLoading('reportSaving')"
+              >Save Report</el-button
+            >
           </div>
         </div>
 
-        <el-card class="tasks-card" shadow="never">
-          <div class="tasks-grid">
-            <div class="task-field">
-              <label>{{ t('weeklyReport.form.tasksAssigned') }}</label>
-              <el-input
-                v-model="reportForm.tasksAssigned"
-                type="textarea"
-                :autosize="{ minRows: 4, maxRows: 10 }"
-                resize="none"
-                :placeholder="t('weeklyReport.form.tasksAssigned')"
-              />
+        <div class="form-content">
+          <div class="section-box">
+            <div class="date-row">
+              <div class="field">
+                <label>Start Date</label>
+                <el-date-picker
+                  v-model="reportForm.weekStartDate"
+                  type="date"
+                  @change="updateEndDate"
+                  value-format="YYYY-MM-DD"
+                />
+              </div>
+              <div class="field">
+                <label>End Date</label>
+                <el-date-picker
+                  v-model="reportForm.weekEndDate"
+                  type="date"
+                  disabled
+                  value-format="YYYY-MM-DD"
+                />
+              </div>
             </div>
-            <div class="task-field">
-              <label>{{ t('weeklyReport.form.tasksCompleted') }}</label>
-              <el-input
-                v-model="reportForm.tasksCompleted"
-                type="textarea"
-                :autosize="{ minRows: 4, maxRows: 10 }"
-                resize="none"
-                :placeholder="t('weeklyReport.form.tasksCompleted')"
-              />
-            </div>
-            <div class="task-field">
-              <label>{{ t('weeklyReport.form.issuesRisks') }}</label>
-              <el-input
-                v-model="reportForm.issuesRisks"
-                type="textarea"
-                :autosize="{ minRows: 4, maxRows: 10 }"
-                resize="none"
-                :placeholder="t('weeklyReport.form.issuesRisks')"
-              />
+            <div class="tasks-grid">
+              <div class="task-col">
+                <label>Tasks Assigned</label>
+                <el-input
+                  v-model="reportForm.tasksAssigned"
+                  type="textarea"
+                  :rows="3"
+                  class="scroll-textarea"
+                  placeholder="Input tasks..."
+                />
+              </div>
+              <div class="task-col">
+                <label>Tasks Completed</label>
+                <el-input
+                  v-model="reportForm.tasksCompleted"
+                  type="textarea"
+                  :rows="3"
+                  resize="none"
+                  class="scroll-textarea"
+                  placeholder="Input results..."
+                />
+              </div>
+              <div class="task-col">
+                <label>Issues / Risks</label>
+                <el-input
+                  v-model="reportForm.issuesRisks"
+                  type="textarea"
+                  :rows="3"
+                  resize="none"
+                  class="scroll-textarea"
+                  placeholder="Input blockers..."
+                />
+              </div>
             </div>
           </div>
-        </el-card>
 
-        <!-- Criteria grouped by Group -->
-        <template v-for="(group, groupId) in criteriaByGroup" :key="groupId">
-          <el-card class="category-card" shadow="never">
-            <template #header>
-              <div class="category-header">
-                <span class="category-title">{{ group.name }}</span>
-              </div>
-            </template>
+          <div
+            v-for="(group, groupId) in criteriaByGroup"
+            :key="groupId"
+            class="group-section"
+          >
+            <h4 class="group-title">{{ group.name }}</h4>
+            <el-table
+              :data="group.criteria"
+              :span-method="objectSpanMethod"
+              border
+              class="evaluation-table"
+              :header-cell-style="{ background: '#f5f7fa', color: '#606266' }"
+            >
+              <el-table-column label="Criteria Group" width="180">
+                <template #default="{ row }">
+                  <span class="parent-text">{{ row.parentName }}</span>
+                </template>
+              </el-table-column>
 
-            <el-table :data="group.criteria" border class="criteria-table" :span-method="objectSpanMethod">
-              <el-table-column :label="t('weeklyReport.table.criteriaParent')" width="100" header-align="center">
+              <el-table-column label="Evaluation Criteria" min-width="200">
                 <template #default="{ row }">
-                  <div class="parent-criteria-name" style="font-size: 12px">
-                    {{ row.parentName }}
+                  <div class="criteria-cell">
+                    <span class="criteria-name">{{ row.name }}</span>
+
+                    <el-popover
+                      placement="top-start"
+                      :width="350"
+                      trigger="hover"
+                    >
+                      <template #reference>
+                        <el-icon class="info-icon"><InfoFilled /></el-icon>
+                      </template>
+                      <div class="rubric-popup">
+                        <div class="rubric-row good">
+                          <span class="badge">9-10</span>
+                          {{
+                            getScoreDefinition(row, "EXCELLENT")?.description
+                          }}
+                        </div>
+                        <div class="rubric-row">
+                          <span class="badge">7-8</span>
+                          {{ getScoreDefinition(row, "GOOD")?.description }}
+                        </div>
+                        <div class="rubric-row">
+                          <span class="badge">5-6</span>
+                          {{ getScoreDefinition(row, "AVERAGE")?.description }}
+                        </div>
+                        <div class="rubric-row bad">
+                          <span class="badge">0-4</span>
+                          {{ getScoreDefinition(row, "WEAK")?.description }}
+                        </div>
+                      </div>
+                    </el-popover>
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.criteriaChild')" width="100" header-align="center">
-                <template #default="{ row }">
-                  <div class="child-criteria-name" style="font-size: 12px">{{ row.name }}</div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.excellent')">
-                <template #default="{ row }">
-                  <div class="score-def excellent">
-                    {{ getScoreDefinition(row, 'EXCELLENT')?.description || '-' }}
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.good')">
-                <template #default="{ row }">
-                  <div class="score-def good">
-                    {{ getScoreDefinition(row, 'GOOD')?.description || '-' }}
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.average')">
-                <template #default="{ row }">
-                  <div class="score-def average">
-                    {{ getScoreDefinition(row, 'AVERAGE')?.description || '-' }}
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.weak')">
-                <template #default="{ row }">
-                  <div class="score-def weak">
-                    {{ getScoreDefinition(row, 'WEAK')?.description || '-' }}
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.score')" width="90" align="center">
+
+              <el-table-column label="Score" width="100" align="center">
                 <template #default="{ row }">
                   <el-input-number
-                    :model-value="getDetailForCriteria(row.id).score"
-                    @update:model-value="(val) => updateScore(row.id, val)"
+                    :model-value="getDetail(row.id).score"
+                    @update:model-value="
+                      (v) => updateDetail(row.id, 'score', v)
+                    "
                     :min="0"
                     :max="10"
-                    :precision="0"
-                    size="small"
-                    controls-position="right"
-                    class="score-input"
+                    :controls="false"
+                    class="compact-input"
+                    placeholder="0-10"
                   />
                 </template>
               </el-table-column>
-              <el-table-column :label="t('weeklyReport.table.comment')" width="180">
+
+              <el-table-column label="Comment" min-width="250">
                 <template #default="{ row }">
                   <el-input
+                    :model-value="getDetail(row.id).comment"
+                    @update:model-value="
+                      (v) => updateDetail(row.id, 'comment', v)
+                    "
                     type="textarea"
-                    :autosize="{ minRows: 1, maxRows: 6 }"
-                    resize="none"
-                    :model-value="getDetailForCriteria(row.id).comment"
-                    @update:model-value="(val) => updateComment(row.id, val)"
-                    :placeholder="t('weeklyReport.form.commentPlaceholder')"
-                    size="small"
+                    :rows="4"
+                    class="comment-textarea"
+                    placeholder="Add comment..."
                   />
                 </template>
               </el-table-column>
             </el-table>
-          </el-card>
-        </template>
+          </div>
 
-        <div class="overall-average">
-          <span class="average-label">{{ t('weeklyReport.table.averageScore') }}:</span>
-          <el-tag 
-            size="large"
-            :type="getOverallAverage >= 7 ? 'success' : getOverallAverage >= 5 ? 'warning' : 'info'"
-            class="average-tag"
-          >
-            {{ getOverallAverage }}
-          </el-tag>
-        </div>
-
-      
-        <el-card class="comment-card" shadow="never">
-          <template #header>
-            <div class="card-header">
-              <span>{{ t('weeklyReport.form.mentorComment') }}</span>
-            </div>
-          </template>
-          <el-input
-            v-model="reportForm.mentorOverallComment"
-            type="textarea"
-            :rows="4"
-            :placeholder="t('weeklyReport.form.commentPlaceholder')"
-          />
-        </el-card>
-
-      
-        <div class="form-actions">
-          <el-button @click="cancelReportForm">
-            {{ t('weeklyReport.actions.cancel') }}
-          </el-button>
-          <el-button type="primary" @click="saveReport" :loading="reportSaving">
-            {{ t('weeklyReport.actions.save') }}
-          </el-button>
+          <div class="section-box">
+            <label class="final-label">Mentor Overall Comment</label>
+            <el-input
+              v-model="reportForm.mentorOverallComment"
+              type="textarea"
+              :rows="4"
+              resize="none"
+              class="scroll-textarea"
+            />
+          </div>
         </div>
       </div>
     </template>
   </div>
 </template>
-
-<style scoped>
-/* Weekly Report Styles */
-.reports-content {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  min-height: 400px;
+  
+  <style scoped>
+.report-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-bottom: 50px;
 }
-
-.reports-header {
+.header-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
-
-.reports-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.reports-list {
-  margin-bottom: 24px;
-}
-
-.no-reports {
-  text-align: center;
-  padding: 60px 20px;
-  color: #909399;
-}
-
-.report-form {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #ebeef5;
-}
-
-.form-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.date-range {
-  display: flex;
-  gap: 16px;
-}
-
-.date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.date-field label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
-}
-
-.category-card {
+.shadow-table {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   overflow: hidden;
 }
-
-.category-card :deep(.el-card__header) {
-  padding: 12px 16px;
-  background-color: #409eff;
-  color: white;
+.pagination-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
-.category-header {
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 20px;
+}
+.left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 15px;
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.avg-score {
+  font-size: 16px;
+  margin-right: 10px;
 }
 
-.category-title {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.criteria-table {
-  width: 100%;
-}
-
-.criteria-table :deep(.el-table__header th) {
-  background-color: #f5f7fa;
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.criteria-name {
-  font-weight: 600;
-  font-size: 13px;
-  color: #2c3e50;
-}
-
-.criteria-parent {
-  font-size: 11px;
-  color: #909399;
-  margin-top: 2px;
-}
-
-.score-def {
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 4px;
-  background-color: #fff;
-  color: #303133;
-}
-
-.tasks-card {
+.section-box {
+  background: #fff;
+  padding: 20px;
   border-radius: 8px;
-  margin-bottom: 16px;
+  border: 1px solid #ebeef5;
+  margin-bottom: 20px;
+}
+.date-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.field label,
+.task-col label,
+.final-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 5px;
 }
 
 .tasks-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
 }
 
-.task-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.scroll-textarea :deep(.el-textarea__inner),
+.comment-textarea :deep(.el-textarea__inner) {
+  resize: none; 
+  overflow-y: auto; 
+  line-height: 1.4;
+  padding: 8px;
 }
 
-.task-field label {
+
+.group-section {
+  margin-bottom: 30px;
+}
+.group-title {
+  margin: 0 0 10px 0;
+  font-size: 15px;
+  color: #409eff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.evaluation-table {
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.parent-text {
+  font-weight: 600;
+  color: #606266;
   font-size: 13px;
-  font-weight: 600;
-  color: #2c3e50;
 }
-
-.overall-average {
+.criteria-cell {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 12px;
-  padding: 16px 0;
+  justify-content: space-between;
+}
+.criteria-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+.info-icon {
+  color: #c0c4cc;
+  cursor: help;
+  margin-left: 8px;
+}
+.info-icon:hover {
+  color: #409eff;
+}
+
+.compact-input {
+  width: 100%;
+  max-width: 80px;
+}
+.compact-input :deep(.el-input__inner) {
+  text-align: center;
   font-weight: 600;
-  color: #2c3e50;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
-.average-label {
-  font-size: 16px;
+.rubric-popup {
+  font-size: 12px;
+  line-height: 1.4;
 }
-
-.average-tag {
-  font-size: 18px;
-  padding: 8px 16px;
-}
-
-.score-input {
-  width: 80px;
-}
-
-.comment-card {
-  border-radius: 8px;
-}
-
-.comment-card :deep(.el-card__header) {
-  padding: 12px 16px;
-  background-color: #f5f7fa;
-}
-
-.form-actions {
+.rubric-row {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  gap: 8px;
+  margin-bottom: 6px;
+  align-items: baseline;
+}
+.badge {
+  background: #f4f4f5;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  min-width: 30px;
+  text-align: center;
+  font-size: 11px;
+}
+.rubric-row.good .badge {
+  background: #e1f3d8;
+  color: #67c23a;
+}
+.rubric-row.bad .badge {
+  background: #fde2e2;
+  color: #f56c6c;
 }
 </style>

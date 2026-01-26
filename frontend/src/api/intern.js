@@ -33,7 +33,7 @@ export function getInternsByMentor(mentorId, params = {}) {
 }
 
 export function getMyIntern(params = {}) {
-    return http.get("/interns/my-intern", { params })
+    return http.get("/interns/my-interns", { params })
 }
 
 export function getInternsAnalysis() {

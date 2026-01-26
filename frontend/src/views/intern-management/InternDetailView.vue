@@ -8,6 +8,7 @@ import { Edit, Document, TrendCharts, DataBoard, Discount, Medal } from '@elemen
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
 import { getInternById } from '@/api/intern'
+import { useStatus, useDateFormat } from '@/composables'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,6 +23,9 @@ const loading = ref(false)
 const layoutComponent = computed(() => {
   return authStore.userRole === 'MENTOR' ? MentorLayout : AdminLayout
 })
+
+const { getStatusType } = useStatus()
+const { formatDate } = useDateFormat()
 
 async function fetchInternDetail() {
   loading.value = true
@@ -46,16 +50,6 @@ function openReportsTab() {
   router.push(`${prefix}/${internId}/edit?tab=reports`)
 }
 
-const getStatusType = (status) => {
-  const map = {
-    ACTIVE: 'success',
-    WARNING: 'warning',
-    COMPLETE: 'primary',
-    DROPPED: 'danger'
-  }
-  return map[status] || 'info'
-}
-
 const calculateDuration = (start, end) => {
   if (!start || !end) return '-'
   const startDate = new Date(start)
@@ -65,11 +59,6 @@ const calculateDuration = (start, end) => {
   const weeks = Math.floor(diffDays / 7)
   
   return `${formatDate(start)} - ${formatDate(end)} (${weeks} ${t.value('common.weeks')})`
-}
-
-function formatDate(date) {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString()
 }
 
 onMounted(() => {

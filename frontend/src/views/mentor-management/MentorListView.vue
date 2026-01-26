@@ -1,98 +1,131 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { onBeforeRouteLeave } from "vue-router"
+import { ElMessageBox } from 'element-plus'
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
 import { getMentors, createMentor, updateMentor, toggleUserStatus } from '@/api/user'
-import { getDepartments } from '@/api/department'
+import { usePagination, useLoading, useApi, useDropdownData, useDialog } from '@/composables'
+
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
 
+// Composables
+const pagination = usePagination({
+  initialPage: 1,
+  initialPageSize: 10,
+  onPageChange: () => fetchMentors()
+})
+
+const { loading, withLoading } = useLoading()
+const { execute: executeApi } = useApi({
+  showErrorMessage: true,
+  showSuccessMessage: true
+})
+
+// Composables
+const { departments, fetchDepartments } = useDropdownData()
+const mentorFormDialog = useDialog()
+const mentorDetailDialog = useDialog()
+
+// Data
 const mentors = ref([])
-const departments = ref([])
-const currentPage = ref(1)
-const pageSize = 10
-const totalItems = ref(0)
 const searchName = ref("")
 const filterStatus = ref("")
 const filterDepartment = ref("")
-const showMentorForm = ref(false)
-const showMentorDetail = ref(false)
-const selectedMentor = ref(null)
-const loading = ref(false)
 
+/**
+ * Fetch mentors from backend with current filters and pagination
+ */
 async function fetchMentors() {
-  loading.value = true
-  try {
+  await withLoading(async () => {
     const params = {
-      page: currentPage.value - 1,
-      limit: pageSize,
+      ...pagination.apiParams.value,
       keyword: searchName.value || undefined,
       department_id: filterDepartment.value || undefined,
       is_active: filterStatus.value === 'ACTIVE' ? true : filterStatus.value === 'LOCKED' ? false : undefined
     }
-    const res = await getMentors(params)
+    
+    const res = await executeApi(
+      () => getMentors(params),
+      null,
+      'mentorManagement.messages.loadError'
+    )
+    console.log(res)
+    
     mentors.value = res.data?.data?.items || []
-    totalItems.value = res.data?.data?.totalItems || 0
-  } catch (error) {
-    ElMessage.error(t.value('mentorManagement.messages.loadError'))
-  } finally {
-    loading.value = false
-  }
+    pagination.setTotalItems(res.data?.data?.totalItems || 0)
+  })
 }
 
-async function fetchDepartments() {
-  try {
-    const res = await getDepartments({ limit: 100 })
-    departments.value = res.data?.data?.items || []
-    console.log(res.data.data.items)
-  } catch (error) {
-    console.error("Failed to load departments:", error)
-  }
-}
-
+/**
+ * Open form dialog for creating a new mentor
+ */
 function openAddMentor() {
-  selectedMentor.value = null
-  showMentorForm.value = true
+  mentorFormDialog.open()
 }
 
+/**
+ * Open form dialog for editing an existing mentor
+ * @param {Mentor} mentor - Mentor to edit
+ */
 function openEditMentor(mentor) {
-  selectedMentor.value = mentor
-  showMentorForm.value = true
+  mentorFormDialog.open(mentor)
 }
 
+/**
+ * Open detail dialog for a mentor
+ * @param {Mentor} mentor - Mentor to view
+ */
 function openDetailMentor(mentor) {
-  selectedMentor.value = mentor
-  showMentorDetail.value = true
+  mentorDetailDialog.open(mentor)
 }
 
+/**
+ * Close mentor detail dialog
+ */
 function closeMentorDetail() {
-  showMentorDetail.value = false
+  mentorDetailDialog.close()
 }
 
+/**
+ * Handle save mentor (create or update)
+ * @param {Object} payload - Mentor data to save
+ * @param {Function} done - Callback function
+ */
 async function handleSaveMentor(payload, done) {
   try {
-    if (selectedMentor.value) {
-      await updateMentor(selectedMentor.value.id, payload)
-      ElMessage.success(t.value('mentorManagement.messages.updateSuccess'))
+    if (mentorFormDialog.selectedItem) {
+      await executeApi(
+        () => updateMentor(mentorFormDialog.selectedItem.id, payload),
+        'mentorManagement.messages.updateSuccess',
+        false
+      )
     } else {
-      await createMentor(payload)
-      ElMessage.success(t.value('mentorManagement.messages.createSuccess'))
+      await executeApi(
+        () => createMentor(payload),
+        'mentorManagement.messages.createSuccess',
+        false
+      )
     }
     fetchMentors()
-    showMentorForm.value = false
+    mentorFormDialog.close()
   } catch (error) {
-    console.error("Save error:", error)
+    // Error already handled by useApi
   } finally {
     done?.()
   }
 }
 
+/**
+ * Handle toggle mentor active status with confirmation
+ * @param {Mentor} mentor - Mentor to toggle status
+ */
 async function handleToggleStatus(mentor) {
-  const confirmMessage = mentor.active 
+  const confirmMessage = mentor.isActive 
     ? t.value('mentorManagement.confirm.lockAccount').replace('{name}', mentor.fullName)
     : t.value('mentorManagement.confirm.unlockAccount').replace('{name}', mentor.fullName)
   
@@ -106,28 +139,37 @@ async function handleToggleStatus(mentor) {
         type: 'warning' 
       }
     )
-    const res = await toggleUserStatus(mentor.id)
+    const res = await executeApi(
+      () => toggleUserStatus(mentor.id),
+      'mentorManagement.messages.toggleSuccess',
+      true
+    )
     if (res.data && res.data.data) {
       const index = mentors.value.findIndex(m => m.id === mentor.id)
       if (index !== -1) {
         mentors.value[index] = res.data.data
       }
     }
-    ElMessage.success(t.value('mentorManagement.messages.toggleSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
-      console.error("Toggle status error:", error)
+      // Error already handled by useApi
     }
   }
 }
 
+/**
+ * Handle pagination page change
+ * @param {number} page - New page number
+ */
 function handlePageChange(page) {
-  currentPage.value = page
-  fetchMentors()
+  pagination.setPage(page)
 }
 
+/**
+ * Handle search - reset to first page and fetch
+ */
 function handleSearch() {
-  currentPage.value = 1
+  pagination.firstPage()
   fetchMentors()
 }
 
@@ -138,6 +180,21 @@ watch([searchName, filterStatus, filterDepartment], () => {
 onMounted(() => {
   fetchMentors()
   fetchDepartments()
+})
+
+onBeforeUnmount(() => {
+  mentorFormDialog.reset()
+  mentorDetailDialog.reset()
+})
+
+onDeactivated(() => {
+  mentorFormDialog.reset()
+  mentorDetailDialog.reset()
+})
+
+onBeforeRouteLeave(() => {
+  mentorFormDialog.reset()
+  mentorDetailDialog.reset()
 })
 </script>
 
@@ -268,9 +325,9 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            v-model:current-page="currentPage"
-            :page-size="pageSize"
-            :total="totalItems"
+            :current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            :total="pagination.totalItems.value"
             layout="prev, pager, next"
             background
             @current-change="handlePageChange"
@@ -279,37 +336,38 @@ onMounted(() => {
       </el-card>
 
       <MentorFormDialog
-        v-model:visible="showMentorForm"
-        :mentor="selectedMentor"
+        :visible="mentorFormDialog.visible"
+        :mentor="mentorFormDialog.selectedItem"
         :departments="departments"
+        @update:visible="mentorFormDialog.visible = $event"
         @save="handleSaveMentor"
       />
 
       <el-dialog 
-        v-model="showMentorDetail" 
+        v-model="mentorDetailDialog.visible" 
         :title="t('mentorManagement.detail.title')"
         width="450px"
       >
         <el-descriptions :column="1" border>
           <el-descriptions-item :label="t('mentorManagement.detail.mentorName')">
-            {{ selectedMentor?.fullName }}
+            {{ mentorDetailDialog.selectedItem?.fullName }}
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.table.email')">
-            {{ selectedMentor?.email }}
+            {{ mentorDetailDialog.selectedItem?.email }}
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.detail.department')">
-            <el-tag type="info" v-if="selectedMentor?.department">
-              {{ selectedMentor.department.title }}
+            <el-tag type="info" v-if="mentorDetailDialog.selectedItem?.department">
+              {{ mentorDetailDialog.selectedItem?.department?.title }}
             </el-tag>
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.table.status')">
-            <el-tag :type="selectedMentor?.active ? 'success' : 'danger'">
-              {{ selectedMentor?.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
+            <el-tag :type="mentorDetailDialog.selectedItem?.isActive ? 'success' : 'danger'">
+              {{ mentorDetailDialog.selectedItem?.isActive ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.detail.internCount')">
-            {{ selectedMentor?.internCount || 0 }}
+            {{ mentorDetailDialog.selectedItem?.internCount || 0 }}
           </el-descriptions-item>
         </el-descriptions>
 
