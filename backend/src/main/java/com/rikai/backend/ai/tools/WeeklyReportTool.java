@@ -1,5 +1,8 @@
 package com.rikai.backend.ai.tools;
 
+import com.rikai.backend.dto.record.WeeklyReportInfo;
+import com.rikai.backend.dto.record.WeeklyReportResult;
+import com.rikai.backend.dto.record.CriteriaScore;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.WeeklyReport;
 import com.rikai.backend.model.WeeklyReportDetail;
@@ -7,19 +10,20 @@ import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.WeeklyReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * AI Tool for retrieving weekly report analysis.
- * This tool allows the AI agent to get weekly performance data for interns.
+ * AI Tool for retrieving and searching weekly reports.
  */
 @Component
 @RequiredArgsConstructor
@@ -28,103 +32,88 @@ public class WeeklyReportTool {
 
         private final WeeklyReportRepository weeklyReportRepository;
         private final InternRepository internRepository;
-
-        public record WeeklyReportResult(
-                        String internName,
-                        List<WeeklyReportInfo> reports,
-                        Double overallAverageScore) {
-        }
-
-        public record WeeklyReportInfo(
-                        Integer weekNumber,
-                        String weekStartDate,
-                        String tasksAssigned,
-                        String tasksCompleted,
-                        String issuesRisks,
-                        String mentorComment,
-                        BigDecimal averageScore,
-                        List<CriteriaScore> criteriaScores) {
-        }
-
-        public record CriteriaScore(
-                        String criteriaName,
-                        BigDecimal score,
-                        String comment) {
-        }
+        private final VectorStore vectorStore; // Inject VectorStore
 
         @Tool(description = """
-                        Get weekly report analysis for an intern. Returns weekly performance data including:
-                        - Tasks assigned and completed
-                        - Issues and risks noted
-                        - Mentor's overall comment
-                        - Average score for the week
-                        - Individual criteria scores
-
-                        Use this tool when user asks:
-                        - "What did intern [id] do this week?"
-                        - "What is intern [id]'s weekly score?"
-                        - "How is intern [id] performing?"
-                        - "Show me the weekly report for intern [id]"
-                        - "What feedback did the mentor give to intern [id]?"
-                        """)
+            Get weekly report analysis for a specific intern by ID.
+            Use this when you know the intern's ID and want to see their history.
+            """)
         public WeeklyReportResult getWeeklyReportAnalysis(
-                        @ToolParam(description = "ID of the intern to get weekly reports for") Long internId) {
-
+                @ToolParam(description = "ID of the intern to get weekly reports for") Long internId) {
                 log.info("AI Tool: getWeeklyReportAnalysis called for internId: {}", internId);
 
                 if (internId == null) {
                         return new WeeklyReportResult("Unknown", Collections.emptyList(), 0.0);
                 }
 
-                // Get intern name
                 String internName = internRepository.findById(internId)
-                                .map(Intern::getFullName)
-                                .orElse("Unknown");
+                        .map(Intern::getFullName)
+                        .orElse("Unknown");
 
-                // Get weekly reports using the existing repository method with Pageable
                 List<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(
-                                internId, PageRequest.of(0, 20)).getContent();
+                        internId, PageRequest.of(0, 20)).getContent();
 
                 if (reports.isEmpty()) {
                         return new WeeklyReportResult(internName, Collections.emptyList(), 0.0);
                 }
 
                 List<WeeklyReportInfo> reportInfos = reports.stream()
-                                .map(this::mapToReportInfo)
-                                .collect(Collectors.toList());
+                        .map(this::mapToReportInfo)
+                        .collect(Collectors.toList());
 
-                // Calculate overall average
                 double overallAverage = reports.stream()
-                                .filter(r -> r.getAverageScore() != null)
-                                .mapToDouble(r -> r.getAverageScore().doubleValue())
-                                .average()
-                                .orElse(0.0);
+                        .filter(r -> r.getAverageScore() != null)
+                        .mapToDouble(r -> r.getAverageScore().doubleValue())
+                        .average()
+                        .orElse(0.0);
 
                 return new WeeklyReportResult(internName, reportInfos, overallAverage);
         }
 
+        @Tool(description = """
+            Search for weekly reports based on meaning, keywords, or qualitative descriptions.
+            Use this tool to answer questions like:
+            - "Find interns who are lazy or not working hard"
+            - "Show me reports with low scores in Communication"
+            - "Who is having trouble with Java tasks?"
+            - "Find positive feedback about proactivity"
+            """)
+        public List<String> searchReports(
+                @ToolParam(description = "The search query description (e.g., 'lazy intern', 'low technical score')") String query) {
+
+                log.info("AI Tool: searchReports called with query: {}", query);
+
+                List<Document> results = vectorStore.similaritySearch(
+                        SearchRequest.builder().query(query).topK(5).build()
+                );
+
+                return results.stream()
+                        .map(Document::getFormattedContent)
+                        .collect(Collectors.toList());
+        }
+
         private WeeklyReportInfo mapToReportInfo(WeeklyReport report) {
                 List<CriteriaScore> criteriaScores = report.getDetails() != null
-                                ? report.getDetails().stream()
-                                                .map(this::mapToCriteriaScore)
-                                                .collect(Collectors.toList())
-                                : Collections.emptyList();
+                        ? report.getDetails().stream()
+                        .map(this::mapToCriteriaScore)
+                        .collect(Collectors.toList())
+                        : Collections.emptyList();
 
                 return new WeeklyReportInfo(
-                                report.getWeekNumber(),
-                                report.getWeekStartDate() != null ? report.getWeekStartDate().toString() : null,
-                                report.getTasksAssigned(),
-                                report.getTasksCompleted(),
-                                report.getIssuesRisks(),
-                                report.getMentorOverallComment(),
-                                report.getAverageScore(),
-                                criteriaScores);
+                        report.getWeekNumber(),
+                        report.getWeekStartDate() != null ? report.getWeekStartDate().toString() : null,
+                        report.getTasksAssigned(),
+                        report.getTasksCompleted(),
+                        report.getIssuesRisks(),
+                        report.getMentorOverallComment(),
+                        report.getAverageScore(),
+                        criteriaScores);
         }
 
         private CriteriaScore mapToCriteriaScore(WeeklyReportDetail detail) {
                 return new CriteriaScore(
-                                detail.getCriteria() != null ? detail.getCriteria().getName() : null,
-                                detail.getScore(),
-                                detail.getComment());
+                        detail.getCriteria() != null ? detail.getCriteria().getName() : null,
+                        detail.getScore(),
+                        detail.getComment());
         }
 }

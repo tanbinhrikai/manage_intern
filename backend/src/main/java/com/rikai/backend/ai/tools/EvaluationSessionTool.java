@@ -1,5 +1,7 @@
 package com.rikai.backend.ai.tools;
 
+import com.rikai.backend.dto.record.EvaluationResult;
+import com.rikai.backend.dto.record.EvaluationScoreResult;
 import com.rikai.backend.model.EvaluationScore;
 import com.rikai.backend.model.EvaluationSession;
 import com.rikai.backend.repository.EvaluationSessionRepository;
@@ -10,7 +12,6 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,24 +28,6 @@ public class EvaluationSessionTool {
 
         private final EvaluationSessionRepository evaluationSessionRepository;
         private final InternRepository internRepository;
-
-        public record EvaluationResult(
-                        Integer sessionId,
-                        String sessionType,
-                        String evaluationDate,
-                        BigDecimal finalScore,
-                        String levelAssessment,
-                        String conclusion,
-                        String overallComment,
-                        String mentorName,
-                        List<EvaluationScoreResult> scores) {
-        }
-
-        public record EvaluationScoreResult(
-                        String criteriaName,
-                        BigDecimal score,
-                        String comment) {
-        }
 
         @Tool(description = """
                         Get evaluation session results for an intern. Returns formal evaluation data including:
@@ -70,7 +53,6 @@ public class EvaluationSessionTool {
                         return Collections.emptyList();
                 }
 
-                // Verify intern exists
                 if (!internRepository.existsById(internId)) {
                         log.warn("Intern not found with id: {}", internId);
                         return Collections.emptyList();

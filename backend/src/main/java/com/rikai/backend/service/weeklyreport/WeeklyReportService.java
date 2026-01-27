@@ -1,5 +1,6 @@
 package com.rikai.backend.service.weeklyreport;
 
+import com.rikai.backend.ai.event.ReportSavedEvent;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportCreateDTO;
 import com.rikai.backend.dto.request.weeklyreport.WeeklyReportDetailRequest;
@@ -156,10 +157,7 @@ public class WeeklyReportService implements IWeeklyReportService {
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
 
-        // Publish event for RAG vector sync
-        if (savedReport.getMentorOverallComment() != null && !savedReport.getMentorOverallComment().isBlank()) {
-            eventPublisher.publishEvent(new com.rikai.backend.ai.event.ReportSavedEvent(this, savedReport));
-        }
+        eventPublisher.publishEvent(new ReportSavedEvent(this, savedReport));
 
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
     }
@@ -269,9 +267,7 @@ public class WeeklyReportService implements IWeeklyReportService {
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
 
         // Publish event for RAG vector sync
-        if (updatedReport.getMentorOverallComment() != null && !updatedReport.getMentorOverallComment().isBlank()) {
-            eventPublisher.publishEvent(new com.rikai.backend.ai.event.ReportSavedEvent(this, updatedReport));
-        }
+        eventPublisher.publishEvent(new ReportSavedEvent(this, updatedReport));
 
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }

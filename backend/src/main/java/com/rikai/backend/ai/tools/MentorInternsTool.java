@@ -1,5 +1,7 @@
 package com.rikai.backend.ai.tools;
 
+import com.rikai.backend.dto.record.InternInfo;
+import com.rikai.backend.dto.record.MentorInternsResult;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.InternRepository;
@@ -27,23 +29,6 @@ public class MentorInternsTool {
 
         private final InternRepository internRepository;
         private final UsersRepository usersRepository;
-
-        public record MentorInternsResult(
-                        String mentorName,
-                        String mentorEmail,
-                        String department,
-                        List<InternInfo> interns) {
-        }
-
-        public record InternInfo(
-                        Long id,
-                        String fullName,
-                        String email,
-                        String position,
-                        String status,
-                        String startDate,
-                        String endDate) {
-        }
 
         @Tool(description = """
                         Get list of interns assigned to a specific mentor.

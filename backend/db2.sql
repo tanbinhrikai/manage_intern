@@ -1,4 +1,9 @@
 use intern_hub_db;
+# set foreign_key_checks  = 0 ;
+# truncate table plan_tasks;
+# truncate table plan_modules;
+#
+# truncate table learning_plans;
 
 DROP PROCEDURE IF EXISTS generate_comprehensive_data;
 

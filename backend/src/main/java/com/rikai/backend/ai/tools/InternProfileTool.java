@@ -1,5 +1,6 @@
 package com.rikai.backend.ai.tools;
 
+import com.rikai.backend.dto.record.InternProfileResult;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.repository.InternRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,21 +24,6 @@ import java.util.stream.Collectors;
 public class InternProfileTool {
 
         private final InternRepository internRepository;
-
-        public record InternProfileResult(
-                        Long id,
-                        String fullName,
-                        String email,
-                        String phone,
-                        String positionName,
-                        String mentorName,
-                        String mentorEmail,
-                        String batchName,
-                        String status,
-                        String startDate,
-                        String endDate,
-                        String offerStatus) {
-        }
 
         @Tool(description = """
                         Find intern profile by name or keyword. Returns intern details including:

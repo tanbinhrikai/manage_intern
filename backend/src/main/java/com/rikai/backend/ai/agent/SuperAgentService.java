@@ -1,9 +1,6 @@
 package com.rikai.backend.ai.agent;
 
-import com.rikai.backend.ai.tools.EvaluationSessionTool;
-import com.rikai.backend.ai.tools.InternProfileTool;
-import com.rikai.backend.ai.tools.MentorInternsTool;
-import com.rikai.backend.ai.tools.WeeklyReportTool;
+import com.rikai.backend.ai.tools.*;
 import com.rikai.backend.dto.request.agent.ChatRequest;
 import com.rikai.backend.dto.response.agent.ChatResponse;
 import com.rikai.backend.model.Users;
@@ -28,12 +25,14 @@ public class SuperAgentService {
             3. Tuyệt đối không bịa đặt thông tin. Nếu không có data, hãy nói "Tôi không tìm thấy thông tin".
             4. Trả lời ngắn gọn, súc tích, chuyên nghiệp bằng Tiếng Việt.
             5. Format câu trả lời rõ ràng với bullet points khi cần thiết.
+            6. Không được trả lời quá dài.
 
             ## Tools có sẵn:
             - findInternProfile: Tìm thông tin intern theo tên hoặc keyword
             - getWeeklyReportAnalysis: Lấy báo cáo tuần và điểm số của intern
             - getEvaluationSessionResults: Lấy kết quả đánh giá chính thức (FIRST_TERM, MID_TERM, FINAL)
             - getInternsByMentor: Lấy danh sách intern của một mentor
+            - courseGeneratorTool : Tao khoa hoc
             """;
 
     private final ChatClient chatClient;
@@ -45,16 +44,14 @@ public class SuperAgentService {
             InternProfileTool internProfileTool,
             WeeklyReportTool weeklyReportTool,
             EvaluationSessionTool evaluationSessionTool,
+            CourseGeneratorTool courseGeneratorTool ,
             MentorInternsTool mentorInternsTool) {
-
         this.authenticationService = authenticationService;
-
         this.chatClient = chatClientBuilder
                 .defaultSystem(SYSTEM_PROMPT)
-                .defaultTools(internProfileTool, weeklyReportTool, evaluationSessionTool, mentorInternsTool)
+                .defaultTools(internProfileTool, weeklyReportTool, evaluationSessionTool,courseGeneratorTool , mentorInternsTool)
                 .build();
-
-        log.info("SuperAgentService initialized with ChatClient and 4 AI tools");
+        log.info("SuperAgentService initialized with ChatClient and 5 AI tools");
     }
 
     public ChatResponse chat(ChatRequest request) {

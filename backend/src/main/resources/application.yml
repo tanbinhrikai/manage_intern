@@ -43,7 +43,7 @@ spring:
         enabled: true
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_GRPC_PORT:6334}
-        collection-name: mentor-comments
+        collection-name: report_intern
         initialize-schema: true
 
 jwt:
