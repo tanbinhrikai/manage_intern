@@ -1,7 +1,9 @@
 HELP.md
 .gradle
 .env
+.cursorrules
 db.sql
+skills
 docker-compose.yml
 build/
 !gradle/wrapper/gradle-wrapper.jar

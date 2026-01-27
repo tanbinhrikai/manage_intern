@@ -1,7 +1,6 @@
 package com.rikai.backend.dto.response.weeklyreport;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import com.rikai.backend.model.WeeklyReport;
 import lombok.*;
 

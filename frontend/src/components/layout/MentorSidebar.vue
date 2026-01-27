@@ -12,6 +12,8 @@ const t = computed(() => localeStore.t)
 const menuItems = [
   { key: 'dashboard', path: '/mentor/dashboard', icon: 'dashboard' },
   { key: 'myInterns', path: '/mentor/my-interns', icon: 'interns' },
+  { key: 'evaluationSessions', path: '/mentor/evaluation-sessions', icon: 'evaluationSession' },
+  { key: 'agentChat', path: '/mentor/agent-chat', icon: 'chat' },
   { key: 'reports', path: '/mentor/reports', icon: 'reports' },
   { key: 'settings', path: '/mentor/settings', icon: 'settings' }
 ]
@@ -51,6 +53,15 @@ const userInitials = computed(() => {
           <circle cx="9" cy="7" r="4"/>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
           <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <svg v-else-if="item.icon === 'evaluationSession'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <svg v-else-if="item.icon === 'chat'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <path d="M8 9h8"/>
+          <path d="M8 13h6"/>
         </svg>
         <svg v-else-if="item.icon === 'reports'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>

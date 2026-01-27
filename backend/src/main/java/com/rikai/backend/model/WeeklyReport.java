@@ -1,6 +1,5 @@
 package com.rikai.backend.model;
 
-import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -12,7 +11,6 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter

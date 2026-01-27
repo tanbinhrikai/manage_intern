@@ -92,6 +92,7 @@ public enum SuccessCode {
     GET_ALL_BATCHES_SUCCESSFUL("Get all internship batches successful", HttpStatus.OK),
     UPDATE_BATCH_SUCCESSFUL("Update internship batch successful", HttpStatus.OK),
     DELETE_BATCH_SUCCESSFUL("Delete internship batch successful", HttpStatus.OK),
+    AGENT_RESPONSE_SUCCESSFUL("Agent response successful" , HttpStatus.OK)
     ;
 
     SuccessCode(String message, HttpStatusCode statusCode) {

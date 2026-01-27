@@ -130,15 +130,15 @@ CREATE TABLE IF NOT EXISTS weekly_reports (
 -- 8. EVALUATION CRITERIA TABLE
 -- =====================================================
 CREATE TABLE IF NOT EXISTS evaluation_criteria (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    category VARCHAR(50),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    weight DECIMAL(5,2) DEFAULT 1.00,
-    is_active BOOLEAN DEFAULT TRUE,
-    display_order INT DEFAULT 0,
-    INDEX idx_criteria_category (category),
-    INDEX idx_criteria_active (is_active)
+                                                   id INT AUTO_INCREMENT PRIMARY KEY,
+                                                   category VARCHAR(50),
+                                                   name VARCHAR(255) NOT NULL,
+                                                   description TEXT,
+                                                   weight DECIMAL(5,2) DEFAULT 1.00,
+                                                   is_active BOOLEAN DEFAULT TRUE,
+                                                   display_order INT DEFAULT 0,
+                                                   INDEX idx_criteria_category (category),
+                                                   INDEX idx_criteria_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

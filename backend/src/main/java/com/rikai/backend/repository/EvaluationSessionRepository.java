@@ -16,44 +16,48 @@ import java.util.UUID;
 @Repository
 public interface EvaluationSessionRepository extends JpaRepository<EvaluationSession, Integer> {
 
-    /**
-     * Find evaluation session by intern ID and session type
-     * Used to ensure only one session per type per intern
-     */
-    Optional<EvaluationSession> findByIntern_IdAndSessionType(Long internId, SessionType sessionType);
+       /**
+        * Find evaluation session by intern ID and session type
+        * Used to ensure only one session per type per intern
+        */
+       Optional<EvaluationSession> findByIntern_IdAndSessionType(Long internId, SessionType sessionType);
 
-    /**
-     * Find all evaluation sessions for an intern, ordered by evaluation date
-     */
-    @Query("SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
-           "WHERE es.intern.id = :internId ORDER BY es.evaluationDate ASC")
-    List<EvaluationSession> findByInternIdOrderByEvaluationDate(@Param("internId") Long internId);
+       /**
+        * Find all evaluation sessions for an intern, ordered by evaluation date
+        */
+       @Query("SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
+                     "WHERE es.intern.id = :internId ORDER BY es.evaluationDate ASC")
+       List<EvaluationSession> findByInternIdOrderByEvaluationDate(@Param("internId") Long internId);
 
-    /**
-     * Find all evaluation sessions for an intern with pagination
-     */
-    @Query(value = "SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
-                   "WHERE es.intern.id = :internId",
-           countQuery = "SELECT COUNT(es) FROM EvaluationSession es WHERE es.intern.id = :internId")
-    Page<EvaluationSession> findByInternId(@Param("internId") Long internId, Pageable pageable);
+       /**
+        * Find all evaluation sessions for an intern with pagination
+        */
+       @Query(value = "SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
+                     "WHERE es.intern.id = :internId", countQuery = "SELECT COUNT(es) FROM EvaluationSession es WHERE es.intern.id = :internId")
+       Page<EvaluationSession> findByInternId(@Param("internId") Long internId, Pageable pageable);
 
-    /**
-     * Find all evaluation sessions for a mentor
-     */
-    @Query(value = "SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
-                   "WHERE es.mentor.id = :mentorId",
-           countQuery = "SELECT COUNT(es) FROM EvaluationSession es WHERE es.mentor.id = :mentorId")
-    Page<EvaluationSession> findByMentorId(@Param("mentorId") UUID mentorId, Pageable pageable);
+       /**
+        * Find all evaluation sessions for a mentor
+        */
+       @Query(value = "SELECT es FROM EvaluationSession es JOIN FETCH es.intern JOIN FETCH es.mentor " +
+                     "WHERE es.mentor.id = :mentorId", countQuery = "SELECT COUNT(es) FROM EvaluationSession es WHERE es.mentor.id = :mentorId")
+       Page<EvaluationSession> findByMentorId(@Param("mentorId") UUID mentorId, Pageable pageable);
 
-    /**
-     * Check if intern has a specific session type already
-     */
-    boolean existsByIntern_IdAndSessionType(Long internId, SessionType sessionType);
+       /**
+        * Check if intern has a specific session type already
+        */
+       boolean existsByIntern_IdAndSessionType(Long internId, SessionType sessionType);
 
-    /**
-     * Get the latest evaluation session for an intern
-     */
-    @Query("SELECT es FROM EvaluationSession es WHERE es.intern.id = :internId " +
-           "ORDER BY es.evaluationDate DESC LIMIT 1")
-    Optional<EvaluationSession> findLatestByInternId(@Param("internId") Long internId);
+       /**
+        * Get the latest evaluation session for an intern
+        */
+       @Query("SELECT es FROM EvaluationSession es WHERE es.intern.id = :internId " +
+                     "ORDER BY es.evaluationDate DESC LIMIT 1")
+       Optional<EvaluationSession> findLatestByInternId(@Param("internId") Long internId);
+
+       /**
+        * Find all evaluation sessions for an intern, ordered by evaluation date
+        * descending
+        */
+       List<EvaluationSession> findByInternIdOrderByEvaluationDateDesc(Long internId);
 }

@@ -1,10 +1,7 @@
 package com.rikai.backend.dto.response.batch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rikai.backend.dto.response.department.DepartmentResponse;
 import com.rikai.backend.dto.response.intern.InternResponse;
-import com.rikai.backend.dto.response.internship_roadmap.InternshipRoadmapResponse;
-import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.model.Enum.BatchStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

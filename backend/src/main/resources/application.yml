@@ -1,10 +1,12 @@
 spring:
   application:
     name: backend
+
   datasource:
     url: ${URL_DATABASE}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
   jpa:
     hibernate:
       ddl-auto: none
@@ -12,9 +14,37 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
   flyway:
     locations: classpath:/db/migration,classpath:/dev/db/migration
     baseline-on-migrate: true
     baseline-version: 0
+
+  ai:
+    model:
+      embedding:
+        google-genai:
+          enabled: true
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY}
+        chat:
+          options:
+            model: ${TYPE_MODEL_GEMINI}
+            temperature: 0.3
+        embedding:
+          enabled: true
+          api-key: ${GEMINI_API_KEY}
+          transport-type: REST
+          options:
+            model: ${TYPE_MODEL_EMBEDDING}
+    vectorstore:
+      qdrant:
+        enabled: true
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_GRPC_PORT:6334}
+        collection-name: mentor-comments
+        initialize-schema: true
+
 jwt:
   signerKey: ${SIGNER_KEY}

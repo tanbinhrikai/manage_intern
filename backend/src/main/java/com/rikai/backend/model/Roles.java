@@ -4,9 +4,6 @@ package com.rikai.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.Instant;
 
 @Entity
 @Data

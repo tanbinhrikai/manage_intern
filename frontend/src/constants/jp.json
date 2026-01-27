@@ -34,6 +34,7 @@
         "positions": "ポジション",
         "evaluationCriteria": "評価基準",
         "evaluationSessions": "評価セッション",
+        "agentChat": "AIアシスタント",
         "systemConfig": "システム設定",
         "auditLog": "監査ログ",
         "myInterns": "担当インターン",
@@ -654,6 +655,26 @@
         "edit": {
             "update": "セッションを更新",
             "cannotChangeSessionType": "セッションタイプは作成後に変更できません"
+        }
+    },
+    "agentChat": {
+        "title": "AIアシスタント",
+        "subtitle": "インターン、メンター、レポート、評価についてお気軽にお尋ねください",
+        "agent": "AIアシスタント",
+        "you": "あなた",
+        "send": "送信",
+        "inputPlaceholder": "メッセージを入力してください...",
+        "error": "申し訳ありません。リクエストの処理中にエラーが発生しました。もう一度お試しください。",
+        "welcome": {
+            "title": "こんにちは！AIアシスタントです",
+            "description": "インターン、メンター、週報、評価に関する質問にお答えします。",
+            "suggestions": "こんな質問をお試しください："
+        },
+        "suggestions": {
+            "internsCount": "インターンは何人いますか？",
+            "mentorsList": "メンターの一覧を見せてください",
+            "weeklyReports": "週報の状況はどうですか？",
+            "evaluations": "インターンの評価について教えてください"
         }
     }
 }

@@ -14,5 +14,7 @@ public interface PositionMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "interns", ignore = true)
+    @Mapping(target = "department" , ignore = true)
+    @Mapping(target = "description" , ignore = true)
     Position toPosition(PositionCreationRequest request);
 }

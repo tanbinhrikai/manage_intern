@@ -7,7 +7,6 @@ import com.rikai.backend.dto.request.weeklyreport.WeeklyReportUpdateDTO;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.response.weeklyreport.WeeklyReportResponse;
 import com.rikai.backend.exception.AppException;
-import com.rikai.backend.model.Enum.StatusWeeklyReport;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.model.WeeklyReport;
@@ -20,9 +19,9 @@ import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +41,7 @@ public class WeeklyReportService implements IWeeklyReportService {
     InternRepository internRepository;
     AuthenticationService authenticationService;
     EvaluationCriteriaRepository evaluationCriteriaRepository;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -155,6 +155,12 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
+
+        // Publish event for RAG vector sync
+        if (savedReport.getMentorOverallComment() != null && !savedReport.getMentorOverallComment().isBlank()) {
+            eventPublisher.publishEvent(new com.rikai.backend.ai.event.ReportSavedEvent(this, savedReport));
+        }
+
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
     }
 
@@ -201,8 +207,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                     .collect(Collectors.toMap(
                             detail -> detail.getCriteria().getId(),
                             detail -> detail,
-                            (existing, replacement) -> existing
-                    ));
+                            (existing, replacement) -> existing));
 
             Set<Long> requestCriteriaIds = new HashSet<>();
             for (WeeklyReportDetailRequest requestItem : updateDTO.getDetails()) {
@@ -240,10 +245,9 @@ public class WeeklyReportService implements IWeeklyReportService {
                 requestCriteriaIds.add(requestItem.getCriteriaId());
             }
 
-            report.getDetails().removeIf(detail ->
-                    detail.getCriteria() != null
-                            && detail.getCriteria().getParent() != null
-                            && !requestCriteriaIds.contains(detail.getCriteria().getId()));
+            report.getDetails().removeIf(detail -> detail.getCriteria() != null
+                    && detail.getCriteria().getParent() != null
+                    && !requestCriteriaIds.contains(detail.getCriteria().getId()));
 
             recalculateMainScores(report);
         }
@@ -257,12 +261,18 @@ public class WeeklyReportService implements IWeeklyReportService {
         // Manually trigger averageScore calculation to ensure it's updated
         // @PreUpdate might not be triggered if only collection changes
         report.updateAverageScore();
-        
+
         // Force Hibernate to detect the change by touching a field
         // This ensures @PreUpdate is called
         report.setUpdatedAt(java.time.Instant.now());
 
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
+
+        // Publish event for RAG vector sync
+        if (updatedReport.getMentorOverallComment() != null && !updatedReport.getMentorOverallComment().isBlank()) {
+            eventPublisher.publishEvent(new com.rikai.backend.ai.event.ReportSavedEvent(this, updatedReport));
+        }
+
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
 
@@ -310,7 +320,8 @@ public class WeeklyReportService implements IWeeklyReportService {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
 
-        Page<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId, pageRequest);
+        Page<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId,
+                pageRequest);
         return PageResponse.<WeeklyReportResponse>builder()
                 .items(reports.stream()
                         .map(WeeklyReportResponse::fromWeeklyReport)
@@ -374,8 +385,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .collect(Collectors.toMap(
                         detail -> detail.getCriteria().getId(),
                         detail -> detail,
-                        (existing, replacement) -> existing
-                ));
+                        (existing, replacement) -> existing));
 
         // Group sub-criteria by their parent criteria
         Map<EvaluationCriteria, List<WeeklyReportDetail>> subCriteriaByParent = new LinkedHashMap<>();
@@ -445,9 +455,8 @@ public class WeeklyReportService implements IWeeklyReportService {
         Set<Long> parentIdsWithSubCriteria = subCriteriaByParent.keySet().stream()
                 .map(EvaluationCriteria::getId)
                 .collect(Collectors.toSet());
-        details.removeIf(detail ->
-                detail.getCriteria() != null
-                        && detail.getCriteria().getParent() == null
-                        && !parentIdsWithSubCriteria.contains(detail.getCriteria().getId()));
+        details.removeIf(detail -> detail.getCriteria() != null
+                && detail.getCriteria().getParent() == null
+                && !parentIdsWithSubCriteria.contains(detail.getCriteria().getId()));
     }
 }

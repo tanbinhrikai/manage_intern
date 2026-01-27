@@ -34,6 +34,7 @@
         "positions": "Positions",
         "evaluationCriteria": "Evaluation Criteria",
         "evaluationSessions": "Evaluation Sessions",
+        "agentChat": "AI Assistant",
         "systemConfig": "System Config",
         "auditLog": "Audit Log",
         "myInterns": "My Interns",
@@ -654,6 +655,26 @@
         "edit": {
             "update": "Update Session",
             "cannotChangeSessionType": "Session type cannot be changed after creation"
+        }
+    },
+    "agentChat": {
+        "title": "AI Assistant",
+        "subtitle": "Ask me anything about interns, mentors, reports and evaluations",
+        "agent": "AI Assistant",
+        "you": "You",
+        "send": "Send",
+        "inputPlaceholder": "Type your message here...",
+        "error": "Sorry, there was an error processing your request. Please try again.",
+        "welcome": {
+            "title": "Hello! I'm your AI Assistant",
+            "description": "I can help you with questions about interns, mentors, weekly reports, and evaluations.",
+            "suggestions": "Try asking me:"
+        },
+        "suggestions": {
+            "internsCount": "How many interns do we have?",
+            "mentorsList": "Show me the list of mentors",
+            "weeklyReports": "What are the status of weekly reports?",
+            "evaluations": "Tell me about intern evaluations"
         }
     }
 }

@@ -29,5 +29,11 @@ public interface InternMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "internStatus", ignore = true)
+    @Mapping(target = "internshipBatch" , ignore = true)
+    @Mapping(target = "offerStatus" , ignore = true)
+    @Mapping(target = "offerDate" , ignore = true)
+    @Mapping(target = "offerNotes" , ignore = true)
+    @Mapping(target = "email" , ignore = true)
+    @Mapping(target = "phone" , ignore = true)
     Intern toIntern(InternCreationRequest request);
 }

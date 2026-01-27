@@ -18,6 +18,7 @@ const menuItems = [
   { key: 'positions', path: '/admin/positions', icon: 'position' },
   { key: 'evaluationCriteria', path: '/admin/evaluation-criteria', icon: 'criteria' },
   { key: 'evaluationSessions', path: '/admin/evaluation-sessions', icon: 'evaluationSession' },
+  { key: 'agentChat', path: '/admin/agent-chat', icon: 'chat' },
   { key: 'systemConfig', path: '/admin/system-config', icon: 'config' },
   { key: 'auditLog', path: '/admin/audit-log', icon: 'audit' }
 ]
@@ -92,6 +93,11 @@ const userInitials = computed(() => {
         <svg v-else-if="item.icon === 'evaluationSession'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 11l3 3L22 4"/>
           <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <svg v-else-if="item.icon === 'chat'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <path d="M8 9h8"/>
+          <path d="M8 13h6"/>
         </svg>
         <svg v-else-if="item.icon === 'config'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>

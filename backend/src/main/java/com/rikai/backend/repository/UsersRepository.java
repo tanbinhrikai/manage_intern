@@ -14,54 +14,53 @@ import java.util.UUID;
 
 @Repository
 public interface UsersRepository extends JpaRepository<Users, UUID> {
-    @Query("""
-                SELECT u FROM Users u
-                WHERE (:keyword IS NULL OR :keyword = '' OR 
-                      (LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                      )
-                AND (:startDate IS NULL OR u.dateOfBirth >= :startDate)
-                AND (:endDate IS NULL OR u.dateOfBirth <= :endDate)
-                AND (:departmentId IS NULL OR u.department.id = :departmentId)
-                AND (:isActive IS NULL OR u.isActive = :isActive)
-                AND u.role.roleName = 'MENTOR'
-            """)
-    Page<Users> findAllMentorUsers(
-            Pageable pageable,
-            String keyword,
-            LocalDate startDate,
-            LocalDate endDate,
-            Boolean isActive,
-            Long departmentId);
+        @Query("""
+                            SELECT u FROM Users u
+                            WHERE (:keyword IS NULL OR :keyword = '' OR
+                                  (LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                                  )
+                            AND (:startDate IS NULL OR u.dateOfBirth >= :startDate)
+                            AND (:endDate IS NULL OR u.dateOfBirth <= :endDate)
+                            AND (:departmentId IS NULL OR u.department.id = :departmentId)
+                            AND (:isActive IS NULL OR u.isActive = :isActive)
+                            AND u.role.roleName = 'MENTOR'
+                        """)
+        Page<Users> findAllMentorUsers(
+                        Pageable pageable,
+                        String keyword,
+                        LocalDate startDate,
+                        LocalDate endDate,
+                        Boolean isActive,
+                        Long departmentId);
 
-    @Query("""
-                SELECT u FROM Users u
-                WHERE (:keyword IS NULL OR :keyword = '' OR 
-                      (LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                      )
-                AND (:startDate IS NULL OR u.dateOfBirth >= :startDate)
-                AND (:endDate IS NULL OR u.dateOfBirth <= :endDate)
-                AND (:departmentId IS NULL OR u.department.id = :departmentId)
-                AND (:isActive IS NULL OR u.isActive = :isActive)
-                AND u.role.roleName = 'HR'
-            """)
-    Page<Users> findAllHRUsers(
-            Pageable pageable,
-            String keyword,
-            LocalDate startDate,
-            LocalDate endDate,
-            Boolean isActive,
-            Long departmentId);
+        @Query("""
+                            SELECT u FROM Users u
+                            WHERE (:keyword IS NULL OR :keyword = '' OR
+                                  (LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                                  )
+                            AND (:startDate IS NULL OR u.dateOfBirth >= :startDate)
+                            AND (:endDate IS NULL OR u.dateOfBirth <= :endDate)
+                            AND (:departmentId IS NULL OR u.department.id = :departmentId)
+                            AND (:isActive IS NULL OR u.isActive = :isActive)
+                            AND u.role.roleName = 'HR'
+                        """)
+        Page<Users> findAllHRUsers(
+                        Pageable pageable,
+                        String keyword,
+                        LocalDate startDate,
+                        LocalDate endDate,
+                        Boolean isActive,
+                        Long departmentId);
 
+        long countByRole_RoleName(String roleName);
 
+        Optional<Users> findByEmailAndIsActive(String email, boolean isActive);
 
+        List<Users> findByIsActive(boolean isActive);
 
-    long countByRole_RoleName(String roleName);
+        Optional<Users> findByEmail(String email);
 
-    Optional<Users> findByEmailAndIsActive(String email, boolean isActive);
+        boolean existsByEmail(String email);
 
-    List<Users> findByIsActive(boolean isActive);
-
-    Optional<Users> findByEmail(String email);
-
-    boolean existsByEmail(String email);
+        List<Users> findByFullNameContainingIgnoreCase(String fullName);
 }

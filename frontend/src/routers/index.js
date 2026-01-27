@@ -172,6 +172,18 @@ const routes = [
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
+    path: "/admin/agent-chat",
+    name: "AdminAgentChat",
+    component: () => import("@/views/agent-chat/AgentChatView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/mentor/agent-chat",
+    name: "MentorAgentChat",
+    component: () => import("@/views/agent-chat/AgentChatView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
     path: "/",
     redirect: "/login",
   },
