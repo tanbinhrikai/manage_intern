@@ -15,21 +15,11 @@ import java.util.UUID;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class InternUpdateRequest {
-    @NotBlank(message = "INVALID_FULLNAME")
     String fullName;
-
-    @NotNull(message = "JOB_POSITION_REQUIRED")
     Long positionId;
-
-    @NotNull(message = "MENTOR_REQUIRED")
     UUID mentorId;
-
-    @NotNull(message = "START_DATE_REQUIRED")
+    Long internShipBatchId;
     LocalDate startDate;
-
-    @NotNull(message = "END_DATE_REQUIRED")
     LocalDate endDate;
-
-    @NotNull(message = "STATUS_REQUIRED")
     InternStatus internStatus;
 }

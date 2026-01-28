@@ -57,6 +57,10 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
 
     long countByRole_RoleName(String roleName);
 
+    long countByDepartment_IdAndRole_RoleName(Long departmentId, String roleName);
+
+    List<Users> findByDepartment_IdAndRole_RoleName(Long departmentId, String roleName);
+
     Optional<Users> findByEmailAndIsActive(String email, boolean isActive);
 
     List<Users> findByIsActive(boolean isActive);
@@ -64,4 +68,6 @@ public interface UsersRepository extends JpaRepository<Users, UUID> {
     Optional<Users> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    long countByDepartment_Id(Long departmentId);
 }

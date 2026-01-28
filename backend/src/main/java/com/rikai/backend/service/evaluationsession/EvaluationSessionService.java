@@ -11,6 +11,9 @@ import com.rikai.backend.exception.AppException;
 import com.rikai.backend.model.Enum.EvaluationConclusion;
 import com.rikai.backend.model.Enum.ScoreLabel;
 import com.rikai.backend.model.Enum.SessionType;
+import com.rikai.backend.event.EvaluationSessionCreatedEvent;
+import com.rikai.backend.event.EvaluationSessionDeletedEvent;
+import com.rikai.backend.event.EvaluationSessionUpdatedEvent;
 import com.rikai.backend.model.*;
 import com.rikai.backend.repository.*;
 import com.rikai.backend.service.auth.AuthenticationService;
@@ -18,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,6 +47,7 @@ public class EvaluationSessionService implements IEvaluationSessionService {
     WeeklyReportRepository weeklyReportRepository;
     EvaluationCriteriaRepository evaluationCriteriaRepository;
     AuthenticationService authenticationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -108,6 +113,10 @@ public class EvaluationSessionService implements IEvaluationSessionService {
         }
 
         EvaluationSession savedSession = evaluationSessionRepository.save(session);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new EvaluationSessionCreatedEvent(this, savedSession));
+        
         return EvaluationScoreResponse.builder().build().toResponse(savedSession);
     }
 
@@ -150,6 +159,10 @@ public class EvaluationSessionService implements IEvaluationSessionService {
         generateScoresFromWeeklyReports(session);
 
         EvaluationSession savedSession = evaluationSessionRepository.save(session);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new EvaluationSessionCreatedEvent(this, savedSession));
+        
         return EvaluationScoreResponse.builder().build().toResponse(savedSession);
     }
 
@@ -282,6 +295,10 @@ public class EvaluationSessionService implements IEvaluationSessionService {
         }
 
         EvaluationSession updatedSession = evaluationSessionRepository.save(session);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new EvaluationSessionUpdatedEvent(this, updatedSession));
+        
         return EvaluationScoreResponse.builder().build().toResponse(updatedSession);
     }
 
@@ -302,7 +319,16 @@ public class EvaluationSessionService implements IEvaluationSessionService {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
 
+        // Lưu thông tin trước khi delete để publish event
+        Integer sessionId = session.getId();
+        String internName = session.getIntern().getFullName();
+        String mentorName = session.getMentor().getFullName();
+        String sessionType = session.getSessionType().toString();
+        
         evaluationSessionRepository.delete(session);
+        
+        // Publish event sau khi delete
+        eventPublisher.publishEvent(new EvaluationSessionDeletedEvent(this, sessionId, internName, mentorName, sessionType));
     }
 
     @Override

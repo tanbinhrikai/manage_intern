@@ -4,12 +4,15 @@ import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.model.Intern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -47,7 +50,26 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
 
     Page<Intern> findByInternStatus(InternStatus status, Pageable pageable);
 
+    Page<Intern> findByInternshipBatch_Id(Long batchId, Pageable pageable);
+
+    @Query("""
+            SELECT i FROM Intern i
+            WHERE i.internshipBatch.id = :batchId
+            AND (:keyword IS NULL OR :keyword = '' OR LOWER(i.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            AND (:internStatus IS NULL OR i.internStatus = :internStatus)
+            """)
+    Page<Intern> findByInternshipBatchWithFilters(@Param("batchId") Long batchId,
+                                                  @Param("keyword") String keyword,
+                                                  @Param("internStatus") InternStatus internStatus,
+                                                  Pageable pageable);
+
     long countByInternStatus(InternStatus status);
+
+    long countByMentor_Id(UUID mentorId);
+
+    long countByPosition_Id(Long positionId);
+
+    long countByInternshipBatch_Id(Long batchId);
 
     @Query("""
             SELECT i FROM Intern i
@@ -79,5 +101,36 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
     Page<Intern> findAllInternsNotEvaluatedThisWeek(@Param("weekStartDate") LocalDate weekStartDate,
                                                     Pageable pageable);
 
+    /*
+        Find all interns where the mentor's department matches the department of the given mentor ID
+     */
+    @EntityGraph(attributePaths = {
+            "position",
+            "internshipBatch",
+            "mentor",
+            "mentor.department"
+    })
+    @Query("""
+            SELECT i
+            FROM Intern i
+            JOIN Users mu ON mu.id = :mentorId
+            WHERE i.mentor.department = mu.department
+            """)
+    Page<Intern> findAllInternsByDepartmentOfMentor(@Param("mentorId") UUID mentorId, Pageable pageable);
+
+    /*
+        Check if an intern exists by email
+     */
     boolean existsByEmail(String email);
+
+    // Select new intern (Filtered by createdAt)
+    List<Intern> findByCreatedAtAfter(Instant date, Pageable pageable);
+
+    // Select updated intern (Filtered by updatedAt)
+    @Query("SELECT i FROM Intern i WHERE i.updatedAt > :date AND i.internStatus != 'DROPPED'")
+    List<Intern> findRecentlyUpdated(@Param("date") Instant date, Pageable pageable);
+
+    // Select deleted intern (Filtered by updatedAt)
+    @Query("SELECT i FROM Intern i WHERE i.updatedAt > :date AND i.internStatus = 'DROPPED'")
+    List<Intern> findRecentlyDeleted(@Param("date") Instant date, Pageable pageable);
 }

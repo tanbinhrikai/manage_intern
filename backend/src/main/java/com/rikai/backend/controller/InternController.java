@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -103,6 +104,17 @@ public class InternController {
         return ApiResponse.buildSuccessResponse(internService.getInternById(id), SuccessCode.GET_INTERN_SUCCESSFUL);
     }
 
+    @GetMapping("/department-interns")
+    @PreAuthorize("hasRole('MENTOR')")
+    public ApiResponse<PageResponse<InternResponse>> getAllInternsByDepartmentOfMentor(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+        Pageable pageable = PageRequest.of(page, limit);
+        return ApiResponse.buildSuccessResponse(
+                internService.findAllInternsByDepartmentOfMentor(pageable),
+                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
+    }
+
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> createIntern(@Valid @RequestBody InternCreationRequest request) {
@@ -122,6 +134,43 @@ public class InternController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<Void> deleteIntern(@PathVariable Long id) {
         internService.deleteIntern(id);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_INTERN_SUCCESSFUL);
+    }
+
+    @GetMapping("/batch/{batchId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<PageResponse<InternResponse>> getInternsByBatch(
+            @PathVariable Long batchId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status) {
+        Pageable pageable = PageRequest.of(page, limit);
+        return ApiResponse.buildSuccessResponse(
+                internService.getInternsByBatch(batchId, pageable, keyword, status),
+                SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
+    }
+
+    @PostMapping("/bulk-update")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MENTOR')")
+    public ApiResponse<Void> bulkUpdateInterns(
+            @RequestParam List<Long> internIds,
+            @Valid @RequestBody InternUpdateRequest request) {
+        internService.bulkUpdateInterns(internIds, request);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.UPDATE_INTERN_SUCCESSFUL);
+    }
+
+    @DeleteMapping("/bulk-delete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'HR', 'MENTOR')")
+    public ApiResponse<Void> bulkDeleteInterns(@RequestParam List<Long> internIds) {
+        internService.bulkDeleteInterns(internIds);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_INTERN_SUCCESSFUL);
+    }
+
+    @DeleteMapping("/{id:\\d+}/permanent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> permanentDeleteIntern(@PathVariable Long id) {
+        internService.permanentDeleteIntern(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_INTERN_SUCCESSFUL);
     }
 }

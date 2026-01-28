@@ -32,5 +32,7 @@ public class InternshipBatchResponse {
 
     Instant createdAt;
 
+    Long internCount;
+
     List<InternResponse> internResponses;
 }

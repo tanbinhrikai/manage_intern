@@ -7,6 +7,7 @@ import com.rikai.backend.dto.response.user.UserResponse;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public interface IUserService {
@@ -33,4 +34,8 @@ public interface IUserService {
     UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO);
 
     UserResponse toggleStatus(UUID id);
+
+    List<UserResponse> getMentorsByDepartment(Long departmentId);
+
+    void permanentDeleteUser(UUID id);
 }

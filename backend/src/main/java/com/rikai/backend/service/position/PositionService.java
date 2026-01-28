@@ -8,6 +8,7 @@ import com.rikai.backend.dto.response.position.PositionResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.PositionMapper;
 import com.rikai.backend.model.Position;
+import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.PositionRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PositionService implements IPositionService {
     PositionRepository positionRepository;
     PositionMapper positionMapper;
+    InternRepository internRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,7 +33,11 @@ public class PositionService implements IPositionService {
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
 
         Page<Position> positions = positionRepository.getAllPositionByKeyword(pageable , keywordValue);
-        return PageResponse.fromPage(positions.map(positionMapper::toPositionResponse));
+        return PageResponse.fromPage(positions.map(pos -> {
+            PositionResponse response = positionMapper.toPositionResponse(pos);
+            response.setInternCount(internRepository.countByPosition_Id(pos.getId()));
+            return response;
+        }));
     }
 
     @Override

@@ -17,11 +17,15 @@ import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.InternshipBatchRepository;
 import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.repository.UsersRepository;
+import com.rikai.backend.event.InternCreatedEvent;
+import com.rikai.backend.event.InternDeletedEvent;
+import com.rikai.backend.event.InternUpdatedEvent;
 import com.rikai.backend.service.auth.AuthenticationService;
 import com.rikai.backend.validation.AutoGenerateEmail;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +36,7 @@ import java.text.Normalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -45,6 +50,7 @@ public class InternService implements IInternService {
     UsersRepository usersRepository;
     InternMapper internMapper;
     AuthenticationService authenticationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -115,6 +121,12 @@ public class InternService implements IInternService {
 
         Position position = getPosition(request.getPositionId());
         Users mentor = getMentor(request.getMentorId());
+        
+        // Only update batch if provided
+        if (request.getInternShipBatchId() != null) {
+            InternshipBatch batch = getBatch(request.getInternShipBatchId());
+            intern.setInternshipBatch(batch);
+        }
 
         intern.setFullName(request.getFullName());
         intern.setPosition(position);
@@ -124,6 +136,10 @@ public class InternService implements IInternService {
         intern.setInternStatus(request.getInternStatus());
 
         Intern saved = internRepository.save(intern);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
+        
         return internMapper.toInternResponse(saved);
     }
 
@@ -132,8 +148,16 @@ public class InternService implements IInternService {
     public void deleteIntern(Long id) {
         Intern intern = internRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+        
+        // Lưu thông tin trước khi delete để publish event
+        Long internId = intern.getId();
+        String internName = intern.getFullName();
+        
         intern.setInternStatus(InternStatus.DROPPED);
         internRepository.save(intern);
+        
+        // Publish event sau khi delete (soft delete)
+        eventPublisher.publishEvent(new InternDeletedEvent(this, internId, internName));
     }
 
     @Override
@@ -250,6 +274,100 @@ public class InternService implements IInternService {
     private InternshipBatch getBatch(Long batchId) {
         return internshipBatchRepository.findById(batchId)
                 .orElseThrow(() -> new AppException(ErrorCode.BATCH_NOT_EXISTED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<InternResponse> getInternsByBatch(Long batchId, Pageable pageable, String keyword, String status) {
+        if (!internshipBatchRepository.existsById(batchId)) {
+            throw new AppException(ErrorCode.BATCH_NOT_EXISTED);
+        }
+
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
+        InternStatus internStatus = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
+            }
+        }
+
+        Page<Intern> internPage = internRepository.findByInternshipBatchWithFilters(
+                batchId,
+                keywordValue,
+                internStatus,
+                pageable
+        );
+        return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
+    }
+
+    @Override
+    public PageResponse<InternResponse> findAllInternsByDepartmentOfMentor(Pageable pageable) {
+        Users users = authenticationService.getCurrentUser();
+        var mentorId = users.getId();
+        if (!usersRepository.existsById(mentorId)) {
+            throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
+        }
+        Page<Intern> internPage = internRepository.findAllInternsByDepartmentOfMentor(mentorId, pageable);
+        return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
+    }
+
+    @Override
+    @Transactional
+    public void bulkUpdateInterns(List<Long> internIds, InternUpdateRequest request) {
+        if (internIds == null || internIds.isEmpty()) {
+            return;
+        }
+
+        validateDateRange(request.getStartDate(), request.getEndDate());
+        Position position = getPosition(request.getPositionId());
+        Users mentor = getMentor(request.getMentorId());
+        InternshipBatch batch = getBatch(request.getInternShipBatchId());
+
+        List<Intern> interns = internRepository.findAllById(internIds);
+        if (interns.isEmpty()) {
+            throw new AppException(ErrorCode.INTERN_NOT_EXISTED);
+        }
+
+        for (Intern intern : interns) {
+            intern.setFullName(request.getFullName());
+            intern.setPosition(position);
+            intern.setMentor(mentor);
+            intern.setInternshipBatch(batch);
+            intern.setStartDate(request.getStartDate());
+            intern.setEndDate(request.getEndDate());
+            intern.setInternStatus(request.getInternStatus());
+        }
+
+        internRepository.saveAll(interns);
+    }
+
+    @Override
+    @Transactional
+    public void bulkDeleteInterns(List<Long> internIds) {
+        if (internIds == null || internIds.isEmpty()) {
+            return;
+        }
+
+        List<Intern> interns = internRepository.findAllById(internIds);
+        if (interns.isEmpty()) {
+            throw new AppException(ErrorCode.INTERN_NOT_EXISTED);
+        }
+
+        for (Intern intern : interns) {
+            intern.setInternStatus(InternStatus.DROPPED);
+        }
+
+        internRepository.saveAll(interns);
+    }
+
+    @Override
+    @Transactional
+    public void permanentDeleteIntern(Long id) {
+        Intern intern = internRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+        internRepository.delete(intern);
     }
 
 }

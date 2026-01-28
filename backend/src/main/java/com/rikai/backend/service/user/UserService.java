@@ -12,6 +12,7 @@ import com.rikai.backend.model.Enum.RoleType;
 import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.DepartmentRepository;
+import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
@@ -39,6 +40,7 @@ public class UserService implements IUserService {
     PasswordEncoder passwordEncoder;
     RolesRepository rolesRepository;
     DepartmentRepository departmentRepository;
+    InternRepository internRepository;
     IAuthenticationService authenticationService;
 
     @Override
@@ -86,7 +88,11 @@ public class UserService implements IUserService {
                 isActive,
                 departmentId);
         List<UserResponse> userResponses = usersPage.getContent().stream()
-                .map(UserResponse::fromUser)
+                .map(user -> {
+                    UserResponse response = UserResponse.fromUser(user);
+                    response.setInternCount(0L); // HR don't have interns
+                    return response;
+                })
                 .toList();
         return PageResponse.<UserResponse>builder()
                 .items(userResponses)
@@ -177,5 +183,30 @@ public class UserService implements IUserService {
         user.setIsActive(!user.getIsActive());
         Users savedUser = usersRepository.save(user);
         return UserResponse.fromUser(savedUser);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getMentorsByDepartment(Long departmentId) {
+        if (!departmentRepository.existsById(departmentId)) {
+            throw new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED);
+        }
+
+        List<Users> mentors = usersRepository.findByDepartment_IdAndRole_RoleName(departmentId, "MENTOR");
+        return mentors.stream()
+                .map(user -> {
+                    UserResponse response = UserResponse.fromUser(user);
+                    response.setInternCount(internRepository.countByMentor_Id(user.getId()));
+                    return response;
+                })
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void permanentDeleteUser(UUID id) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        usersRepository.delete(user);
     }
 }

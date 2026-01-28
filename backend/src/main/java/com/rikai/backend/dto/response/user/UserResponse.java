@@ -26,6 +26,7 @@ public class UserResponse {
     private Instant updatedAt;
     private RolesResponse role;
     private DepartmentResponse department;
+    private Long internCount;
 
     public static UserResponse fromUser(Users user) {
         if (user == null) {

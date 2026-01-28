@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,13 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Inte
     @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr WHERE wr.intern.id = :internId")
     Page<WeeklyReport> findByInternId(@Param("internId") Long internId, Pageable pageable);
 
+    /**
+     * Find weekly reports by intern ID ordered by week start date in descending order.
+     *
+     * @param internId the ID of the intern
+     * @param pageable the pagination information
+     * @return a page of weekly reports for the specified intern ordered by week start date descending
+     */
     @Query("SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId ORDER BY wr.weekStartDate DESC")
     Page<WeeklyReport> findByInternIdOrderByWeekStartDateDesc(@Param("internId") Long internId, Pageable pageable);
 
@@ -34,6 +42,14 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Inte
     Page<WeeklyReport> findByMentorIdAndInternId(@Param("mentorId") UUID mentorId, @Param("internId") Long internId,
                                                  Pageable pageable);
 
+    /**
+     * Find weekly reports by intern ID within a specified date range ordered by week start date in descending order.
+     *
+     * @param internId  the ID of the intern
+     * @param startDate the start date of the range
+     * @param endDate   the end date of the range
+     * @return a list of weekly reports for the specified intern within the date range ordered by week start date descending
+     */
     @Query("SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor WHERE wr.intern.id = :internId "
             +
             "AND wr.weekStartDate >= :startDate AND wr.weekStartDate <= :endDate " +
@@ -50,6 +66,20 @@ public interface WeeklyReportRepository extends JpaRepository<WeeklyReport, Inte
     @Query(value = "SELECT wr FROM WeeklyReport wr JOIN FETCH wr.intern JOIN FETCH wr.mentor", countQuery = "SELECT COUNT(wr) FROM WeeklyReport wr")
     Page<WeeklyReport> findAll(@NonNull Pageable pageable);
 
+    /**
+     * Find a weekly report by its ID, including its details and associated criteria.
+     *
+     * @param id the ID of the weekly report
+     * @return an Optional containing the weekly report with its details and criteria if found, otherwise empty
+     */
     @Query("SELECT wr FROM WeeklyReport wr LEFT JOIN FETCH wr.details d LEFT JOIN FETCH d.criteria WHERE wr.id = :id")
     Optional<WeeklyReport> findByIdWithDetails(@Param("id") Integer id);
+
+    // Select new weekly reports (Filtered by createdAt and updatedAt)
+    @Query("SELECT r FROM WeeklyReport r JOIN FETCH r.intern JOIN FETCH r.mentor WHERE r.createdAt > :date")
+    List<WeeklyReport> findByCreatedAtAfter(@Param("date") Instant date, Pageable pageable);
+
+    // Select updated weekly reports (Filtered by updatedAt)
+    @Query("SELECT r FROM WeeklyReport r JOIN FETCH r.intern JOIN FETCH r.mentor WHERE r.updatedAt > :date")
+    List<WeeklyReport> findByUpdatedAtAfter(@Param("date") Instant date, Pageable pageable);
 }

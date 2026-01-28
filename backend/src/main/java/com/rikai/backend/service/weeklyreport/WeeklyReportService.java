@@ -15,11 +15,15 @@ import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.WeeklyReportRepository;
 import com.rikai.backend.repository.EvaluationCriteriaRepository;
 import com.rikai.backend.model.EvaluationCriteria;
+import com.rikai.backend.event.WeeklyReportCreatedEvent;
+import com.rikai.backend.event.WeeklyReportDeletedEvent;
+import com.rikai.backend.event.WeeklyReportUpdatedEvent;
 import com.rikai.backend.model.WeeklyReportDetail;
 import com.rikai.backend.service.auth.AuthenticationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +46,7 @@ public class WeeklyReportService implements IWeeklyReportService {
     InternRepository internRepository;
     AuthenticationService authenticationService;
     EvaluationCriteriaRepository evaluationCriteriaRepository;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -155,6 +160,10 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new WeeklyReportCreatedEvent(this, savedReport));
+        
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
     }
 
@@ -263,6 +272,10 @@ public class WeeklyReportService implements IWeeklyReportService {
         report.setUpdatedAt(java.time.Instant.now());
 
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
+        
+        // Publish event để DashboardService có thể bắt được
+        eventPublisher.publishEvent(new WeeklyReportUpdatedEvent(this, updatedReport));
+        
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
 
@@ -286,7 +299,15 @@ public class WeeklyReportService implements IWeeklyReportService {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
 
+        // Lưu thông tin trước khi delete để publish event
+        Integer reportId = report.getId();
+        String internName = report.getIntern().getFullName();
+        String mentorName = report.getMentor().getFullName();
+        
         weeklyReportRepository.delete(report);
+        
+        // Publish event sau khi delete
+        eventPublisher.publishEvent(new WeeklyReportDeletedEvent(this, reportId, internName, mentorName));
     }
 
     /**

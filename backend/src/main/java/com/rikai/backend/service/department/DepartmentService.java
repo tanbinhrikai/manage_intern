@@ -9,6 +9,7 @@ import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.DepartmentMapper;
 import com.rikai.backend.model.Department;
 import com.rikai.backend.repository.DepartmentRepository;
+import com.rikai.backend.repository.UsersRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DepartmentService implements IDepartmentService {
     DepartmentRepository departmentRepository;
     DepartmentMapper departmentMapper;
+    UsersRepository usersRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,7 +33,11 @@ public class DepartmentService implements IDepartmentService {
 
         Page<Department> departments = departmentRepository.getAllDepartmentByKeyword(pageable , keywordValue);
 
-        return PageResponse.fromPage(departments.map(departmentMapper::toDepartmentResponse));
+        return PageResponse.fromPage(departments.map(dept -> {
+            DepartmentResponse response = departmentMapper.toDepartmentResponse(dept);
+            response.setMentorCount(usersRepository.countByDepartment_IdAndRole_RoleName(dept.getId(), "MENTOR"));
+            return response;
+        }));
     }
 
     @Override

@@ -25,7 +25,6 @@ public interface InternshipBatchMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "interns", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     void updateInternshipBatch(@MappingTarget InternshipBatch internshipBatch, InternshipBatchUpdateRequest internshipBatchUpdateRequest);
 

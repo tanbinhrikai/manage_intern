@@ -18,6 +18,6 @@ public class InternshipBatchUpdateRequest {
     LocalDate endDate;
     String description;
 
-    BatchStatus batchStatus;
+    BatchStatus status;
     String picMentorId;
 }

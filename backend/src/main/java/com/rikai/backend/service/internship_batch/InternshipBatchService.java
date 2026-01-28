@@ -9,6 +9,7 @@ import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.InternshipBatchMapper;
 import com.rikai.backend.model.Enum.BatchStatus;
 import com.rikai.backend.model.InternshipBatch;
+import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.InternshipBatchRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class InternshipBatchService implements IInternshipBatchService {
     InternshipBatchRepository batchRepository;
     InternshipBatchMapper batchMapper;
+    InternRepository internRepository;
 
     @Override
     @Transactional
     public InternshipBatchResponse createBatch(InternshipBatchCreationRequest request) {
         InternshipBatch batch = batchMapper.toInternshipBatch(request);
-        batch.setStatus(BatchStatus.DRAFT);
+        batch.setStatus(BatchStatus.ACTIVE);
         InternshipBatch savedBatch = batchRepository.save(batch);
         return batchMapper.toInternshipBatchResponse(savedBatch);
     }
@@ -41,11 +43,6 @@ public class InternshipBatchService implements IInternshipBatchService {
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
         batchMapper.updateInternshipBatch(batch, request);
-
-        if (request.getBatchStatus() != null) {
-            batch.setStatus(request.getBatchStatus());
-        }
-
         InternshipBatch updatedBatch = batchRepository.save(batch);
         return batchMapper.toInternshipBatchResponse(updatedBatch);
     }
@@ -53,7 +50,11 @@ public class InternshipBatchService implements IInternshipBatchService {
     @Override
     public PageResponse<InternshipBatchResponse> getAllBatches(Pageable pageable, String keyword, BatchStatus status) {
         Page<InternshipBatch> batchPage = batchRepository.findBatches(keyword, status, pageable);
-        Page<InternshipBatchResponse> responsePage = batchPage.map(batchMapper::toInternshipBatchResponse);
+        Page<InternshipBatchResponse> responsePage = batchPage.map(batch -> {
+            InternshipBatchResponse response = batchMapper.toInternshipBatchResponse(batch);
+            response.setInternCount(internRepository.countByInternshipBatch_Id(batch.getId()));
+            return response;
+        });
         return PageResponse.fromPage(responsePage);
     }
 
@@ -61,7 +62,9 @@ public class InternshipBatchService implements IInternshipBatchService {
     public InternshipBatchResponse getBatchById(Long id) {
         InternshipBatch batch = batchRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        return batchMapper.toInternshipBatchResponse(batch);
+        InternshipBatchResponse response= batchMapper.toInternshipBatchResponse(batch);
+        response.setInternCount(internRepository.countByInternshipBatch_Id(batch.getId()));
+        return response;
     }
 
     @Override

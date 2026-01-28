@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -102,5 +103,19 @@ public class UserController {
         return ApiResponse.buildSuccessResponse(
                 updatedUser,
                 SuccessCode.UPDATE_USER_SUCCESSFUL);
+    }
+
+    @GetMapping("/departments/{departmentId}/mentors")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<List<UserResponse>> getMentorsByDepartment(@PathVariable Long departmentId) {
+        List<UserResponse> mentors = userService.getMentorsByDepartment(departmentId);
+        return ApiResponse.buildSuccessResponse(mentors, SuccessCode.GET_ALL_USERS_SUCCESSFUL);
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> permanentDeleteUser(@PathVariable UUID id) {
+        userService.permanentDeleteUser(id);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_USER_SUCCESSFUL);
     }
 }

@@ -1,46 +1,57 @@
 package com.rikai.backend.model;
 
-import com.rikai.backend.model.Enum.RoadmapStatus;
+import com.rikai.backend.model.Enum.ProgressStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
-@Data
+@Table(name = "intern_roadmap_progress",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"intern_id", "node_id"})
+        })
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "intern_roadmap_progress")
 public class InternRoadmapProgress {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "intern_id", referencedColumnName = "id", nullable = false)
-    Intern intern;
+    @JoinColumn(name = "intern_id", nullable = false)
+    private Intern intern;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "roadmap_id", referencedColumnName = "id", nullable = false)
-    InternshipRoadmap roadmap;
+    @JoinColumn(name = "node_id", nullable = false)
+    private RoadmapNode roadmapNode;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(nullable = false, length = 20)
     @Builder.Default
-    RoadmapStatus status = RoadmapStatus.PENDING;
+    private ProgressStatus status = ProgressStatus.LOCKED;
 
-    @Column(name = "start_date")
-    LocalDate startDate;
+    @Column(name = "submitted_proof", columnDefinition = "TEXT")
+    private String submittedProof;
 
-    @Column(name = "expected_end_date")
-    LocalDate expectedEndDate;
+    @Column(name = "mentor_feedback", columnDefinition = "TEXT")
+    private String mentorFeedback;
 
-    @Column(name = "actual_completion_date")
-    LocalDate actualCompletionDate;
+    @Column(name = "completed_at")
+    private LocalDate completedAt;
 
-    @Column(name = "mentor_notes", columnDefinition = "TEXT")
-    String mentorNotes;
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

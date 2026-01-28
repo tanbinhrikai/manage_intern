@@ -78,10 +78,12 @@ public class WeeklyReport {
             return;
         }
 
+        // Calculate average from parent criteria only (main criteria)
+        // Use doubleValue() instead of intValue() to preserve decimal precision
         double average = this.details.stream()
                 .filter(detail -> detail.getScore() != null)
                 .filter(detail -> detail.getCriteria() != null && detail.getCriteria().getParent() == null)
-                .mapToInt(detail -> detail.getScore().intValue())
+                .mapToDouble(detail -> detail.getScore().doubleValue())
                 .average()
                 .orElse(0.0);
 

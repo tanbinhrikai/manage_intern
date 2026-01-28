@@ -2,6 +2,7 @@ package com.rikai.backend.dto.response.intern;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rikai.backend.common.InternStatus;
+import com.rikai.backend.dto.response.batch.InternshipBatchResponse;
 import com.rikai.backend.dto.response.mentor.MentorResponse;
 import com.rikai.backend.dto.response.position.PositionResponse;
 import lombok.*;
@@ -20,6 +21,7 @@ public class InternResponse {
     Long id;
     String fullName;
     PositionResponse position;
+    InternshipBatchResponse internshipBatch;
     MentorResponse mentor;
     LocalDate startDate;
     LocalDate endDate;

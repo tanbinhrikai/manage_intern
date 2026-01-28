@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public interface IInternService {
@@ -41,4 +42,14 @@ public interface IInternService {
     PageResponse<InternResponse> getInternsNotEvaluatedThisWeek(Pageable pageable);
 
     InternAnalysisResponse getAnalysis();
+
+    PageResponse<InternResponse> getInternsByBatch(Long batchId, Pageable pageable, String keyword, String status);
+
+    PageResponse<InternResponse> findAllInternsByDepartmentOfMentor(Pageable pageable);
+
+    void bulkUpdateInterns(List<Long> internIds, InternUpdateRequest request);
+
+    void bulkDeleteInterns(List<Long> internIds);
+
+    void permanentDeleteIntern(Long id);
 }

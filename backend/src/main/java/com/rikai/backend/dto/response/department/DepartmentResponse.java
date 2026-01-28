@@ -13,4 +13,5 @@ import lombok.experimental.FieldDefaults;
 public class DepartmentResponse {
     Long id;
     String title;
+    Long mentorCount;
 }

@@ -1,6 +1,11 @@
 spring:
   application:
     name: backend
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
   datasource:
     url: ${URL_DATABASE}
     username: ${DB_USERNAME}
@@ -12,9 +17,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
-  flyway:
-    locations: classpath:/db/migration,classpath:/dev/db/migration
-    baseline-on-migrate: true
-    baseline-version: 0
+        connection:
+          characterEncoding: UTF-8
 jwt:
   signerKey: ${SIGNER_KEY}

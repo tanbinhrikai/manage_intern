@@ -37,7 +37,7 @@ public class InternshipBatch {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20)
     @Builder.Default
-    BatchStatus status = BatchStatus.DRAFT;
+    BatchStatus status = BatchStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
