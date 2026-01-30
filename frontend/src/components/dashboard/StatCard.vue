@@ -34,6 +34,12 @@ defineProps({
       <svg v-else-if="icon === 'mentor'" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
       </svg>
+      <svg v-else-if="icon === 'completed'" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+      <svg v-else-if="icon === 'dropped'" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 5.99L12 10.59 7.41 7.99 6 9.41 10.59 12 6 16.59 7.41 18 12 13.41 16.59 18 18 16.59 13.41 12 18 7.41z"/>
+      </svg>
     </div>
     <div class="stat-content">
       <span class="stat-title">{{ title }}</span>
@@ -88,6 +94,16 @@ defineProps({
   color: #4f46e5;
 }
 
+.icon-teal {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.icon-red {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .stat-content {
   display: flex;
   flex-direction: column;
@@ -102,6 +118,8 @@ defineProps({
 .stat-value {
   font-size: 28px;
   font-weight: 700;
+  display:inline-block;
+  margin: 0 auto;
   color: #1f2937;
 }
 </style>

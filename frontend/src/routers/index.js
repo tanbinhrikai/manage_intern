@@ -96,14 +96,50 @@ const routes = [
   {
     path: "/admin/departments",
     name: "DepartmentList",
+    component: () => import("@/views/system-config/DepartmentTreeView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/departments/list",
+    name: "DepartmentListOld",
     component: () => import("@/views/system-config/DepartmentListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/positions",
     name: "PositionList",
+    component: () => import("@/views/system-config/PositionTreeView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/positions/list",
+    name: "PositionListOld",
     component: () => import("@/views/system-config/PositionListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/batches",
+    name: "BatchList",
+    component: () => import("@/views/internship-batch/BatchListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/batches/:id",
+    name: "BatchDetail",
+    component: () => import("@/views/internship-batch/BatchDetailView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/mentor/batches",
+    name: "MentorBatchList",
+    component: () => import("@/views/internship-batch/BatchListView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
+    path: "/mentor/batches/:id",
+    name: "MentorBatchDetail",
+    component: () => import("@/views/internship-batch/BatchDetailView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
     path: "/admin/evaluation-criteria",

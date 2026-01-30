@@ -43,3 +43,19 @@ export function getInternsAnalysis() {
 export function getInternsNotEvaluatedThisWeek(params = {}) {
     return http.get("/interns/not-evaluated-this-week", { params })
 }
+
+export function getInternsByBatch(batchId, params = {}) {
+    return http.get(`/interns/batch/${batchId}`, { params })
+}
+
+export function bulkUpdateInterns(internIds, data) {
+    return http.post('/interns/bulk-update', data, { params: { internIds } })
+}
+
+export function bulkDeleteInterns(internIds) {
+    return http.delete('/interns/bulk-delete', { params: { internIds } })
+}
+
+export function permanentDeleteIntern(id) {
+    return http.delete(`/interns/${id}/permanent`)
+}

@@ -15,3 +15,7 @@ export function createPosition(data) {
 export function updatePosition(id, data) {
     return http.put(`/positions/${id}`, data)
 }
+
+export function deletePosition(id) {
+    return http.delete(`/positions/${id}`)
+}

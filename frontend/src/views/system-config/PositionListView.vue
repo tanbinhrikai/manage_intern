@@ -5,7 +5,7 @@ import { Search, Plus, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import { getPositions, createPosition, updatePosition } from '@/api/position'
-import { usePagination, useLoading, useApi, useDialog } from '@/composables'
+import { usePagination, useLoading, useApi, useDialog, useConfirm } from '@/composables'
 import { createPositionCreationRequest, createPositionUpdateRequest } from '@/types/position'
 
 const localeStore = useLocaleStore()
@@ -23,6 +23,7 @@ const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: true
 })
+const { confirmUpdate } = useConfirm()
 
 // Data
 const positions = ref([])
@@ -108,6 +109,24 @@ async function handleSave() {
   } finally {
     setLoadingState('saving', false)
   }
+}
+
+/**
+ * Handle save with confirmation
+ */
+function handleSaveWithConfirm() {
+  if (!formData.value.title.trim()) {
+    return
+  }
+  
+  const message = isEdit.value 
+    ? (t.value('positionManagement.confirm.update') || 'Are you sure you want to update this position?')
+    : (t.value('positionManagement.confirm.create') || 'Are you sure you want to create this position?')
+  
+  confirmUpdate({
+    message,
+    onConfirm: handleSave
+  })
 }
 
 /**
@@ -238,7 +257,7 @@ onBeforeRouteLeave(() => {
           <el-button @click="closeForm">
             {{ t('positionManagement.form.cancel') }}
           </el-button>
-          <el-button type="primary" @click="handleSave" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
+          <el-button type="primary" @click="handleSaveWithConfirm" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
             {{ isEdit ? t('positionManagement.form.save') : t('positionManagement.form.create') }}
           </el-button>
         </template>

@@ -19,7 +19,30 @@
         }
     },
     "common": {
-        "weeks": "週間"
+        "weeks": "週間",
+        "confirm": {
+            "title": "確認",
+            "ok": "OK",
+            "cancel": "キャンセル",
+            "yes": "はい",
+            "no": "いいえ",
+            "update": "更新してもよろしいですか？",
+            "delete": "削除してもよろしいですか？",
+            "deleteButton": "削除"
+        },
+        "search": "検索",
+        "filter": "フィルター",
+        "submit": "提出",
+        "warning": "警告",
+        "back":"戻る",
+        "cancel": "キャンセル",
+        "delete": "削除",
+        "edit": "編集",
+        "actions":"アクション",
+        "view": "表示",
+        "all": "すべて",
+        "active": "アクティブ",
+        "inactive": "非アクティブ"
     },
     "language": {
         "en": "English",
@@ -30,8 +53,13 @@
         "interns": "インターン",
         "mentors": "メンター",
         "hrs": "人事スタッフ",
+        "userManagement": "ユーザー管理",
+        "organization": "組織",
+        "evaluation": "評価",
+        "system": "システム",
         "departments": "部署",
         "positions": "ポジション",
+        "batches": "インターンシップバッチ",
         "evaluationCriteria": "評価基準",
         "evaluationSessions": "評価セッション",
         "systemConfig": "システム設定",
@@ -60,12 +88,40 @@
         "totalInterns": "インターン総数",
         "internsActive": "アクティブ",
         "internsWarning": "警告",
+        "internsCompleted": "完了",
+        "internsDropped": "中断",
         "totalMentors": "メンター総数",
         "internsByStatus": "ステータス別インターン",
+        "internsByDepartment": "部署別インターン",
+        "internsByPosition": "ポジション別インターン",
+        "internsTrend": "インターン推移",
+        "averageScoreTrend": "平均スコア推移",
+        "completionRateTrend": "完了率推移",
+        "batchScoreTrend": "バッチ平均スコア推移",
+        "internScoreTrend": "インターンスコア推移",
+        "clickToViewInterns": "バッチをクリックしてインターンの詳細を表示",
+        "byPosition": "ポジション別",
+        "byDepartment": "部門別",
+        "last3Months": "3ヶ月",
+        "last6Months": "6ヶ月",
+        "last12Months": "12ヶ月",
+        "resetZoom": "ズームリセット",
+        "statusBreakdown": "ステータス内訳",
+        "interns": "インターン",
+        "total": "合計",
+        "average": "平均",
+        "peak": "ピーク",
+        "rateActive": "アクティブ率",
+        "rateWarning": "警告率",
+        "rateCompleted": "完了率",
+        "rateDropped": "中断率",
         "recentActivities": "最近の活動",
+        "noData": "データがありません",
         "timeAgo": {
+            "justNow": "たった今",
             "minutesAgo": "{n}分前",
             "hourAgo": "1時間前",
+            "hoursAgo": "{n}時間前",
             "yesterday": "昨日",
             "daysAgo": "{n}日前"
         },
@@ -137,6 +193,8 @@
             "title": "確認",
             "lockAccount": "{name}のアカウントをロックしてもよろしいですか？",
             "unlockAccount": "{name}のアカウントのロックを解除してもよろしいですか？",
+            "update": "このメンターを更新してもよろしいですか？",
+            "create": "このメンターを作成してもよろしいですか？",
             "ok": "確認",
             "cancel": "キャンセル"
         },
@@ -199,6 +257,8 @@
             "title": "確認",
             "lockAccount": "{name}のアカウントをロックしてもよろしいですか？",
             "unlockAccount": "{name}のアカウントのロックを解除してもよろしいですか？",
+            "update": "このHRを更新してもよろしいですか？",
+            "create": "このHRを作成してもよろしいですか？",
             "ok": "確認",
             "cancel": "キャンセル"
         },
@@ -306,6 +366,8 @@
         "confirm": {
             "title": "確認",
             "delete": "インターン {name} を削除してもよろしいですか？",
+            "update": "このインターンを更新してもよろしいですか？",
+            "create": "このインターンを作成してもよろしいですか？",
             "ok": "確認",
             "cancel": "キャンセル"
         },
@@ -372,6 +434,10 @@
             "updateSuccess": "部署を更新しました！",
             "saveError": "エラーが発生しました。もう一度お試しください。"
         },
+        "confirm": {
+            "update": "この部署を更新してもよろしいですか？",
+            "create": "この部署を作成してもよろしいですか？"
+        },
         "form": {
             "addTitle": "新規部署追加",
             "editTitle": "部署を編集",
@@ -396,6 +462,10 @@
             "createSuccess": "ポジションを作成しました！",
             "updateSuccess": "ポジションを更新しました！",
             "saveError": "エラーが発生しました。もう一度お試しください。"
+        },
+        "confirm": {
+            "update": "このポジションを更新してもよろしいですか？",
+            "create": "このポジションを作成してもよろしいですか？"
         },
         "form": {
             "addTitle": "新規ポジション追加",
@@ -432,6 +502,10 @@
             "saveError": "エラーが発生しました。もう一度お試しください。",
             "confirmDelete": "この基準を削除してもよろしいですか？",
             "validationError": "必須項目をすべて入力してください！"
+        },
+        "confirm": {
+            "update": "この基準を更新してもよろしいですか？",
+            "create": "この基準を作成してもよろしいですか？"
         },
         "form": {
             "createTitle": "評価基準を作成",
@@ -472,6 +546,10 @@
                 "createSuccess": "定義を作成しました！",
                 "updateSuccess": "定義を更新しました！",
                 "deleteSuccess": "定義を削除しました！"
+            },
+            "confirm": {
+                "update": "このスコア定義を更新してもよろしいですか？",
+                "create": "このスコア定義を作成してもよろしいですか？"
             }
         },
         "group": {
@@ -487,6 +565,8 @@
             "updateSuccess": "グループを更新しました！",
             "deleteSuccess": "グループを削除しました！",
             "confirmDelete": "このグループとすべての基準を削除しますか？",
+            "confirmUpdate": "このグループを更新してもよろしいですか？",
+            "confirmCreate": "このグループを作成してもよろしいですか？",
             "validationError": "グループ名を入力してください"
         }
     },
@@ -539,9 +619,48 @@
         "messages": {
             "loadError": "レポートの読み込みに失敗しました",
             "createSuccess": "レポートを作成しました！",
+            "saveSuccess": "レポートを保存しました！",
             "updateSuccess": "レポートを更新しました！",
             "saveError": "レポートの保存に失敗しました。もう一度お試しください。"
+        },
+        "confirm": {
+            "update": "この週次レポートを更新してもよろしいですか？",
+            "create": "この週次レポートを作成してもよろしいですか？"
         }
+    },
+    "positionTree": {
+        "title": "ポジションツ",
+        "name": "ポジション名",
+        "nameRequired": "ポジション名は必須です",
+        "create": "ポジションを追加",
+        "refresh": "リフレッシュ",
+        "edit": "ポジションを編集",
+        "delete": "ポジションを削除",
+        "search": "ポジションを検索...",
+        "filterByStatus": "ステータスでフィルター",
+        "allStatus": "すべてのステータス",
+        "common": {
+            "cancel": "キャンセル",
+            "submit": "提出",
+            "confirm": "確認",
+            "delete": "削除",
+            "edit": "編集",
+            "search": "検索",
+            "filter": "フィルター",
+            "all": "すべて",
+            "active": "アクティブ",
+            "inactive": "非アクティブ"
+        }
+    },
+    "departmentTree":{
+        "title": "部署",
+        "create": "部署を追加",
+        "edit": "部署を編集",
+        "delete": "部署を削除",
+        "search": "部署を検索...",
+        "filterByStatus": "ステータスでフィルター",
+        "allStatus": "すべてのステータス",
+        "name":"部署名"
     },
     "evaluationSession": {
         "title": "評価セッション",
@@ -580,6 +699,8 @@
         "confirm": {
             "title": "確認",
             "delete": "{internName} ({sessionType}) の評価セッションを削除してもよろしいですか？",
+            "create": "この評価セッションを作成してもよろしいですか？",
+            "generate": "この評価セッションを生成してもよろしいですか？",
             "ok": "OK",
             "cancel": "キャンセル"
         },
@@ -652,8 +773,56 @@
             }
         },
         "edit": {
+            "title": "評価セッションを編集",
             "update": "セッションを更新",
-            "cannotChangeSessionType": "セッションタイプは作成後に変更できません"
+            "cannotChangeSessionType": "セッションタイプは作成後に変更できません",
+            "confirmUpdate": "評価セッションを更新してもよろしいですか？"
+        },
+        "create": {
+            "confirmCreate": "この評価セッションを作成してもよろしいですか？",
+            "confirmGenerate": "この評価セッションを生成してもよろしいですか？"
+        }
+    },
+    "batch": {
+        "title": "インターンシップバッチ",
+        "create": "バッチを作成",
+        "edit": "バッチを編集",
+        "view": "バッチを表示",
+        "delete": "バッチを削除",
+        "name": "バッチ名",
+        "namePlaceholder": "バッチ名を入力 (例: RIKAI_2024_01)",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "selectDate": "日付を選択",
+        "status": "ステータス",
+        "description": "説明",
+        "descriptionPlaceholder": "バッチの説明を入力...",
+        "duration": "期間",
+        "internCount": "インターン数",
+        "selected": "選択済み",
+        "search": "バッチを検索...",
+        "filterByStatus": "ステータスでフィルター",
+        "nameRequired": "バッチ名は必須です",
+        "startDateRequired": "開始日は必須です",
+        "endDateRequired": "終了日は必須です",
+        "fetchError": "バッチの取得に失敗しました",
+        "createSuccess": "バッチが正常に作成されました",
+        "updateSuccess": "バッチが正常に更新されました",
+        "deleteSuccess": "バッチが正常に削除されました",
+        "saveError": "バッチの保存に失敗しました",
+        "deleteError": "バッチの削除に失敗しました",
+        "deleteConfirm": "バッチ'{name}'を削除してもよろしいですか？",
+        "bulkDeleteConfirm": "{count}個のバッチを削除してもよろしいですか？",
+        "bulkDeleteSuccess": "バッチが正常に削除されました",
+        "bulkDeleteError": "バッチの削除に失敗しました",
+        "detail": {
+            "title": "バッチ詳細",
+            "batchInfo": "バッチ情報",
+            "internsList": "このバッチのインターン",
+            "interns": "インターン",
+            "noInterns": "このバッチにインターンはいません",
+            "loadError": "バッチ詳細の読み込みに失敗しました",
+            "loadInternsError": "インターンの読み込みに失敗しました"
         }
     }
 }

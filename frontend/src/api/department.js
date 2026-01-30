@@ -15,3 +15,7 @@ export function createDepartment(data) {
 export function updateDepartment(id, data) {
   return http.put(`/departments/${id}`, data)
 }
+
+export function deleteDepartment(id) {
+  return http.delete(`/departments/${id}`)
+}

@@ -1,13 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
 import { onBeforeRouteLeave } from "vue-router"
-import { ElMessageBox } from 'element-plus'
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
 import { getHRs, createUser, updateUser, toggleUserStatus } from '@/api/user'
-import { usePagination, useLoading, useApi, useDropdownData, useDialog } from '@/composables'
+import { usePagination, useLoading, useApi, useDropdownData, useDialog, useConfirm } from '@/composables'
 
 
 const localeStore = useLocaleStore()
@@ -30,6 +29,7 @@ const { execute: executeApi } = useApi({
 const { departments, fetchDepartments } = useDropdownData()
 const hrFormDialog = useDialog()
 const hrDetailDialog = useDialog()
+const { confirm, confirmUpdate } = useConfirm()
 
 // Data
 const hrs = ref([])
@@ -120,40 +120,49 @@ async function handleSaveHR(payload, done) {
 }
 
 /**
+ * Handle save HR with confirmation
+ * @param {Object} payload - HR user data to save
+ * @param {Function} done - Callback function
+ */
+function handleSaveHRWithConfirm(payload, done) {
+  const isEdit = !!hrFormDialog.selectedItem
+  const message = isEdit
+    ? (t.value('hrManagement.confirm.update') || 'Are you sure you want to update this HR?')
+    : (t.value('hrManagement.confirm.create') || 'Are you sure you want to create this HR?')
+  
+  confirmUpdate({
+    message,
+    onConfirm: () => handleSaveHR(payload, done)
+  })
+}
+
+/**
  * Handle toggle HR user active status with confirmation
  * @param {User} hr - HR user to toggle status
  */
-async function handleToggleStatus(hr) {
+function handleToggleStatus(hr) {
   const confirmMessage = hr.isActive 
     ? t.value('hrManagement.confirm.lockAccount').replace('{name}', hr.fullName)
     : t.value('hrManagement.confirm.unlockAccount').replace('{name}', hr.fullName)
   
-  try {
-    await ElMessageBox.confirm(
-      confirmMessage,
-      t.value('hrManagement.confirm.title'),
-      { 
-        confirmButtonText: t.value('hrManagement.confirm.ok'), 
-        cancelButtonText: t.value('hrManagement.confirm.cancel'), 
-        type: 'warning' 
-      }
-    )
-    const res = await executeApi(
-      () => toggleUserStatus(hr.id),
-      'hrManagement.messages.toggleSuccess',
-      true
-    )
-    if (res.data && res.data.data) {
-      const index = hrs.value.findIndex(h => h.id === hr.id)
-      if (index !== -1) {
-        hrs.value[index] = res.data.data
+  confirm({
+    message: confirmMessage,
+    title: t.value('hrManagement.confirm.title'),
+    type: 'warning',
+    onConfirm: async () => {
+      const res = await executeApi(
+        () => toggleUserStatus(hr.id),
+        'hrManagement.messages.toggleSuccess',
+        true
+      )
+      if (res.data && res.data.data) {
+        const index = hrs.value.findIndex(h => h.id === hr.id)
+        if (index !== -1) {
+          hrs.value[index] = res.data.data
+        }
       }
     }
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
-    }
-  }
+  })
 }
 
 /**
@@ -341,7 +350,7 @@ onBeforeRouteLeave(() => {
         :departments="departments"
         user-type="HR"
         @update:visible="hrFormDialog.visible = $event"
-        @save="handleSaveHR"
+        @save="handleSaveHRWithConfirm"
       />
 
       <el-dialog 
@@ -363,8 +372,8 @@ onBeforeRouteLeave(() => {
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item :label="t('hrManagement.table.status')">
-            <el-tag :type="hrDetailDialog.selectedItem?.isActive ? 'success' : 'danger'">
-              {{ hrDetailDialog.selectedItem?.isActive ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
+            <el-tag :type="hrDetailDialog.selectedItem?.active ? 'success' : 'danger'">
+              {{ hrDetailDialog.selectedItem?.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>

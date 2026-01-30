@@ -1,14 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
 import { ArrowLeft, Edit, Delete } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import { useAuthStore } from '@/stores/auth'
 import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 import { getEvaluationSessionById, deleteEvaluationSession } from '@/api/evaluation-session'
-import { useLoading, useApi, useDateFormat } from '@/composables'
+import { useLoading, useApi, useDateFormat, useConfirm } from '@/composables'
 import { SessionType, EvaluationConclusion, CriteriaCategory } from '@/types/common'
 
 const route = useRoute()
@@ -30,6 +29,7 @@ const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: true
 })
+const { confirmDelete } = useConfirm()
 
 /**
  * Get session type label
@@ -129,34 +129,23 @@ function openEditView() {
 /**
  * Handle delete session with confirmation
  */
-async function handleDelete() {
+function handleDelete() {
   const confirmMessage = t.value('evaluationSession.confirm.delete')
     .replace('{internName}', session.value.internName || '')
     .replace('{sessionType}', getSessionTypeLabel(session.value.sessionType))
 
-  try {
-    await ElMessageBox.confirm(
-      confirmMessage,
-      t.value('evaluationSession.confirm.title'),
-      {
-        confirmButtonText: t.value('evaluationSession.confirm.ok'),
-        cancelButtonText: t.value('evaluationSession.confirm.cancel'),
-        type: 'warning'
-      }
-    )
-    
-    await executeApi(
-      () => deleteEvaluationSession(sessionId),
-      'evaluationSession.messages.deleteSuccess',
-      true
-    )
-    
-    goBack()
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
+  confirmDelete({
+    message: confirmMessage,
+    title: t.value('evaluationSession.confirm.title'),
+    onConfirm: async () => {
+      await executeApi(
+        () => deleteEvaluationSession(sessionId),
+        'evaluationSession.messages.deleteSuccess',
+        true
+      )
+      goBack()
     }
-  }
+  })
 }
 
 onMounted(() => {

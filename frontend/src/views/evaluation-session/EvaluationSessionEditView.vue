@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, EditPen } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import { useAuthStore } from '@/stores/auth'
@@ -9,7 +9,7 @@ import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 import { getEvaluationSessionById, updateEvaluationSession } from '@/api/evaluation-session'
 import { getEvaluationCriteria } from '@/api/evaluation-criteria'
-import { useLoading, useApi, useDateFormat } from '@/composables'
+import { useLoading, useApi, useDateFormat, useConfirm } from '@/composables'
 import { SessionType } from '@/types/common'
 import { createEvaluationScoreRequest } from '@/types/evaluationSession'
 
@@ -31,6 +31,7 @@ const { execute: executeApi } = useApi({
   showSuccessMessage: true
 })
 const { formatDate } = useDateFormat()
+const { confirmUpdate } = useConfirm()
 
 // Form data
 const form = reactive({
@@ -150,6 +151,16 @@ async function handleUpdate() {
 function goBack() {
   const prefix = authStore.userRole === 'MENTOR' ? '/mentor/evaluation-sessions' : '/admin/evaluation-sessions'
   router.push(`${prefix}/${sessionId}`)
+}
+
+/**
+ * Handle update with confirmation
+ */
+function handleUpdateWithConfirm() {
+  confirmUpdate({
+    message: t.value('evaluationSession.edit.confirmUpdate') || 'Are you sure you want to update the evaluation session?',
+    onConfirm: handleUpdate
+  })
 }
 
 onMounted(async () => {
@@ -294,11 +305,22 @@ onMounted(async () => {
               </el-form-item>
 
               <el-form-item>
+                <!-- <el-button 
+                  type="primary" 
+                  :icon="EditPen"
+                  size="large"
+                  @click="handleUpdateWithConfirm"
+                  :loading="loading"
+                >
+                
+                  {{ t('evaluationSession.edit.update') }}
+                    
+                </el-button> -->
                 <el-button 
                   type="primary" 
                   :icon="EditPen"
                   size="large"
-                  @click="handleUpdate"
+                  @click="handleUpdateWithConfirm"
                   :loading="loading"
                 >
                   {{ t('evaluationSession.edit.update') }}

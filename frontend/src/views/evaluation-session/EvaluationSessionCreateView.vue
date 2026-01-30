@@ -9,7 +9,7 @@ import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
 import { createEvaluationSession, generateEvaluationSession, getEvaluationSessions } from '@/api/evaluation-session'
 import { getEvaluationCriteria } from '@/api/evaluation-criteria'
-import { useLoading, useApi, useDropdownData, useDateFormat } from '@/composables'
+import { useLoading, useApi, useDropdownData, useDateFormat, useConfirm } from '@/composables'
 import { SessionType } from '@/types/common'
 import { createEvaluationSessionCreateRequest, createEvaluationScoreRequest } from '@/types/evaluationSession'
 
@@ -29,6 +29,7 @@ const { execute: executeApi } = useApi({
 })
 const { interns, fetchInterns } = useDropdownData()
 const { formatDate } = useDateFormat()
+const { confirmUpdate } = useConfirm()
 
 // Mode: 'manual' or 'auto-generate'
 const creationMode = ref('auto-generate')
@@ -307,6 +308,26 @@ async function handleAutoGenerate() {
 }
 
 /**
+ * Handle auto-generate with confirmation
+ */
+function handleAutoGenerateWithConfirm() {
+  if (!selectedInternId.value || !autoGenerateForm.sessionType) {
+    ElMessage.warning(t.value('evaluationSession.create.validation.selectInternAndType'))
+    return
+  }
+  
+  if (hasExistingSession(autoGenerateForm.sessionType)) {
+    ElMessage.warning(t.value('evaluationSession.create.messages.sessionExists'))
+    return
+  }
+  
+  confirmUpdate({
+    message: t.value('evaluationSession.confirm.generate') || t.value('evaluationSession.create.confirmGenerate') || 'Are you sure you want to generate this evaluation session?',
+    onConfirm: handleAutoGenerate
+  })
+}
+
+/**
  * Handle manual create
  */
 async function handleManualCreate() {
@@ -334,6 +355,21 @@ async function handleManualCreate() {
       ? '/mentor/evaluation-sessions' 
       : '/admin/evaluation-sessions'
     )
+  })
+}
+
+/**
+ * Handle manual create with confirmation
+ */
+function handleManualCreateWithConfirm() {
+  if (!selectedInternId.value || !manualForm.sessionType || !manualForm.evaluationDate) {
+    ElMessage.warning(t.value('evaluationSession.create.validation.fillRequired'))
+    return
+  }
+  
+  confirmUpdate({
+    message: t.value('evaluationSession.confirm.create') || t.value('evaluationSession.create.confirmCreate') || 'Are you sure you want to create this evaluation session?',
+    onConfirm: handleManualCreate
   })
 }
 
@@ -557,7 +593,7 @@ onMounted(async () => {
                   type="primary" 
                   :icon="Plus"
                   size="large"
-                  @click="handleAutoGenerate"
+                  @click="handleAutoGenerateWithConfirm"
                   :disabled="!selectedInternId || !autoGenerateForm.sessionType"
                   :loading="loading"
                 >
@@ -663,7 +699,7 @@ onMounted(async () => {
                   type="primary" 
                   :icon="EditPen"
                   size="large"
-                  @click="handleManualCreate"
+                  @click="handleManualCreateWithConfirm"
                   :loading="loading"
                 >
                   {{ t('evaluationSession.create.create') }}

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
 import { useRouter, onBeforeRouteLeave } from "vue-router"
-import { ElMessageBox } from "element-plus"
 import { Search, Plus, View, Edit, Delete } from "@element-plus/icons-vue"
 import { useLocaleStore } from "@/locales/locale"
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
@@ -11,7 +10,7 @@ import {
   deleteEvaluationSession,
   generateEvaluationSession
 } from "@/api/evaluation-session"
-import { usePagination, useLoading, useApi, useDropdownData, useDialog, useDateFormat } from "@/composables"
+import { usePagination, useLoading, useApi, useDropdownData, useDialog, useDateFormat, useConfirm } from "@/composables"
 import { SessionType, EvaluationConclusion } from "@/types/common"
 import { useAuthStore } from "@/stores/auth"
 
@@ -41,6 +40,7 @@ const { execute: executeApi } = useApi({
 const { interns, fetchInterns } = useDropdownData()
 const sessionDetailDialog = useDialog()
 const { formatDate } = useDateFormat()
+const { confirmDelete, confirmUpdate } = useConfirm()
 
 // Data
 const sessions = ref([])
@@ -148,32 +148,23 @@ function openEditSession(session) {
  * Handle delete session with confirmation
  * @param {EvaluationSession} session - Session to delete
  */
-async function handleDeleteSession(session) {
+function handleDeleteSession(session) {
   const confirmMessage = t.value('evaluationSession.confirm.delete')
     .replace('{internName}', session.internName || '')
     .replace('{sessionType}', getSessionTypeLabel(session.sessionType))
 
-  try {
-    await ElMessageBox.confirm(
-      confirmMessage,
-      t.value('evaluationSession.confirm.title'),
-      {
-        confirmButtonText: t.value('evaluationSession.confirm.ok'),
-        cancelButtonText: t.value('evaluationSession.confirm.cancel'),
-        type: 'warning'
-      }
-    )
-    await executeApi(
-      () => deleteEvaluationSession(session.id),
-      'evaluationSession.messages.deleteSuccess',
-      true
-    )
-    fetchSessions()
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
+  confirmDelete({
+    message: confirmMessage,
+    title: t.value('evaluationSession.confirm.title'),
+    onConfirm: async () => {
+      await executeApi(
+        () => deleteEvaluationSession(session.id),
+        'evaluationSession.messages.deleteSuccess',
+        true
+      )
+      fetchSessions()
     }
-  }
+  })
 }
 
 /**
@@ -192,6 +183,18 @@ async function handleGenerateSession(internId, sessionType) {
   } catch (error) {
     // Error already handled by useApi
   }
+}
+
+/**
+ * Handle generate session with confirmation
+ * @param {number} internId - Intern ID
+ * @param {SessionType} sessionType - Session type
+ */
+function handleGenerateSessionWithConfirm(internId, sessionType) {
+  confirmUpdate({
+    message: t.value('evaluationSession.confirm.generate') || t.value('evaluationSession.create.confirmGenerate') || 'Are you sure you want to generate this evaluation session?',
+    onConfirm: () => handleGenerateSession(internId, sessionType)
+  })
 }
 
 /**

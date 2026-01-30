@@ -1,69 +1,80 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useLocaleStore } from '@/locales/locale'
-import { useAuthStore } from '@/stores/auth'
-import { Edit, Document, TrendCharts, DataBoard, Discount, Medal } from '@element-plus/icons-vue'
-import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
-import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
-import { getInternById } from '@/api/intern'
-import { useStatus, useDateFormat } from '@/composables'
+import { getInternById } from "@/api/intern";
+import { useDateFormat, useStatus } from "@/composables";
+import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
+import MentorLayout from "@/layouts/dashboard/MentorLayout.vue";
+import { useLocaleStore } from "@/locales/locale";
+import { useAuthStore } from "@/stores/auth";
+import {
+  DataBoard,
+  Discount,
+  Document,
+  Edit,
+  Medal,
+  TrendCharts,
+} from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
+import { computed, onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
-const route = useRoute()
-const router = useRouter()
-const localeStore = useLocaleStore()
-const authStore = useAuthStore()
-const t = computed(() => localeStore.t)
+const route = useRoute();
+const router = useRouter();
+const localeStore = useLocaleStore();
+const authStore = useAuthStore();
+const t = computed(() => localeStore.t);
 
-const internId = route.params.id
-const intern = ref({})
-const loading = ref(false)
+const internId = route.params.id;
+const intern = ref({});
+const loading = ref(false);
 
 const layoutComponent = computed(() => {
-  return authStore.userRole === 'MENTOR' ? MentorLayout : AdminLayout
-})
+  return authStore.userRole === "MENTOR" ? MentorLayout : AdminLayout;
+});
 
-const { getStatusType } = useStatus()
-const { formatDate } = useDateFormat()
+const { getStatusType } = useStatus();
+const { formatDate } = useDateFormat();
 
 async function fetchInternDetail() {
-  loading.value = true
+  loading.value = true;
   try {
-    const res = await getInternById(internId)
-    intern.value = res.data?.data || {}
+    const res = await getInternById(internId);
+    intern.value = res.data?.data || {};
   } catch (error) {
-    console.error("Failed to load intern detail:", error)
-    ElMessage.error(t.value('internManagement.messages.loadError'))
+    console.error("Failed to load intern detail:", error);
+    ElMessage.error(t.value("internManagement.messages.loadError"));
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function openEditView() {
-  const prefix = authStore.userRole === 'MENTOR' ? '/mentor/my-interns' : '/admin/interns'
-  router.push(`${prefix}/${internId}/edit`)
+  const prefix =
+    authStore.userRole === "MENTOR" ? "/mentor/my-interns" : "/admin/interns";
+  router.push(`${prefix}/${internId}/edit`);
 }
 
 function openReportsTab() {
-  const prefix = authStore.userRole === 'MENTOR' ? '/mentor/my-interns' : '/admin/interns'
-  router.push(`${prefix}/${internId}/edit?tab=reports`)
+  const prefix =
+    authStore.userRole === "MENTOR" ? "/mentor/my-interns" : "/admin/interns";
+  router.push(`${prefix}/${internId}/edit?tab=reports`);
 }
 
 const calculateDuration = (start, end) => {
-  if (!start || !end) return '-'
-  const startDate = new Date(start)
-  const endDate = new Date(end)
-  const diffTime = Math.abs(endDate - startDate)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) 
-  const weeks = Math.floor(diffDays / 7)
-  
-  return `${formatDate(start)} - ${formatDate(end)} (${weeks} ${t.value('common.weeks')})`
-}
+  if (!start || !end) return "-";
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const diffTime = Math.abs(endDate - startDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const weeks = Math.floor(diffDays / 7);
+
+  return `${formatDate(start)} - ${formatDate(end)} (${weeks} ${t.value(
+    "common.weeks"
+  )})`;
+};
 
 onMounted(() => {
-  fetchInternDetail()
-})
+  fetchInternDetail();
+});
 </script>
 
 <template>
@@ -71,10 +82,10 @@ onMounted(() => {
     <div class="intern-detail-view" v-loading="loading">
       <div class="page-header">
         <h1 class="page-title">
-          {{ t('internDetail.profileTitle') }}: {{ intern.fullName }}
+          {{ t("internDetail.profileTitle") }}: {{ intern.fullName }}
         </h1>
         <el-button type="primary" :icon="Edit" @click="openEditView">
-          {{ t('internDetail.editInfo') }}
+          {{ t("internDetail.editInfo") }}
         </el-button>
       </div>
 
@@ -83,20 +94,26 @@ onMounted(() => {
           <el-card shadow="hover" class="detail-card mb-24">
             <template #header>
               <div class="card-header">
-                <h3>{{ t('internDetail.sections.basicInfo') }}</h3>
+                <h3>{{ t("internDetail.sections.basicInfo") }}</h3>
               </div>
             </template>
             <div class="info-list">
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.fullName') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.fullName") }}:</span
+                >
                 <span class="value font-medium">{{ intern.fullName }}</span>
               </div>
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.position') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.position") }}:</span
+                >
                 <span class="value">{{ intern.position?.title }}</span>
               </div>
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.mentor') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.mentor") }}:</span
+                >
                 <span class="value">{{ intern.mentor?.fullName }}</span>
               </div>
             </div>
@@ -105,28 +122,42 @@ onMounted(() => {
           <el-card shadow="hover" class="detail-card">
             <template #header>
               <div class="card-header">
-                <h3>{{ t('internDetail.sections.internshipInfo') }}</h3>
+                <h3>{{ t("internDetail.sections.internshipInfo") }}</h3>
               </div>
             </template>
             <div class="info-list">
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.duration') }}:</span>
-                <span class="value">{{ calculateDuration(intern.startDate, intern.endDate) }}</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.duration") }}:</span
+                >
+                <span class="value">{{
+                  calculateDuration(intern.startDate, intern.endDate)
+                }}</span>
               </div>
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.status') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.status") }}:</span
+                >
                 <div class="value">
-                   <el-tag :type="getStatusType(intern.internStatus)" effect="light" class="status-tag">
-                      {{ t('internManagement.status.' + intern.internStatus) }}
-                   </el-tag>
+                  <el-tag
+                    :type="getStatusType(intern.internStatus)"
+                    effect="light"
+                    class="status-tag"
+                  >
+                    {{ t("internManagement.status." + intern.internStatus) }}
+                  </el-tag>
                 </div>
               </div>
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.startDate') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.startDate") }}:</span
+                >
                 <span class="value">{{ formatDate(intern.startDate) }}</span>
               </div>
               <div class="info-item">
-                <span class="label">{{ t('internDetail.fields.endDate') }}:</span>
+                <span class="label"
+                  >{{ t("internDetail.fields.endDate") }}:</span
+                >
                 <span class="value">{{ formatDate(intern.endDate) }}</span>
               </div>
             </div>
@@ -136,21 +167,21 @@ onMounted(() => {
           <el-card shadow="hover" class="detail-card mb-24">
             <template #header>
               <div class="card-header">
-                <h3>{{ t('internDetail.sections.reportsAndEval') }}</h3>
+                <h3>{{ t("internDetail.sections.reportsAndEval") }}</h3>
               </div>
             </template>
             <div class="action-list">
               <el-button text class="action-btn" @click="openReportsTab">
                 <el-icon class="mr-2"><Document /></el-icon>
-                {{ t('internDetail.actions.viewReports') }}
+                {{ t("internDetail.actions.viewReports") }}
               </el-button>
               <el-button text class="action-btn">
                 <el-icon class="mr-2"><TrendCharts /></el-icon>
-                {{ t('internDetail.actions.viewEval') }}
+                {{ t("internDetail.actions.viewEval") }}
               </el-button>
               <el-button text class="action-btn">
                 <el-icon class="mr-2"><DataBoard /></el-icon>
-                {{ t('internDetail.actions.viewBMM') }}
+                {{ t("internDetail.actions.viewBMM") }}
               </el-button>
             </div>
           </el-card>
@@ -158,17 +189,21 @@ onMounted(() => {
           <el-card shadow="hover" class="detail-card">
             <template #header>
               <div class="card-header">
-                <h3>{{ t('internDetail.sections.quickActions') }}</h3>
+                <h3>{{ t("internDetail.sections.quickActions") }}</h3>
               </div>
             </template>
             <div class="quick-actions">
-               <p class="description">{{ t('internDetail.description') }}</p>
-               <el-button type="danger" class="full-width mb-12" :icon="Discount">
-                 {{ t('internDetail.actions.recommendDrop') }}
-               </el-button>
-               <el-button type="success" class="full-width" :icon="Medal">
-                 {{ t('internDetail.actions.recommendOffer') }}
-               </el-button>
+              <p class="description">{{ t("internDetail.description") }}</p>
+              <el-button
+                type="danger"
+                class="full-width mb-12"
+                :icon="Discount"
+              >
+                {{ t("internDetail.actions.recommendDrop") }}
+              </el-button>
+              <el-button type="success" class="full-width" :icon="Medal">
+                {{ t("internDetail.actions.recommendOffer") }}
+              </el-button>
             </div>
           </el-card>
         </el-col>

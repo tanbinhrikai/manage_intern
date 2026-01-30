@@ -5,7 +5,7 @@ import { Search, Plus, Edit } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import { getDepartments, createDepartment, updateDepartment } from '@/api/department'
-import { usePagination, useLoading, useApi, useDialog } from '@/composables'
+import { usePagination, useLoading, useApi, useDialog, useConfirm } from '@/composables'
 import { createDepartmentCreationRequest, createDepartmentUpdateRequest } from '@/types/department'
 
 const localeStore = useLocaleStore()
@@ -23,6 +23,7 @@ const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: true
 })
+const { confirmUpdate } = useConfirm()
 
 const departments = ref([])
 const searchName = ref("")
@@ -107,6 +108,24 @@ async function handleSave() {
   } finally {
     setLoadingState('saving', false)
   }
+}
+
+/**
+ * Handle save with confirmation
+ */
+function handleSaveWithConfirm() {
+  if (!formData.value.title.trim()) {
+    return
+  }
+  
+  const message = isEdit.value 
+    ? (t.value('departmentManagement.confirm.update') || 'Are you sure you want to update this department?')
+    : (t.value('departmentManagement.confirm.create') || 'Are you sure you want to create this department?')
+  
+  confirmUpdate({
+    message,
+    onConfirm: handleSave
+  })
 }
 
 /**
@@ -237,7 +256,7 @@ onBeforeRouteLeave(() => {
           <el-button @click="closeForm">
             {{ t('departmentManagement.form.cancel') }}
           </el-button>
-          <el-button type="primary" @click="handleSave" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
+          <el-button type="primary" @click="handleSaveWithConfirm" :loading="isLoading('saving')" :disabled="!formData.title.trim()">
             {{ isEdit ? t('departmentManagement.form.save') : t('departmentManagement.form.create') }}
           </el-button>
         </template>

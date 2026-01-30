@@ -35,4 +35,10 @@ export function toggleUserStatus(id) {
 export const createMentor = createUser;
 export const updateMentor = updateUser;
 
+export function getMentorsByDepartment(departmentId) {
+  return http.get(`/users/departments/${departmentId}/mentors`);
+}
 
+export function permanentDeleteUser(id) {
+  return http.delete(`/users/${id}/permanent`);
+}

@@ -3,7 +3,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { getEvaluationCriteriaById, 
   createEvaluationCriteria, 
@@ -13,6 +13,7 @@ import { getEvaluationCriteriaById,
 } from '@/api/evaluation-criteria'
 import EvaluationCriteriaScoreDefinitions from './EvaluationCriteriaScoreDefinitions.vue'
 import { createEvaluationCriteriaCreationRequest, createEvaluationCriteriaUpdateRequest } from '@/types/evaluationCriteria'
+import { useConfirm } from '@/composables'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +24,7 @@ const criteriaId = route.params.id
 const isEdit = computed(() => !!criteriaId)
 const loading = ref(false)
 const saving = ref(false)
+const { confirmUpdate } = useConfirm()
 
 // Check if this is a parent criteria (no parentId)
 const isParentCriteria = computed(() => isEdit.value && !formData.parentId)
@@ -137,6 +139,22 @@ async function handleSaveCriteria() {
   }
 }
 
+function handleSaveCriteriaWithConfirm() {
+  if (!formData.groupId || !formData.name.trim()) {
+    ElMessage.warning(t.value('evaluationCriteria.messages.validationError') || 'Please fill required fields')
+    return
+  }
+  
+  const message = isEdit.value 
+    ? (t.value('evaluationCriteria.confirm.update') || 'Are you sure you want to update this criteria?')
+    : (t.value('evaluationCriteria.confirm.create') || 'Are you sure you want to create this criteria?')
+  
+  confirmUpdate({
+    message,
+    onConfirm: handleSaveCriteria
+  })
+}
+
 onMounted(async () => {
   await loadDropdownData()
   await fetchCriteria()
@@ -248,7 +266,7 @@ onMounted(async () => {
             </el-row>
             
             <div class="form-actions">
-              <el-button type="primary" @click="handleSaveCriteria" :loading="saving">
+              <el-button type="primary" @click="handleSaveCriteriaWithConfirm" :loading="saving">
                 {{ isEdit ? t('evaluationCriteria.form.save') : t('evaluationCriteria.form.create') }}
               </el-button>
             </div>

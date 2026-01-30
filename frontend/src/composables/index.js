@@ -8,6 +8,7 @@
  * - useForm: Form state and validation management
  * - useDropdownData: Dropdown data fetching
  * - useDialog: Dialog state management
+ * - useConfirm: Confirmation dialogs
  * - useStatus: Status utilities
  * - useDateFormat: Date formatting utilities
  */
@@ -18,5 +19,6 @@ export { useApi } from './useApi'
 export { useForm } from './useForm'
 export { useDropdownData } from './useDropdownData'
 export { useDialog } from './useDialog'
+export { useConfirm } from './useConfirm'
 export { useStatus } from './useStatus'
 export { useDateFormat } from './useDateFormat'

@@ -11,8 +11,8 @@ import {
   updateCriteriaGroup,
   deleteCriteriaGroup
 } from '@/api/evaluation-criteria'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useLoading, useApi } from '@/composables'
+import { ElMessage } from 'element-plus'
+import { useLoading, useApi, useConfirm } from '@/composables'
 import { createCriteriaGroupCreationRequest, createCriteriaGroupUpdateRequest } from '@/types/evaluationCriteria'
 
 const localeStore = useLocaleStore()
@@ -25,6 +25,7 @@ const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: true
 })
+const { confirmDelete, confirmUpdate } = useConfirm()
 
 // Data
 const treeData = ref([])
@@ -124,28 +125,24 @@ function handleEdit(node, data) {
   router.push(`/admin/evaluation-criteria/${data.id}`)
 }
 
-async function handleDelete(node, data) {
+function handleDelete(node, data) {
   if (data.isGroup) {
-    await handleDeleteGroup(data)
+    handleDeleteGroup(data)
     return
   }
-  try {
-    await ElMessageBox.confirm(
-      t.value('evaluationCriteria.messages.confirmDelete') || `Delete "${data.label}"?`,
-      'Warning',
-      { confirmButtonText: 'OK', cancelButtonText: 'Cancel', type: 'warning' }
-    )
-    await executeApi(
-      () => deleteEvaluationCriteria(data.id),
-      'evaluationCriteria.messages.deleteSuccess',
-      true
-    )
-    fetchCriteria()
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
+  
+  confirmDelete({
+    message: t.value('evaluationCriteria.messages.confirmDelete') || `Delete "${data.label}"?`,
+    title: t.value('common.confirm.title') || 'Warning',
+    onConfirm: async () => {
+      await executeApi(
+        () => deleteEvaluationCriteria(data.id),
+        'evaluationCriteria.messages.deleteSuccess',
+        true
+      )
+      fetchCriteria()
     }
-  }
+  })
 }
 
 // ========== Group Handlers ==========
@@ -206,24 +203,36 @@ async function handleSaveGroup() {
   }
 }
 
-async function handleDeleteGroup(data) {
-  try {
-    await ElMessageBox.confirm(
-      t.value('evaluationCriteria.group.confirmDelete') || `Delete group "${data.label}" and all its criteria?`,
-      'Warning',
-      { confirmButtonText: 'OK', cancelButtonText: 'Cancel', type: 'warning' }
-    )
-    await executeApi(
-      () => deleteCriteriaGroup(data.rawId),
-      'evaluationCriteria.group.deleteSuccess',
-      true
-    )
-    fetchCriteria()
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
-    }
+function handleSaveGroupWithConfirm() {
+  if (!groupForm.name.trim()) {
+    ElMessage.warning(t.value('evaluationCriteria.group.validationError') || 'Please enter group name')
+    return
   }
+  
+  const isEdit = groupDialogMode.value === 'edit'
+  const message = isEdit
+    ? (t.value('evaluationCriteria.group.confirmUpdate') || 'Are you sure you want to update this group?')
+    : (t.value('evaluationCriteria.group.confirmCreate') || 'Are you sure you want to create this group?')
+  
+  confirmUpdate({
+    message: message || 'Are you sure?',
+    onConfirm: handleSaveGroup
+  })
+}
+
+function handleDeleteGroup(data) {
+  confirmDelete({
+    message: t.value('evaluationCriteria.group.confirmDelete') || `Delete group "${data.label}" and all its criteria?`,
+    title: t.value('common.confirm.title') || 'Warning',
+    onConfirm: async () => {
+      await executeApi(
+        () => deleteCriteriaGroup(data.rawId),
+        'evaluationCriteria.group.deleteSuccess',
+        true
+      )
+      fetchCriteria()
+    }
+  })
 }
 
 onMounted(fetchCriteria)
@@ -317,7 +326,7 @@ onMounted(fetchCriteria)
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="groupDialogVisible = false">{{ t('evaluationCriteria.form.cancel') }}</el-button>
-          <el-button type="primary" :loading="isLoading('groupSaving')" @click="handleSaveGroup">
+          <el-button type="primary" :loading="isLoading('groupSaving')" @click="handleSaveGroupWithConfirm">
             {{ groupDialogMode === 'edit' ? t('evaluationCriteria.form.save') : (t('evaluationCriteria.group.create') || 'Create') }}
           </el-button>
         </div>

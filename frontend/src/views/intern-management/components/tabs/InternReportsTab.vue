@@ -1,20 +1,24 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useLocaleStore } from "@/locales/locale";
 import { getEvaluationCriteria } from "@/api/evaluation-criteria";
 import {
-  getWeeklyReportsByInternId,
   createWeeklyReport,
+  getWeeklyReportsByInternId,
   updateWeeklyReport,
 } from "@/api/weekly-report";
 import {
-  InfoFilled,
-  Calendar,
-  List,
-  ChatLineRound,
-} from "@element-plus/icons-vue";
-import { usePagination, useLoading, useApi, useDateFormat } from "@/composables";
-import { createWeeklyReportRequest, createWeeklyReportDetailRequest } from "@/types/weeklyReport";
+  useApi,
+  useDateFormat,
+  useLoading,
+  usePagination,
+  useConfirm,
+} from "@/composables";
+import { useLocaleStore } from "@/locales/locale";
+import {
+  createWeeklyReportDetailRequest,
+  createWeeklyReportRequest,
+} from "@/types/weeklyReport";
+import { InfoFilled, List } from "@element-plus/icons-vue";
+import { computed, onMounted, reactive, ref } from "vue";
 
 const props = defineProps({
   internId: {
@@ -44,6 +48,7 @@ const { execute: executeApi } = useApi({
   showSuccessMessage: true,
 });
 const { formatDate } = useDateFormat();
+const { confirmUpdate } = useConfirm();
 
 const criteriaGroups = ref([]);
 const weeklyReports = ref([]);
@@ -276,6 +281,17 @@ async function saveReport() {
   }
 }
 
+function saveReportWithConfirm() {
+  const message = selectedReportId.value
+    ? (t.value("weeklyReport.confirm.update") || "Are you sure you want to update this weekly report?")
+    : (t.value("weeklyReport.confirm.create") || "Are you sure you want to create this weekly report?");
+  
+  confirmUpdate({
+    message,
+    onConfirm: saveReport
+  });
+}
+
 /**
  * @param {number} id
  * @returns {import('@/types/weeklyReport').WeeklyReportDetailRequest}
@@ -296,7 +312,6 @@ const updateDetail = (id, field, val) => {
   const d = reportForm.details.find((item) => item.criteriaId === id);
   if (d) d[field] = val;
 };
-
 
 /**
  * @param {number} s
@@ -392,7 +407,7 @@ onMounted(async () => {
             <el-button @click="cancelReportForm">Cancel</el-button>
             <el-button
               type="primary"
-              @click="saveReport"
+              @click="saveReportWithConfirm"
               :loading="isLoading('reportSaving')"
               >Save Report</el-button
             >
@@ -648,12 +663,11 @@ onMounted(async () => {
 
 .scroll-textarea :deep(.el-textarea__inner),
 .comment-textarea :deep(.el-textarea__inner) {
-  resize: none; 
-  overflow-y: auto; 
+  resize: none;
+  overflow-y: auto;
   line-height: 1.4;
   padding: 8px;
 }
-
 
 .group-section {
   margin-bottom: 30px;

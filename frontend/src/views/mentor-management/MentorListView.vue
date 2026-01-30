@@ -1,13 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
 import { onBeforeRouteLeave } from "vue-router"
-import { ElMessageBox } from 'element-plus'
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
 import { getMentors, createMentor, updateMentor, toggleUserStatus } from '@/api/user'
-import { usePagination, useLoading, useApi, useDropdownData, useDialog } from '@/composables'
+import { usePagination, useLoading, useApi, useDropdownData, useDialog, useConfirm } from '@/composables'
 
 
 const localeStore = useLocaleStore()
@@ -30,6 +29,7 @@ const { execute: executeApi } = useApi({
 const { departments, fetchDepartments } = useDropdownData()
 const mentorFormDialog = useDialog()
 const mentorDetailDialog = useDialog()
+const { confirm, confirmUpdate } = useConfirm()
 
 // Data
 const mentors = ref([])
@@ -121,40 +121,49 @@ async function handleSaveMentor(payload, done) {
 }
 
 /**
+ * Handle save mentor with confirmation
+ * @param {Object} payload - Mentor data to save
+ * @param {Function} done - Callback function
+ */
+function handleSaveMentorWithConfirm(payload, done) {
+  const isEdit = !!mentorFormDialog.selectedItem
+  const message = isEdit
+    ? (t.value('mentorManagement.confirm.update') || 'Are you sure you want to update this mentor?')
+    : (t.value('mentorManagement.confirm.create') || 'Are you sure you want to create this mentor?')
+  
+  confirmUpdate({
+    message,
+    onConfirm: () => handleSaveMentor(payload, done)
+  })
+}
+
+/**
  * Handle toggle mentor active status with confirmation
  * @param {Mentor} mentor - Mentor to toggle status
  */
-async function handleToggleStatus(mentor) {
+function handleToggleStatus(mentor) {
   const confirmMessage = mentor.isActive 
     ? t.value('mentorManagement.confirm.lockAccount').replace('{name}', mentor.fullName)
     : t.value('mentorManagement.confirm.unlockAccount').replace('{name}', mentor.fullName)
   
-  try {
-    await ElMessageBox.confirm(
-      confirmMessage,
-      t.value('mentorManagement.confirm.title'),
-      { 
-        confirmButtonText: t.value('mentorManagement.confirm.ok'), 
-        cancelButtonText: t.value('mentorManagement.confirm.cancel'), 
-        type: 'warning' 
-      }
-    )
-    const res = await executeApi(
-      () => toggleUserStatus(mentor.id),
-      'mentorManagement.messages.toggleSuccess',
-      true
-    )
-    if (res.data && res.data.data) {
-      const index = mentors.value.findIndex(m => m.id === mentor.id)
-      if (index !== -1) {
-        mentors.value[index] = res.data.data
+  confirm({
+    message: confirmMessage,
+    title: t.value('mentorManagement.confirm.title'),
+    type: 'warning',
+    onConfirm: async () => {
+      const res = await executeApi(
+        () => toggleUserStatus(mentor.id),
+        'mentorManagement.messages.toggleSuccess',
+        true
+      )
+      if (res.data && res.data.data) {
+        const index = mentors.value.findIndex(m => m.id === mentor.id)
+        if (index !== -1) {
+          mentors.value[index] = res.data.data
+        }
       }
     }
-  } catch (error) {
-    if (error !== 'cancel') {
-      // Error already handled by useApi
-    }
-  }
+  })
 }
 
 /**
@@ -340,7 +349,7 @@ onBeforeRouteLeave(() => {
         :mentor="mentorFormDialog.selectedItem"
         :departments="departments"
         @update:visible="mentorFormDialog.visible = $event"
-        @save="handleSaveMentor"
+        @save="handleSaveMentorWithConfirm"
       />
 
       <el-dialog 
@@ -362,8 +371,8 @@ onBeforeRouteLeave(() => {
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.table.status')">
-            <el-tag :type="mentorDetailDialog.selectedItem?.isActive ? 'success' : 'danger'">
-              {{ mentorDetailDialog.selectedItem?.isActive ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
+            <el-tag :type="mentorDetailDialog.selectedItem?.active ? 'success' : 'danger'">
+              {{ mentorDetailDialog.selectedItem?.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item :label="t('mentorManagement.detail.internCount')">

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { 
   getScoreLabels,
@@ -11,6 +11,7 @@ import {
   deleteScoreDefinition
 } from '@/api/evaluation-criteria'
 import { createCriteriaScoreDefinitionCreationRequest, createCriteriaScoreDefinitionUpdateRequest } from '@/types/evaluationCriteria'
+import { useConfirm } from '@/composables'
 
 const props = defineProps({
   criteriaId: {
@@ -21,6 +22,7 @@ const props = defineProps({
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
+const { confirmDelete, confirmUpdate } = useConfirm()
 const loading = ref(false)
 const scoreLabels = ref([])
 const scoreDefinitions = ref([])
@@ -125,19 +127,27 @@ async function handleSaveScore() {
   }
 }
 
-async function handleDeleteScore(id) {
-  try {
-    await ElMessageBox.confirm(
-      t.value('evaluationCriteria.messages.confirmDelete') || 'Delete this definition?', 
-      'Warning', 
-      { type: 'warning' }
-    )
-    await deleteScoreDefinition(id)
-    ElMessage.success(t.value('evaluationCriteria.scoreDefinitions.messages.deleteSuccess'))
-    fetchScoreDefinitions()
-  } catch (e) {
-   // console.error(e)
-  }
+function handleSaveScoreWithConfirm() {
+  const message = isScoreEdit.value
+    ? (t.value('evaluationCriteria.scoreDefinitions.confirm.update') || 'Are you sure you want to update this score definition?')
+    : (t.value('evaluationCriteria.scoreDefinitions.confirm.create') || 'Are you sure you want to create this score definition?')
+  
+  confirmUpdate({
+    message: message || 'Are you sure?',
+    onConfirm: handleSaveScore
+  })
+}
+
+function handleDeleteScore(id) {
+  confirmDelete({
+    message: t.value('evaluationCriteria.messages.confirmDelete') || 'Delete this definition?',
+    title: t.value('common.confirm.title') || 'Warning',
+    onConfirm: async () => {
+      await deleteScoreDefinition(id)
+      ElMessage.success(t.value('evaluationCriteria.scoreDefinitions.messages.deleteSuccess'))
+      fetchScoreDefinitions()
+    }
+  })
 }
 
 watch(() => props.criteriaId, (newVal) => {
@@ -215,7 +225,7 @@ onMounted(async () => {
       </el-form>
       <template #footer>
         <el-button @click="showScoreDialog = false">{{ t('evaluationCriteria.scoreDefinitions.form.cancel') }}</el-button>
-        <el-button type="primary" @click="handleSaveScore" :loading="savingScore">{{ t('evaluationCriteria.scoreDefinitions.form.save') }}</el-button>
+        <el-button type="primary" @click="handleSaveScoreWithConfirm" :loading="savingScore">{{ t('evaluationCriteria.scoreDefinitions.form.save') }}</el-button>
       </template>
     </el-dialog>
   </div>

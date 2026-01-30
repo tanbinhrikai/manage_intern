@@ -7,7 +7,7 @@ import { updateIntern } from '@/api/intern'
 import { getPositions } from '@/api/position'
 import { getMentors } from '@/api/user'
 import { createInternUpdateRequest } from '@/types/intern'
-import { useStatus, useDateFormat } from '@/composables'
+import { useStatus, useDateFormat, useConfirm } from '@/composables'
 
 const props = defineProps({
   intern: {
@@ -31,6 +31,7 @@ const isAdmin = computed(() => authStore.userRole === 'ADMIN')
 
 const { statusOptions } = useStatus()
 const { formatDate } = useDateFormat()
+const { confirmUpdate } = useConfirm()
 
 const formData = reactive(createInternUpdateRequest())
 
@@ -89,6 +90,13 @@ async function handleSave() {
   } finally {
     saving.value = false
   }
+}
+
+function handleSaveWithConfirm() {
+  confirmUpdate({
+    message: t.value('internManagement.confirm.update') || 'Are you sure you want to update this intern?',
+    onConfirm: handleSave
+  })
 }
 
 const { getStatusType } = useStatus()
@@ -207,7 +215,7 @@ onMounted(() => {
       </div>
 
       <div class="actions">
-        <el-button type="primary" @click="handleSave" :loading="saving">
+        <el-button type="primary" @click="handleSaveWithConfirm" :loading="saving">
           {{ t('internDetail.saveChanges') }}
         </el-button>
       </div>

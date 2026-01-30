@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
-import { ElMessageBox } from "element-plus";
 import {
   Search,
   Plus,
@@ -22,7 +21,7 @@ import {
   updateIntern,
   deleteIntern,
 } from "@/api/intern";
-import { usePagination, useLoading, useApi, useDropdownData, useDialog, useStatus, useDateFormat } from "@/composables";
+import { usePagination, useLoading, useApi, useDropdownData, useDialog, useStatus, useDateFormat, useConfirm } from "@/composables";
 
 const localeStore = useLocaleStore();
 const router = useRouter();
@@ -47,6 +46,7 @@ const internFormDialog = useDialog()
 const internDetailDialog = useDialog()
 const { getStatusType, statusOptions } = useStatus()
 const { formatDate } = useDateFormat()
+const { confirmDelete } = useConfirm()
 
 // Data
 const interns = ref([]);
@@ -140,32 +140,23 @@ async function handleSaveIntern(payload, done) {
  * Handle delete intern with confirmation
  * @param {Intern} intern - Intern to delete
  */
-async function handleDeleteIntern(intern) {
+function handleDeleteIntern(intern) {
   const confirmMessage = t
     .value("internManagement.confirm.delete")
     .replace("{name}", intern.fullName);
 
-  try {
-    await ElMessageBox.confirm(
-      confirmMessage,
-      t.value("internManagement.confirm.title"),
-      {
-        confirmButtonText: t.value("internManagement.confirm.ok"),
-        cancelButtonText: t.value("internManagement.confirm.cancel"),
-        type: "warning",
-      }
-    );
-    await executeApi(
-      () => deleteIntern(intern.id),
-      "internManagement.messages.deleteSuccess",
-      true // Show error if delete fails
-    );
-    fetchInterns();
-  } catch (error) {
-    if (error !== "cancel") {
-      // Error already handled by useApi
+  confirmDelete({
+    message: confirmMessage,
+    title: t.value("internManagement.confirm.title"),
+    onConfirm: async () => {
+      await executeApi(
+        () => deleteIntern(intern.id),
+        "internManagement.messages.deleteSuccess",
+        true
+      );
+      fetchInterns();
     }
-  }
+  });
 }
 
 /**
