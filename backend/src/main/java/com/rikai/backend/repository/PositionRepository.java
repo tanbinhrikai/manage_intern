@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface PositionRepository extends JpaRepository<Position , Long> {
     @Query("""
@@ -16,4 +18,6 @@ public interface PositionRepository extends JpaRepository<Position , Long> {
             WHERE (:keyword IS NULL OR :keyword = '' OR LOWER(i.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
              """)
     Page<Position> getAllPositionByKeyword(Pageable pageable , @Param("keyword") String keyword);
+
+    Optional<Position> findByTitleContainingIgnoreCase(String title);
 }

@@ -5,12 +5,8 @@ import com.rikai.backend.dto.response.dashboard.ActivityResponse;
 import com.rikai.backend.dto.response.dashboard.ChartDataResponse;
 import com.rikai.backend.dto.response.dashboard.MultiSeriesChartResponse;
 import com.rikai.backend.event.*;
-import com.rikai.backend.model.Department;
-import com.rikai.backend.model.EvaluationSession;
-import com.rikai.backend.model.Intern;
-import com.rikai.backend.model.InternStatusHistory;
-import com.rikai.backend.model.Position;
-import com.rikai.backend.model.WeeklyReport;
+import com.rikai.backend.model.*;
+import com.rikai.backend.model.Enum.BatchStatus;
 import com.rikai.backend.model.Enum.SessionType;
 import com.rikai.backend.repository.*;
 import lombok.AccessLevel;
@@ -53,6 +49,7 @@ public class DashboardService implements IDashboardService {
     InternStatusHistoryRepository internStatusHistoryRepository;
     DepartmentRepository departmentRepository;
     PositionRepository positionRepository;
+    InternshipBatchRepository internshipBatchRepository;
 
     /**
      * Fetch recent activities including intern creations, updates, deletions,
@@ -814,5 +811,192 @@ public class DashboardService implements IDashboardService {
             current = current.plusMonths(1);
         }
         return data;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public MultiSeriesChartResponse getBatchScoreTrend() {
+        // Get all ONGOING batches with their interns
+        List<InternshipBatch> ongoingBatches = internshipBatchRepository
+                .findByStatusWithInterns(BatchStatus.ONGOING);
+        
+        if (ongoingBatches.isEmpty()) {
+            return MultiSeriesChartResponse.builder()
+                    .labels(Collections.emptyList())
+                    .series(Collections.emptyList())
+                    .build();
+        }
+        
+        // Find the earliest start date and calculate weeks until now
+        LocalDate now = LocalDate.now();
+        LocalDate earliestStart = ongoingBatches.stream()
+                .map(InternshipBatch::getStartDate)
+                .min(LocalDate::compareTo)
+                .orElse(now);
+        
+        // Calculate number of weeks from earliest start to now
+        long totalWeeks = ChronoUnit.WEEKS.between(earliestStart, now) + 1;
+        if (totalWeeks <= 0) totalWeeks = 1;
+        
+        // Generate week labels with date format DD/MM/YYYY
+        List<String> labels = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (int i = 0; i < totalWeeks; i++) {
+            LocalDate weekStart = earliestStart.plusWeeks(i);
+            labels.add(weekStart.format(formatter));
+        }
+        
+        // Build series for each batch
+        List<MultiSeriesChartResponse.Series> seriesList = new ArrayList<>();
+        
+        for (InternshipBatch batch : ongoingBatches) {
+            LocalDate batchStart = batch.getStartDate();
+            List<Long> internIds = batch.getInterns() != null 
+                    ? batch.getInterns().stream().map(Intern::getId).toList()
+                    : Collections.emptyList();
+            
+            if (internIds.isEmpty()) continue;
+            
+            // Get all weekly reports for interns in this batch
+            List<WeeklyReport> batchReports = weeklyReportRepository.findAll().stream()
+                    .filter(r -> r.getIntern() != null && internIds.contains(r.getIntern().getId()))
+                    .filter(r -> r.getWeekStartDate() != null && r.getAverageScore() != null)
+                    .filter(r -> !r.getWeekStartDate().isBefore(batchStart) && !r.getWeekStartDate().isAfter(now))
+                    .toList();
+            
+            // Calculate average score for each week
+            // Labels are generated from earliestStart, so we need to match each label with batch's data
+            List<Double> data = new ArrayList<>();
+            for (int i = 0; i < totalWeeks; i++) {
+                // Calculate the week start date for this label (based on earliestStart)
+                LocalDate labelWeekStart = earliestStart.plusWeeks(i);
+                LocalDate labelWeekEnd = labelWeekStart.plusDays(6);
+                
+                // If this week is before batch start date, add null
+                if (labelWeekStart.isBefore(batchStart)) {
+                    data.add(null);
+                    continue;
+                }
+                
+                // If this week is in the future, add null
+                if (labelWeekStart.isAfter(now)) {
+                    data.add(null);
+                    continue;
+                }
+                
+                // Find reports for this week
+                final LocalDate finalWeekStart = labelWeekStart;
+                final LocalDate finalWeekEnd = labelWeekEnd;
+                List<BigDecimal> weekScores = batchReports.stream()
+                        .filter(r -> !r.getWeekStartDate().isBefore(finalWeekStart) && !r.getWeekStartDate().isAfter(finalWeekEnd))
+                        .map(WeeklyReport::getAverageScore)
+                        .filter(score -> score != null && score.compareTo(BigDecimal.ZERO) > 0)
+                        .toList();
+                
+                if (weekScores.isEmpty()) {
+                    data.add(null);
+                } else {
+                    double avg = weekScores.stream()
+                            .mapToDouble(BigDecimal::doubleValue)
+                            .average()
+                            .orElse(0.0);
+                    data.add(Math.round(avg * 100.0) / 100.0);
+                }
+            }
+            
+            seriesList.add(MultiSeriesChartResponse.Series.builder()
+                    .id(batch.getId())
+                    .name(batch.getName())
+                    .data(data)
+                    .build());
+        }
+        
+        return MultiSeriesChartResponse.builder()
+                .labels(labels)
+                .series(seriesList)
+                .build();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public MultiSeriesChartResponse getInternScoreTrendByBatch(Long batchId) {
+        // Get the batch with interns
+        InternshipBatch batch = internshipBatchRepository.findById(batchId)
+                .orElse(null);
+        
+        if (batch == null || batch.getInterns() == null || batch.getInterns().isEmpty()) {
+            return MultiSeriesChartResponse.builder()
+                    .labels(Collections.emptyList())
+                    .series(Collections.emptyList())
+                    .build();
+        }
+        
+        LocalDate batchStart = batch.getStartDate();
+        LocalDate now = LocalDate.now();
+        
+        // Calculate number of weeks from batch start to now
+        long totalWeeks = ChronoUnit.WEEKS.between(batchStart, now) + 1;
+        if (totalWeeks <= 0) totalWeeks = 1;
+        
+        // Generate week labels with date format DD/MM/YYYY
+        List<String> labels = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        for (int i = 0; i < totalWeeks; i++) {
+            LocalDate weekStart = batchStart.plusWeeks(i);
+            labels.add(weekStart.format(formatter));
+        }
+        
+        // Build series for each intern
+        List<MultiSeriesChartResponse.Series> seriesList = new ArrayList<>();
+        
+        for (Intern intern : batch.getInterns()) {
+            LocalDate internStartDate = intern.getStartDate();
+            
+            // Get all weekly reports for this intern
+            List<WeeklyReport> internReports = weeklyReportRepository.findAll().stream()
+                    .filter(r -> r.getIntern() != null && r.getIntern().getId().equals(intern.getId()))
+                    .filter(r -> r.getWeekStartDate() != null && r.getAverageScore() != null)
+                    .filter(r -> !r.getWeekStartDate().isBefore(internStartDate) && !r.getWeekStartDate().isAfter(now))
+                    .toList();
+            
+            // Calculate score for each week
+            List<Double> data = new ArrayList<>();
+            for (int weekNum = 1; weekNum <= totalWeeks; weekNum++) {
+                LocalDate weekStart = batchStart.plusWeeks(weekNum - 1);
+                LocalDate weekEnd = weekStart.plusDays(6);
+                
+                // If intern hasn't started yet or week is in the future, add null
+                if (weekStart.isBefore(internStartDate) || weekStart.isAfter(now)) {
+                    data.add(null);
+                    continue;
+                }
+                
+                // Find report for this week
+                final LocalDate finalWeekStart = weekStart;
+                final LocalDate finalWeekEnd = weekEnd;
+                WeeklyReport weekReport = internReports.stream()
+                        .filter(r -> !r.getWeekStartDate().isBefore(finalWeekStart) && !r.getWeekStartDate().isAfter(finalWeekEnd))
+                        .findFirst()
+                        .orElse(null);
+                
+                if (weekReport == null || weekReport.getAverageScore() == null 
+                        || weekReport.getAverageScore().compareTo(BigDecimal.ZERO) <= 0) {
+                    data.add(null);
+                } else {
+                    data.add(weekReport.getAverageScore().doubleValue());
+                }
+            }
+            
+            seriesList.add(MultiSeriesChartResponse.Series.builder()
+                    .id(intern.getId())
+                    .name(intern.getFullName())
+                    .data(data)
+                    .build());
+        }
+        
+        return MultiSeriesChartResponse.builder()
+                .labels(labels)
+                .series(seriesList)
+                .build();
     }
 }

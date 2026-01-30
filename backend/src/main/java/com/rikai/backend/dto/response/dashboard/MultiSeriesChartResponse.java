@@ -24,6 +24,7 @@ public class MultiSeriesChartResponse {
     @Builder
     @FieldDefaults(level = AccessLevel.PRIVATE)
     public static class Series {
+        Long id;       // Optional ID (e.g., batch ID, intern ID) for drill-down
         String name;   // Series name (e.g., position/department name)
         List<Double> data; // Values for each label
     }

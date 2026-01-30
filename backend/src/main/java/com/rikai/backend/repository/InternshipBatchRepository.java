@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 
 @Repository
 public interface InternshipBatchRepository extends JpaRepository<InternshipBatch  , Long> {
@@ -21,4 +23,7 @@ public interface InternshipBatchRepository extends JpaRepository<InternshipBatch
             Pageable pageable
     );
     boolean existsByName(String name);
+    
+    @Query("SELECT b FROM InternshipBatch b LEFT JOIN FETCH b.interns WHERE b.status = :status")
+    List<InternshipBatch> findByStatusWithInterns(@Param("status") BatchStatus status);
 }

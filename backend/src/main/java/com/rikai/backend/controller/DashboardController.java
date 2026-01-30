@@ -104,4 +104,18 @@ public class DashboardController {
         MultiSeriesChartResponse data = dashboardService.getCompletionRateTrendByGroup(months);
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
+    
+    @GetMapping("/chart/batch-score-trend")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<MultiSeriesChartResponse> getBatchScoreTrend() {
+        MultiSeriesChartResponse data = dashboardService.getBatchScoreTrend();
+        return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
+    }
+    
+    @GetMapping("/chart/batch/{batchId}/intern-score-trend")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<MultiSeriesChartResponse> getInternScoreTrendByBatch(@PathVariable Long batchId) {
+        MultiSeriesChartResponse data = dashboardService.getInternScoreTrendByBatch(batchId);
+        return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
+    }
 }

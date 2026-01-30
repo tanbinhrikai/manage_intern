@@ -31,7 +31,7 @@ public class InternshipBatchService implements IInternshipBatchService {
     @Transactional
     public InternshipBatchResponse createBatch(InternshipBatchCreationRequest request) {
         InternshipBatch batch = batchMapper.toInternshipBatch(request);
-        batch.setStatus(BatchStatus.ACTIVE);
+        batch.setStatus(BatchStatus.ONGOING);
         InternshipBatch savedBatch = batchRepository.save(batch);
         return batchMapper.toInternshipBatchResponse(savedBatch);
     }

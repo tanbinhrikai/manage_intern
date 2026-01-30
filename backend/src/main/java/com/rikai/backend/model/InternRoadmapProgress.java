@@ -10,10 +10,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "intern_roadmap_progress",
+@Table(
+        name = "intern_roadmap_progress",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"intern_id", "node_id"})
-        })
+        },
+        indexes = {
+                @Index(name = "idx_progress_status", columnList = "status"),
+                @Index(name = "idx_progress_node", columnList = "node_id"),
+                @Index(name = "idx_progress_intern", columnList = "intern_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

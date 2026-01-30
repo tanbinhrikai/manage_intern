@@ -22,4 +22,8 @@ public interface IDashboardService {
     // Multi-series chart methods grouped by position
     MultiSeriesChartResponse getAverageScoreTrendByGroup(int months);
     MultiSeriesChartResponse getCompletionRateTrendByGroup(int months);
+    
+    // Batch score trend methods
+    MultiSeriesChartResponse getBatchScoreTrend();
+    MultiSeriesChartResponse getInternScoreTrendByBatch(Long batchId);
 }
