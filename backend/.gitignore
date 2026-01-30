@@ -4,6 +4,8 @@ HELP.md
 db.sql
 docker-compose.yml
 build/
+skills
+.cursorrules
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/

@@ -34,11 +34,11 @@
         "filter": "フィルター",
         "submit": "提出",
         "warning": "警告",
-        "back":"戻る",
+        "back": "戻る",
         "cancel": "キャンセル",
         "delete": "削除",
         "edit": "編集",
-        "actions":"アクション",
+        "actions": "アクション",
         "view": "表示",
         "all": "すべて",
         "active": "アクティブ",
@@ -140,9 +140,16 @@
         "deadline": "期限",
         "week": "週",
         "submitReport": "レポート提出",
-        "evaluationProgress": "評価進捗概要",
+        "evaluationProgress": "評価進捗",
         "reportsCompleted": "{completed}/{total}件の週次レポートが完了しました",
         "internsUnderSupervision": "担当インターン一覧",
+        "internsByStatus": "担当インターンのステータス別",
+        "statistics": {
+            "totalInterns": "担当インターン",
+            "activeInterns": "アクティブ",
+            "warningInterns": "警告",
+            "pendingReports": "未提出レポート"
+        },
         "table": {
             "fullName": "氏名",
             "position": "ポジション",
@@ -621,11 +628,28 @@
             "createSuccess": "レポートを作成しました！",
             "saveSuccess": "レポートを保存しました！",
             "updateSuccess": "レポートを更新しました！",
+            "deleteSuccess": "レポートを削除しました！",
             "saveError": "レポートの保存に失敗しました。もう一度お試しください。"
         },
         "confirm": {
             "update": "この週次レポートを更新してもよろしいですか？",
             "create": "この週次レポートを作成してもよろしいですか？"
+        }
+    },
+    "myReports": {
+        "title": "マイレポート",
+        "filterByIntern": "インターンで絞り込み",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "table": {
+            "internName": "インターン名",
+            "weekStartDate": "週開始日",
+            "weekNumber": "週",
+            "averageScore": "平均点",
+            "createdAt": "作成日"
+        },
+        "messages": {
+            "loadError": "レポートの読み込みに失敗しました"
         }
     },
     "positionTree": {
@@ -652,7 +676,7 @@
             "inactive": "非アクティブ"
         }
     },
-    "departmentTree":{
+    "departmentTree": {
         "title": "部署",
         "create": "部署を追加",
         "edit": "部署を編集",
@@ -660,7 +684,7 @@
         "search": "部署を検索...",
         "filterByStatus": "ステータスでフィルター",
         "allStatus": "すべてのステータス",
-        "name":"部署名"
+        "name": "部署名"
     },
     "evaluationSession": {
         "title": "評価セッション",

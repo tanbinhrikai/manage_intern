@@ -1,12 +1,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
-import { Search, View, Edit, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+import { Search, View, Delete, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
 import { useRouter } from 'vue-router'
+import { getMyReports, deleteWeeklyReport } from '@/api/weekly-report'
 import { getMyIntern } from '@/api/intern'
-import { getPositions } from '@/api/position'
-import { usePagination, useLoading, useApi, useStatus, useDateFormat } from '@/composables'
+import { usePagination, useLoading, useApi, useDateFormat, useConfirm, useDialog } from '@/composables'
+import { ElMessage as message } from 'element-plus'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
@@ -16,7 +17,7 @@ const t = computed(() => localeStore.t)
 const pagination = usePagination({
   initialPage: 1,
   initialPageSize: 10,
-  onPageChange: () => fetchMyInterns()
+  onPageChange: () => fetchReports()
 })
 
 const { loading, withLoading } = useLoading()
@@ -24,164 +25,142 @@ const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: false
 })
-const { getStatusType } = useStatus()
 const { formatDate } = useDateFormat()
+const { showConfirm } = useConfirm()
 
 // Data
+const reports = ref([])
 const interns = ref([])
-const positions = ref([])
 
 // Filters
 const showFilters = ref(false)
-const searchName = ref("")
-const selectedStatus = ref("")
-const selectedPosition = ref(null)
+const selectedIntern = ref(null)
 const startDate = ref(null)
 const endDate = ref(null)
 
-// Intern status options
-const statusOptions = computed(() => [
-  { value: '', label: t.value('internManagement.allStatus') },
-  { value: 'ACTIVE', label: t.value('internManagement.status.ACTIVE') },
-  { value: 'WARNING', label: t.value('internManagement.status.WARNING') },
-  { value: 'COMPLETED', label: t.value('internManagement.status.COMPLETED') },
-  { value: 'DROPPED', label: t.value('internManagement.status.DROPPED') }
-])
-
 /**
- * Fetch positions for filter dropdown
+ * Fetch interns for filter dropdown
  */
-async function fetchPositions() {
-  const res = await executeApi(() => getPositions({ limit: 100 }))
-  positions.value = res.data?.data?.items || []
+async function fetchInterns() {
+  const res = await executeApi(() => getMyIntern({ limit: 100 }))
+  interns.value = res.data?.data?.items || []
 }
 
 /**
- * Fetch interns assigned to current mentor
+ * Fetch mentor's reports
  */
-async function fetchMyInterns() {
+async function fetchReports() {
   await withLoading(async () => {
     const params = {
       ...pagination.apiParams.value,
-      keyword: searchName.value || undefined,
-      status: selectedStatus.value || undefined,
-      position_id: selectedPosition.value || undefined,
+      intern_id: selectedIntern.value || undefined,
       start_date: startDate.value || undefined,
       end_date: endDate.value || undefined
     }
     
     const res = await executeApi(
-      () => getMyIntern(params),
+      () => getMyReports(params),
       null,
-      'internManagement.messages.loadError'
+      'weeklyReport.messages.loadError'
     )
     
-    interns.value = res.data?.data?.items || []
+    reports.value = res.data?.data?.items || []
     pagination.setTotalItems(res.data?.data?.totalItems || 0)
   })
 }
 
 /**
- * Handle search - reset to first page and fetch
+ * Handle filter change
  */
 function handleSearch() {
   pagination.firstPage()
-  fetchMyInterns()
+  fetchReports()
 }
 
 /**
  * Clear all filters
  */
 function clearFilters() {
-  searchName.value = ""
-  selectedStatus.value = ""
-  selectedPosition.value = null
+  selectedIntern.value = null
   startDate.value = null
   endDate.value = null
   handleSearch()
 }
 
 /**
- * Navigate to detail page for an intern
- * @param {Intern} intern - Intern to view
+ * Navigate to report detail
  */
-function openDetailIntern(intern) {
-  router.push(`/mentor/my-interns/${intern.id}`)
+function viewReport(report) {
+  router.push(`/mentor/my-interns/${report.internId}/edit?tab=reports&reportId=${report.id}`)
 }
 
 /**
- * Navigate to edit page for an intern
- * @param {Intern} intern - Intern to edit
+ * Delete a report
  */
-function openEditIntern(intern) {
-  router.push(`/mentor/my-interns/${intern.id}/edit`)
+async function handleDelete(report) {
+  const confirmed = await showConfirm(
+    t.value('common.confirm.delete'),
+    t.value('common.confirm.title'),
+    'warning'
+  )
+  
+  if (confirmed) {
+    const res = await executeApi(() => deleteWeeklyReport(report.id))
+    if (res.data?.success) {
+      message.success(t.value('weeklyReport.messages.deleteSuccess'))
+      fetchReports()
+    }
+  }
+}
+
+/**
+ * Navigate to create new report
+ */
+function createReport() {
+  if (interns.value.length > 0) {
+    router.push(`/mentor/my-interns/${interns.value[0].id}/edit?tab=reports`)
+  }
 }
 
 /**
  * Handle pagination page change
- * @param {number} page - New page number
  */
 function handlePageChange(page) {
   pagination.setPage(page)
 }
 
-// Watch for filter changes (with debounce effect via keyword)
-watch([searchName], () => {
-  handleSearch()
-})
-
 // Fetch data on mount
 onMounted(() => {
-  fetchPositions()
-  fetchMyInterns()
+  fetchInterns()
+  fetchReports()
 })
 </script>
 
 <template>
   <MentorLayout>
-    <div class="my-intern-list-view">
+    <div class="my-reports-view">
       <el-card class="main-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <h2 class="page-title">{{ t('sidebar.myInterns') }}</h2>
+            <h2 class="page-title">{{ t('myReports.title') }}</h2>
           </div>
         </template>
 
         <div class="toolbar">
           <div class="filter-group">
-            <el-input 
-              v-model="searchName" 
-              :placeholder="t('internManagement.searchByName')"
-              :prefix-icon="Search"
-              clearable
-              class="search-input"
-            />
             <el-select
-              v-model="selectedStatus"
-              :placeholder="t('internManagement.filterByStatus')"
+              v-model="selectedIntern"
+              :placeholder="t('myReports.filterByIntern')"
               clearable
+              filterable
               class="filter-select"
               @change="handleSearch"
             >
               <el-option
-                v-for="option in statusOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
-            </el-select>
-            <el-select
-              v-model="selectedPosition"
-              :placeholder="t('internManagement.filterByPosition')"
-              clearable
-              class="filter-select"
-              @change="handleSearch"
-            >
-              <el-option
-                v-for="pos in positions"
-                :key="pos.id"
-                :label="pos.title"
-                :value="pos.id"
+                v-for="intern in interns"
+                :key="intern.id"
+                :label="intern.fullName"
+                :value="intern.id"
               />
             </el-select>
             <el-button 
@@ -206,7 +185,7 @@ onMounted(() => {
                     type="date"
                     format="YYYY-MM-DD"
                     value-format="YYYY-MM-DD"
-                    :placeholder="t('internManagement.startDateFrom')"
+                    :placeholder="t('myReports.startDate')"
                     style="width: 100%"
                     @change="handleSearch"
                   />
@@ -219,7 +198,7 @@ onMounted(() => {
                     type="date"
                     format="YYYY-MM-DD"
                     value-format="YYYY-MM-DD"
-                    :placeholder="t('internManagement.endDateTo')"
+                    :placeholder="t('myReports.endDate')"
                     style="width: 100%"
                     @change="handleSearch"
                   />
@@ -230,57 +209,58 @@ onMounted(() => {
         </el-collapse-transition>
 
         <el-table 
-          :data="interns" 
+          :data="reports" 
           stripe 
           style="width: 100%"
           v-loading="loading"
         >
           <el-table-column 
-            prop="fullName" 
-            :label="t('internManagement.table.fullName')" 
+            prop="internName" 
+            :label="t('myReports.table.internName')" 
             min-width="150" 
           />
           <el-table-column 
-            :label="t('internManagement.table.position')" 
-            min-width="140"
-          >
-            <template #default="scope">
-              <el-tag type="info" v-if="scope.row.position">
-                {{ scope.row.position.title }}
-              </el-tag>
-              <span v-else class="text-muted">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.startDate')" 
+            :label="t('myReports.table.weekStartDate')" 
             min-width="120"
           >
             <template #default="scope">
-              {{ formatDate(scope.row.startDate) }}
+              {{ formatDate(scope.row.weekStartDate) }}
             </template>
           </el-table-column>
           <el-table-column 
-            :label="t('internManagement.table.endDate')" 
-            min-width="120"
-          >
-            <template #default="scope">
-              {{ formatDate(scope.row.endDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.status')" 
-            min-width="120" 
+            prop="weekNumber"
+            :label="t('myReports.table.weekNumber')" 
+            min-width="80"
             align="center"
           >
             <template #default="scope">
-              <el-tag :type="getStatusType(scope.row.internStatus)">
-                {{ t('internManagement.status.' + scope.row.internStatus) }}
+              <el-tag type="info" size="small">
+                {{ t('mentorDashboard.week') }} {{ scope.row.weekNumber }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column 
-            :label="t('internManagement.table.actions')" 
-            min-width="100" 
+            :label="t('myReports.table.averageScore')" 
+            min-width="100"
+            align="center"
+          >
+            <template #default="scope">
+              <span :class="getScoreClass(scope.row.averageScore)">
+                {{ scope.row.averageScore?.toFixed(1) || '-' }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column 
+            :label="t('myReports.table.createdAt')" 
+            min-width="120"
+          >
+            <template #default="scope">
+              {{ formatDate(scope.row.createdAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column 
+            :label="t('common.actions')" 
+            min-width="120" 
             fixed="right" 
             align="center"
           >
@@ -290,14 +270,14 @@ onMounted(() => {
                 :icon="View" 
                 size="small" 
                 circle
-                @click="openDetailIntern(scope.row)"
+                @click="viewReport(scope.row)"
               />
               <el-button 
-                type="warning" 
-                :icon="Edit" 
+                type="danger" 
+                :icon="Delete" 
                 size="small" 
                 circle
-                @click="openEditIntern(scope.row)"
+                @click="handleDelete(scope.row)"
               />
             </template>
           </el-table-column>
@@ -314,13 +294,26 @@ onMounted(() => {
           />
         </div>
       </el-card>
-
     </div>
   </MentorLayout>
 </template>
 
+<script>
+export default {
+  methods: {
+    getScoreClass(score) {
+      if (!score) return ''
+      if (score >= 8) return 'score-excellent'
+      if (score >= 6) return 'score-good'
+      if (score >= 4) return 'score-average'
+      return 'score-weak'
+    }
+  }
+}
+</script>
+
 <style scoped>
-.my-intern-list-view {
+.my-reports-view {
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -367,12 +360,8 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.search-input {
-  width: 220px;
-}
-
 .filter-select {
-  width: 180px;
+  width: 220px;
 }
 
 .extended-filters {
@@ -388,26 +377,30 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-.filter-item label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: flex-end;
-  padding-top: 22px;
-}
-
-.text-muted {
-  color: #9ca3af;
-}
-
 .pagination-wrapper {
   display: flex;
   justify-content: center;
   margin-top: 24px;
+}
+
+.score-excellent {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.score-good {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.score-average {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.score-weak {
+  color: #ef4444;
+  font-weight: 600;
 }
 
 :deep(.el-table) {
@@ -420,23 +413,7 @@ onMounted(() => {
   color: #374151;
 }
 
-:deep(.el-dialog__header) {
-  border-bottom: 1px solid #ebeef5;
-  padding: 16px 20px;
-  margin: 0;
-}
-
-:deep(.el-dialog__body) {
-  padding: 20px;
-}
-
-:deep(.el-dialog__footer) {
-  border-top: 1px solid #ebeef5;
-  padding: 16px 20px;
-}
-
 @media (max-width: 768px) {
-  .search-input,
   .filter-select {
     width: 100%;
   }

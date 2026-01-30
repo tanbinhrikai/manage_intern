@@ -160,10 +160,10 @@ public class WeeklyReportService implements IWeeklyReportService {
         }
 
         WeeklyReport savedReport = weeklyReportRepository.save(report);
-        
+
         // Publish event để DashboardService có thể bắt được
         eventPublisher.publishEvent(new WeeklyReportCreatedEvent(this, savedReport));
-        
+
         return WeeklyReportResponse.fromWeeklyReport(savedReport);
     }
 
@@ -210,8 +210,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                     .collect(Collectors.toMap(
                             detail -> detail.getCriteria().getId(),
                             detail -> detail,
-                            (existing, replacement) -> existing
-                    ));
+                            (existing, replacement) -> existing));
 
             Set<Long> requestCriteriaIds = new HashSet<>();
             for (WeeklyReportDetailRequest requestItem : updateDTO.getDetails()) {
@@ -249,10 +248,9 @@ public class WeeklyReportService implements IWeeklyReportService {
                 requestCriteriaIds.add(requestItem.getCriteriaId());
             }
 
-            report.getDetails().removeIf(detail ->
-                    detail.getCriteria() != null
-                            && detail.getCriteria().getParent() != null
-                            && !requestCriteriaIds.contains(detail.getCriteria().getId()));
+            report.getDetails().removeIf(detail -> detail.getCriteria() != null
+                    && detail.getCriteria().getParent() != null
+                    && !requestCriteriaIds.contains(detail.getCriteria().getId()));
 
             recalculateMainScores(report);
         }
@@ -266,16 +264,16 @@ public class WeeklyReportService implements IWeeklyReportService {
         // Manually trigger averageScore calculation to ensure it's updated
         // @PreUpdate might not be triggered if only collection changes
         report.updateAverageScore();
-        
+
         // Force Hibernate to detect the change by touching a field
         // This ensures @PreUpdate is called
         report.setUpdatedAt(java.time.Instant.now());
 
         WeeklyReport updatedReport = weeklyReportRepository.save(report);
-        
+
         // Publish event để DashboardService có thể bắt được
         eventPublisher.publishEvent(new WeeklyReportUpdatedEvent(this, updatedReport));
-        
+
         return WeeklyReportResponse.fromWeeklyReport(updatedReport);
     }
 
@@ -303,9 +301,9 @@ public class WeeklyReportService implements IWeeklyReportService {
         Integer reportId = report.getId();
         String internName = report.getIntern().getFullName();
         String mentorName = report.getMentor().getFullName();
-        
+
         weeklyReportRepository.delete(report);
-        
+
         // Publish event sau khi delete
         eventPublisher.publishEvent(new WeeklyReportDeletedEvent(this, reportId, internName, mentorName));
     }
@@ -331,7 +329,8 @@ public class WeeklyReportService implements IWeeklyReportService {
             throw new AppException(ErrorCode.UNAUTHORIZED_INTERN_ACCESS);
         }
 
-        Page<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId, pageRequest);
+        Page<WeeklyReport> reports = weeklyReportRepository.findByInternIdOrderByWeekStartDateDesc(internId,
+                pageRequest);
         return PageResponse.<WeeklyReportResponse>builder()
                 .items(reports.stream()
                         .map(WeeklyReportResponse::fromWeeklyReport)
@@ -365,6 +364,41 @@ public class WeeklyReportService implements IWeeklyReportService {
         return false;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<WeeklyReportResponse> getMyReports(PageRequest pageRequest, Long internId, LocalDate startDate,
+            LocalDate endDate) {
+        Users currentUser = authenticationService.getCurrentUser();
+        if (currentUser == null) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        // Only mentors can access this endpoint - check if user is a mentor
+        if (!"MENTOR".equals(currentUser.getRole().getRoleName())
+                && !"ADMIN".equals(currentUser.getRole().getRoleName())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Page<WeeklyReport> reportsPage = weeklyReportRepository.findByMentorIdWithFilters(
+                currentUser.getId(),
+                internId,
+                startDate,
+                endDate,
+                pageRequest);
+
+        List<WeeklyReportResponse> responses = reportsPage.getContent().stream()
+                .map(WeeklyReportResponse::fromWeeklyReport)
+                .collect(Collectors.toList());
+
+        return PageResponse.<WeeklyReportResponse>builder()
+                .items(responses)
+                .currentPage(reportsPage.getNumber())
+                .totalPages(reportsPage.getTotalPages())
+                .totalItems(reportsPage.getTotalElements())
+                .pageSize(reportsPage.getSize())
+                .build();
+    }
+
     /**
      * Recalculate main scores based on sub-criteria scores and weights
      *
@@ -395,8 +429,7 @@ public class WeeklyReportService implements IWeeklyReportService {
                 .collect(Collectors.toMap(
                         detail -> detail.getCriteria().getId(),
                         detail -> detail,
-                        (existing, replacement) -> existing
-                ));
+                        (existing, replacement) -> existing));
 
         // Group sub-criteria by their parent criteria
         Map<EvaluationCriteria, List<WeeklyReportDetail>> subCriteriaByParent = new LinkedHashMap<>();
@@ -466,9 +499,8 @@ public class WeeklyReportService implements IWeeklyReportService {
         Set<Long> parentIdsWithSubCriteria = subCriteriaByParent.keySet().stream()
                 .map(EvaluationCriteria::getId)
                 .collect(Collectors.toSet());
-        details.removeIf(detail ->
-                detail.getCriteria() != null
-                        && detail.getCriteria().getParent() == null
-                        && !parentIdsWithSubCriteria.contains(detail.getCriteria().getId()));
+        details.removeIf(detail -> detail.getCriteria() != null
+                && detail.getCriteria().getParent() == null
+                && !parentIdsWithSubCriteria.contains(detail.getCriteria().getId()));
     }
 }

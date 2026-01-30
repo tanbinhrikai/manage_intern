@@ -94,6 +94,12 @@ const routes = [
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
+    path: "/mentor/my-reports",
+    name: "MentorMyReports",
+    component: () => import("@/views/my-reports/MyReportsListView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
     path: "/admin/departments",
     name: "DepartmentList",
     component: () => import("@/views/system-config/DepartmentTreeView.vue"),

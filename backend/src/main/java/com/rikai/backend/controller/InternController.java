@@ -51,9 +51,14 @@ public class InternController {
     public ApiResponse<PageResponse<InternResponse>> getMyIntern(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String keyword) {
+            @RequestParam(required = false, name = "keyword") String keyword,
+            @RequestParam(required = false, name = "status") String status,
+            @RequestParam(required = false, name = "start_date") LocalDate startDate,
+            @RequestParam(required = false, name = "end_date") LocalDate endDate,
+            @RequestParam(required = false, name = "position_id") Long positionId) {
         Pageable pageable = PageRequest.of(page, limit);
-        return ApiResponse.buildSuccessResponse(internService.getMyIntern(pageable, keyword),
+        return ApiResponse.buildSuccessResponse(
+                internService.getMyIntern(pageable, keyword, status, startDate, endDate, positionId),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
 
@@ -77,7 +82,7 @@ public class InternController {
     @GetMapping("/mentor/{mentorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByMentor(@PathVariable UUID mentorId,
-                                                                        Pageable pageable) {
+            Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByMentor(mentorId, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -85,7 +90,7 @@ public class InternController {
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByStatus(@PathVariable InternStatus status,
-                                                                        Pageable pageable) {
+            Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByStatus(status, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -93,7 +98,7 @@ public class InternController {
     @GetMapping("/position/{positionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByPositionId(@PathVariable Long positionId,
-                                                                            Pageable pageable) {
+            Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByPositionId(positionId, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -125,7 +130,7 @@ public class InternController {
     @PutMapping("/{id:\\d+}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> updateIntern(@PathVariable Long id,
-                                                    @Valid @RequestBody InternUpdateRequest request) {
+            @Valid @RequestBody InternUpdateRequest request) {
         return ApiResponse.buildSuccessResponse(internService.updateIntern(id, request),
                 SuccessCode.UPDATE_INTERN_SUCCESSFUL);
     }

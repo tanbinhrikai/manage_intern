@@ -41,3 +41,12 @@ export function getBatchScoreTrend() {
 export function getInternScoreTrendByBatch(batchId) {
     return http.get(`/dashboard/chart/batch/${batchId}/intern-score-trend`)
 }
+
+// Mentor dashboard APIs
+export function getMentorStatistics() {
+    return http.get("/dashboard/mentor/statistics")
+}
+
+export function getMentorInternStatusDistribution() {
+    return http.get("/dashboard/mentor/chart/intern-status-distribution")
+}

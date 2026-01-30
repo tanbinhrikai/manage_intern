@@ -37,7 +37,13 @@ public interface IInternService {
 
     PageResponse<InternResponse> getInternsByPositionId(Long positionId, Pageable pageable);
 
-    PageResponse<InternResponse> getMyIntern(Pageable pageable, String keyword);
+    PageResponse<InternResponse> getMyIntern(
+            Pageable pageable,
+            String keyword,
+            String status,
+            LocalDate startDate,
+            LocalDate endDate,
+            Long positionId);
 
     PageResponse<InternResponse> getInternsNotEvaluatedThisWeek(Pageable pageable);
 

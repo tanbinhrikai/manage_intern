@@ -15,9 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -43,6 +45,27 @@ public class WeeklyReportController {
         // sort by weekStartDate desc by default
         PageRequest pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "weekStartDate"));
         PageResponse<WeeklyReportResponse> result = weeklyReportService.getAllReports(pageable, internId);
+        return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
+    }
+
+    /**
+     * GET /weekly-reports/my-reports
+     * Get all weekly reports created by the current mentor
+     * Parameters: page, limit, intern_id, start_date, end_date
+     * Returns: Paginated list of reports mentor has created
+     */
+    @GetMapping("/my-reports")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<PageResponse<WeeklyReportResponse>> getMyReports(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(name = "intern_id", required = false) Long internId,
+            @RequestParam(name = "start_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(name = "end_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        // sort by weekStartDate desc by default
+        PageRequest pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "weekStartDate"));
+        PageResponse<WeeklyReportResponse> result = weeklyReportService.getMyReports(pageable, internId, startDate,
+                endDate);
         return ApiResponse.buildSuccessResponse(result, SuccessCode.GET_ALL_WEEKLY_REPORTS_SUCCESSFUL);
     }
 
