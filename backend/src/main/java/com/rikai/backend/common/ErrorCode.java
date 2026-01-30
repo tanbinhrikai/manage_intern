@@ -72,10 +72,10 @@ public enum ErrorCode {
 
     BATCH_NOT_EXISTED("Internship Batch not found", HttpStatus.NOT_FOUND),
 
-
     // Evaluation Session errors
     EVALUATION_SESSION_NOT_EXISTED("Evaluation session not found", HttpStatus.NOT_FOUND),
-    EVALUATION_SESSION_ALREADY_EXISTS("Evaluation session already exists for this intern and session type", HttpStatus.BAD_REQUEST),
+    EVALUATION_SESSION_ALREADY_EXISTS("Evaluation session already exists for this intern and session type",
+            HttpStatus.BAD_REQUEST),
     EVALUATION_SESSION_SEQUENCE_INVALID("Previous evaluation session must be completed first", HttpStatus.BAD_REQUEST),
     INVALID_SESSION_TYPE("Invalid session type", HttpStatus.BAD_REQUEST),
     INVALID_EVALUATION_DATE("Evaluation date must be within intern's internship period", HttpStatus.BAD_REQUEST),
@@ -85,7 +85,14 @@ public enum ErrorCode {
     CRITERIA_GROUP_NOT_EXISTED("Criteria group not found", HttpStatus.NOT_FOUND),
     CRITERIA_GROUP_REQUIRED("Criteria group is required", HttpStatus.BAD_REQUEST),
     GROUP_NAME_REQUIRED("Group name is required", HttpStatus.BAD_REQUEST),
-    INVALID_CRITERIA_GROUP("Criteria group does not match parent group", HttpStatus.BAD_REQUEST);
+    INVALID_CRITERIA_GROUP("Criteria group does not match parent group", HttpStatus.BAD_REQUEST),
+
+    // Learning Plan errors
+    LEARNING_PLAN_NOT_EXISTED("Learning plan not found", HttpStatus.NOT_FOUND),
+    LEARNING_PLAN_TITLE_REQUIRED("Learning plan title is required", HttpStatus.BAD_REQUEST),
+
+    // Chat Memory errors
+    CHAT_MEMORY_NOT_EXISTED("Conversation not found", HttpStatus.NOT_FOUND);
 
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;

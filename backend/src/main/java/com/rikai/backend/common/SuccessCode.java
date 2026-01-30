@@ -83,7 +83,6 @@ public enum SuccessCode {
     GENERATE_EVALUATION_SESSION_SUCCESSFUL("Generate evaluation session successful", HttpStatus.CREATED),
     GET_INTERN_EVALUATION_SUMMARY_SUCCESSFUL("Get intern evaluation summary successful", HttpStatus.OK),
 
-
     GET_ALL_INTERNSHIP_BATCHES_SUCCESSFUL("Get all internship batches successful", HttpStatus.OK),
 
     // Internship Batch success codes
@@ -92,8 +91,19 @@ public enum SuccessCode {
     GET_ALL_BATCHES_SUCCESSFUL("Get all internship batches successful", HttpStatus.OK),
     UPDATE_BATCH_SUCCESSFUL("Update internship batch successful", HttpStatus.OK),
     DELETE_BATCH_SUCCESSFUL("Delete internship batch successful", HttpStatus.OK),
-    AGENT_RESPONSE_SUCCESSFUL("Agent response successful" , HttpStatus.OK)
-    ;
+    AGENT_RESPONSE_SUCCESSFUL("Agent response successful", HttpStatus.OK),
+
+    // Learning Plan success codes
+    CREATE_LEARNING_PLAN_SUCCESSFUL("Create learning plan successful", HttpStatus.CREATED),
+    GET_LEARNING_PLAN_SUCCESSFUL("Get learning plan successful", HttpStatus.OK),
+    GET_ALL_LEARNING_PLANS_SUCCESSFUL("Get all learning plans successful", HttpStatus.OK),
+    UPDATE_LEARNING_PLAN_SUCCESSFUL("Update learning plan successful", HttpStatus.OK),
+    DELETE_LEARNING_PLAN_SUCCESSFUL("Delete learning plan successful", HttpStatus.OK),
+
+    // Chat Memory success codes
+    GET_CONVERSATION_SUCCESSFUL("Get conversation successful", HttpStatus.OK),
+    GET_ALL_CONVERSATIONS_SUCCESSFUL("Get all conversations successful", HttpStatus.OK),
+    DELETE_CONVERSATION_SUCCESSFUL("Delete conversation successful", HttpStatus.OK);
 
     SuccessCode(String message, HttpStatusCode statusCode) {
         this.message = message;

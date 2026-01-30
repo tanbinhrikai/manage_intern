@@ -1,5 +1,6 @@
 package com.rikai.backend.ai.tools;
 
+import com.rikai.backend.ai.security.AgentSecurityAdvisor;
 import com.rikai.backend.dto.record.WeeklyReportInfo;
 import com.rikai.backend.dto.record.WeeklyReportResult;
 import com.rikai.backend.dto.record.CriteriaScore;
@@ -32,7 +33,8 @@ public class WeeklyReportTool {
 
         private final WeeklyReportRepository weeklyReportRepository;
         private final InternRepository internRepository;
-        private final VectorStore vectorStore; // Inject VectorStore
+        private final VectorStore vectorStore;
+        private final AgentSecurityAdvisor agentSecurityAdvisor;
 
         @Tool(description = """
             Get weekly report analysis for a specific intern by ID.
@@ -42,6 +44,10 @@ public class WeeklyReportTool {
                 @ToolParam(description = "ID of the intern to get weekly reports for") Long internId) {
                 log.info("AI Tool: getWeeklyReportAnalysis called for internId: {}", internId);
 
+                if (!agentSecurityAdvisor.canAccessIntern(internId)) {
+                        log.warn("Access denied for user accessing intern {}", internId);
+                        return new WeeklyReportResult("Access Denied", Collections.emptyList(), 0.0);
+                }
                 if (internId == null) {
                         return new WeeklyReportResult("Unknown", Collections.emptyList(), 0.0);
                 }

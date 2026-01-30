@@ -38,6 +38,11 @@ spring:
           transport-type: REST
           options:
             model: ${TYPE_MODEL_EMBEDDING}
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
     vectorstore:
       qdrant:
         enabled: true

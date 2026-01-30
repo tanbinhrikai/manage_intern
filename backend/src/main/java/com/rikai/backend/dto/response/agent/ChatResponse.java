@@ -1,5 +1,6 @@
 package com.rikai.backend.dto.response.agent;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,15 +15,10 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChatResponse {
 
     private String message;
     private Instant timestamp;
-
-    public static ChatResponse of(String message) {
-        return ChatResponse.builder()
-                .message(message)
-                .timestamp(Instant.now())
-                .build();
-    }
+    private String conversationId;
 }

@@ -100,3 +100,4 @@ DELIMITER ;
 CALL generate_comprehensive_data();
 
 DROP PROCEDURE IF EXISTS generate_comprehensive_data;
+
