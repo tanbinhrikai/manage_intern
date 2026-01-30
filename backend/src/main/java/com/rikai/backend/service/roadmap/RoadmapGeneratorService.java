@@ -19,6 +19,9 @@ import com.rikai.backend.repository.RoadmapNodeRepository;
 import com.rikai.backend.repository.TagRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +43,7 @@ public class RoadmapGeneratorService {
     private final TagRepository tagRepository;
     private final PositionRepository positionRepository;
     private final InternshipBatchRepository internshipBatchRepository;
+    private final JdbcChatMemoryRepository chatMemoryRepository;
 
     public RoadmapGeneratorService(
             @Qualifier("routerClient") ChatClient routerClient,
@@ -47,26 +51,33 @@ public class RoadmapGeneratorService {
             RoadmapNodeRepository roadmapNodeRepository,
             TagRepository tagRepository,
             PositionRepository positionRepository,
-            InternshipBatchRepository internshipBatchRepository
-    ) {
+            InternshipBatchRepository internshipBatchRepository,
+            JdbcChatMemoryRepository chatMemoryRepository) {
         this.routerClient = routerClient;
         this.creatorClient = creatorClient;
         this.roadmapNodeRepository = roadmapNodeRepository;
         this.tagRepository = tagRepository;
         this.positionRepository = positionRepository;
         this.internshipBatchRepository = internshipBatchRepository;
+        this.chatMemoryRepository = chatMemoryRepository;
+        ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                .chatMemoryRepository(chatMemoryRepository)
+                .maxMessages(30)
+                .build();
     }
 
     public String chatWithAI(ChatAIDto request) {
+        String conversationId = "Conversation1";
         return creatorClient
                 .prompt(request.message())
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .call()
                 .content();
     }
 
     private UserIntentDto analyzeUserIntent(String userMessage) {
         try {
-            return routerClient.prompt() // <--- Dùng Router
+            return routerClient.prompt()
                     .user(PromptManager.INTENT_ANALYSIS_SYSTEM.formatted(userMessage))
                     .call()
                     .entity(UserIntentDto.class);
@@ -75,9 +86,9 @@ public class RoadmapGeneratorService {
             return new UserIntentDto(false, null, null, null, "Xin lỗi, hệ thống đang bận.");
         }
     }
+
     /**
      * MAIN ENTRY: Xử lý chat thông minh (Router & Slot Filling)
-     *
      */
     @Transactional
     public ChatResponseDto processUserMessage(String userMessage, Long positionId, String durationStr, Long batchId) {
@@ -102,6 +113,14 @@ public class RoadmapGeneratorService {
                     .message("Tôi chưa rõ bạn muốn tạo lộ trình cho vị trí nào. Vui lòng chọn bên dưới hoặc nhập tên:")
                     .data(allPositions)
                     .build();
+        }
+
+        Long finalBatchId = batchId;
+        if (finalBatchId == null) {
+            // Chỉ query DB khi cần thiết
+            InternshipBatch activeBatch = internshipBatchRepository.findByStatus_OnGoing()
+                    .orElseThrow(() -> new RuntimeException("Hệ thống chưa mở khóa thực tập nào!"));
+            finalBatchId = activeBatch.getId();
         }
 
         // --- CASE 3: XỬ LÝ DURATION (Thiếu -> Hiện Dropdown) ---
@@ -184,19 +203,25 @@ public class RoadmapGeneratorService {
 
         try {
             node.setNodeType(dto.type() != null ? NodeType.valueOf(dto.type().toUpperCase()) : NodeType.PHASE);
-        } catch (Exception e) { node.setNodeType(NodeType.PHASE); }
+        } catch (Exception e) {
+            node.setNodeType(NodeType.PHASE);
+        }
 
         try {
             node.setDifficulty(dto.difficulty() != null ? DifficultyLevel.valueOf(dto.difficulty().toUpperCase()) : DifficultyLevel.BEGINNER);
-        } catch (Exception e) { node.setDifficulty(DifficultyLevel.BEGINNER); }
+        } catch (Exception e) {
+            node.setDifficulty(DifficultyLevel.BEGINNER);
+        }
 
         if (dto.tags() != null) {
             Set<Tag> tagEntities = new HashSet<>();
             for (String tagName : dto.tags()) {
                 String clean = tagName.trim().toLowerCase();
-                if(clean.isEmpty()) continue;
+                if (clean.isEmpty()) continue;
                 Tag tag = tagRepository.findByName(clean).orElseGet(() -> {
-                    Tag t = new Tag(); t.setName(clean); t.setCreatedAt(LocalDateTime.now());
+                    Tag t = new Tag();
+                    t.setName(clean);
+                    t.setCreatedAt(LocalDateTime.now());
                     return tagRepository.save(t);
                 });
                 tagEntities.add(tag);

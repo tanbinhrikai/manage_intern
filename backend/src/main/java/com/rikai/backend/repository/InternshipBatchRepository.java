@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -26,4 +27,7 @@ public interface InternshipBatchRepository extends JpaRepository<InternshipBatch
     
     @Query("SELECT b FROM InternshipBatch b LEFT JOIN FETCH b.interns WHERE b.status = :status")
     List<InternshipBatch> findByStatusWithInterns(@Param("status") BatchStatus status);
+
+    @Query("SELECT b FROM InternshipBatch b WHERE b.status = 'ONGOING'")
+    Optional<InternshipBatch> findByStatus_OnGoing();
 }

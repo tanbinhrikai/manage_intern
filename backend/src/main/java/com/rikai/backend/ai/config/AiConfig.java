@@ -1,10 +1,20 @@
 package com.rikai.backend.ai.config;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor; // Quan trọng
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.prompt.ChatOptions;
+//import org.springframework.ai.vectorstore.VectorStore; // Nếu sau này dùng RAG
+//import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.ai.chat.memory.ChatMemoryRepository; // Interface gốc
+
+//import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+//import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 
 @Configuration
 public class AiConfig {
@@ -24,9 +34,25 @@ public class AiConfig {
     @Value("${app.ai.creator.max-output-tokens}")
     private Integer maxTokens;
 
+    @Bean
+    public ChatMemory chatMemory(JdbcChatMemoryRepository repository) {
+        return MessageWindowChatMemory.builder()
+                .chatMemoryRepository(repository)
+                .maxMessages(30)
+                .build();
+    }
+
     @Bean("routerClient")
-    public ChatClient routerClient(ChatClient.Builder builder) {
+    public ChatClient routerClient(
+            ChatClient.Builder builder,
+            ChatMemory chatMemory
+    ) {
         return builder
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor
+                                .builder(chatMemory)
+                                .build()
+                )
                 .defaultOptions(ChatOptions.builder()
                         .model(routerModel)
                         .temperature(routerTemperature)
@@ -35,9 +61,18 @@ public class AiConfig {
                 .build();
     }
 
+
     @Bean("creatorClient")
-    public ChatClient creatorClient(ChatClient.Builder builder) {
+    public ChatClient creatorClient(
+            ChatClient.Builder builder,
+            ChatMemory chatMemory
+    ) {
         return builder
+                .defaultAdvisors(
+                        MessageChatMemoryAdvisor
+                                .builder(chatMemory)
+                                .build()
+                )
                 .defaultOptions(ChatOptions.builder()
                         .model(creatorModel)
                         .temperature(creatorTemperature)
@@ -45,4 +80,5 @@ public class AiConfig {
                         .build())
                 .build();
     }
+
 }
