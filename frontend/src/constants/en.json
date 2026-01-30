@@ -35,7 +35,7 @@
         "submit": "Submit",
         "warning": "Warning",
         "cancel": "Cancel",
-        "back":"Back",
+        "back": "Back",
         "delete": "Delete",
         "edit": "Edit",
         "actions": "Actions",
@@ -134,15 +134,22 @@
         }
     },
     "mentorDashboard": {
-        "title": "Dashboard Mentor",
+        "title": "Mentor Dashboard",
         "internsNeedEvaluation": "Interns Need Evaluation This Week",
         "position": "Position",
         "deadline": "Deadline",
         "week": "Week",
         "submitReport": "Submit Report",
-        "evaluationProgress": "Evaluation Progress Overview",
+        "evaluationProgress": "Evaluation Progress",
         "reportsCompleted": "{completed}/{total} weekly reports completed",
         "internsUnderSupervision": "Interns Under My Supervision",
+        "internsByStatus": "My Interns by Status",
+        "statistics": {
+            "totalInterns": "My Interns",
+            "activeInterns": "Active",
+            "warningInterns": "Warning",
+            "pendingReports": "Pending Reports"
+        },
         "table": {
             "fullName": "Full Name",
             "position": "Position",
@@ -621,11 +628,28 @@
             "createSuccess": "Report created successfully!",
             "saveSuccess": "Report saved successfully!",
             "updateSuccess": "Report updated successfully!",
+            "deleteSuccess": "Report deleted successfully!",
             "saveError": "Failed to save report. Please try again."
         },
         "confirm": {
             "update": "Are you sure you want to update this weekly report?",
             "create": "Are you sure you want to create this weekly report?"
+        }
+    },
+    "myReports": {
+        "title": "My Reports",
+        "filterByIntern": "Filter by Intern",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "table": {
+            "internName": "Intern Name",
+            "weekStartDate": "Week Start",
+            "weekNumber": "Week",
+            "averageScore": "Avg Score",
+            "createdAt": "Created At"
+        },
+        "messages": {
+            "loadError": "Failed to load reports"
         }
     },
     "positionTree": {
@@ -772,7 +796,7 @@
             },
             "messages": {
                 "sessionExists": "This session type already exists for this intern",
-                "selectInternFirst":"Please select an intern from the Internship Information section first"
+                "selectInternFirst": "Please select an intern from the Internship Information section first"
             }
         },
         "edit": {

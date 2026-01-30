@@ -11,7 +11,7 @@ export function getWeeklyReportById(id) {
 
 export function getWeeklyReportsByInternId(internId, params) {
     return http.get(`/weekly-reports/intern/${internId}`, {
-        params: params 
+        params: params
     })
 }
 
@@ -25,4 +25,8 @@ export function updateWeeklyReport(id, data) {
 
 export function deleteWeeklyReport(id) {
     return http.delete(`/weekly-reports/${id}`)
+}
+
+export function getMyReports(params = {}) {
+    return http.get("/weekly-reports/my-reports", { params })
 }

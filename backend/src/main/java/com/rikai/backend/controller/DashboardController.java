@@ -4,6 +4,7 @@ import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.response.dashboard.ActivityResponse;
 import com.rikai.backend.dto.response.dashboard.ChartDataResponse;
+import com.rikai.backend.dto.response.dashboard.MentorStatisticsResponse;
 import com.rikai.backend.dto.response.dashboard.MultiSeriesChartResponse;
 import com.rikai.backend.service.dashboard.IDashboardService;
 import lombok.AccessLevel;
@@ -22,16 +23,17 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class DashboardController {
-    
+
     IDashboardService dashboardService;
 
     /**
      * Endpoint to retrieve recent activities for admin and mentor roles.
      *
-     * @param limit the maximum number of recent activities to retrieve (default is 10)
+     * @param limit the maximum number of recent activities to retrieve (default is
+     *              10)
      * @return ApiResponse containing a list of recent activities
      */
-    
+
     @GetMapping("/recent-activities")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<List<ActivityResponse>> getRecentActivities(
@@ -39,21 +41,21 @@ public class DashboardController {
         List<ActivityResponse> activities = dashboardService.getRecentActivities(limit);
         return ApiResponse.buildSuccessResponse(activities, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/mentors-by-department")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<ChartDataResponse> getMentorsByDepartment() {
         ChartDataResponse data = dashboardService.getMentorsByDepartment();
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/interns-by-position")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<ChartDataResponse> getInternsByPosition() {
         ChartDataResponse data = dashboardService.getInternsByPosition();
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/interns-trend")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<ChartDataResponse> getInternsTrend(
@@ -72,7 +74,7 @@ public class DashboardController {
         }
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/average-score-trend")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<ChartDataResponse> getAverageScoreTrend(
@@ -80,7 +82,7 @@ public class DashboardController {
         ChartDataResponse data = dashboardService.getAverageScoreTrend(months);
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/completion-rate-trend")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<ChartDataResponse> getCompletionRateTrend(
@@ -88,7 +90,7 @@ public class DashboardController {
         ChartDataResponse data = dashboardService.getCompletionRateTrend(months);
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/average-score-trend-by-group")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<MultiSeriesChartResponse> getAverageScoreTrendByGroup(
@@ -96,7 +98,7 @@ public class DashboardController {
         MultiSeriesChartResponse data = dashboardService.getAverageScoreTrendByGroup(months);
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/completion-rate-trend-by-group")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<MultiSeriesChartResponse> getCompletionRateTrendByGroup(
@@ -104,18 +106,34 @@ public class DashboardController {
         MultiSeriesChartResponse data = dashboardService.getCompletionRateTrendByGroup(months);
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/batch-score-trend")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<MultiSeriesChartResponse> getBatchScoreTrend() {
         MultiSeriesChartResponse data = dashboardService.getBatchScoreTrend();
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
-    
+
     @GetMapping("/chart/batch/{batchId}/intern-score-trend")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<MultiSeriesChartResponse> getInternScoreTrendByBatch(@PathVariable Long batchId) {
         MultiSeriesChartResponse data = dashboardService.getInternScoreTrendByBatch(batchId);
+        return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
+    }
+
+    // ===== MENTOR DASHBOARD ENDPOINTS =====
+
+    @GetMapping("/mentor/statistics")
+    @PreAuthorize("hasRole('MENTOR')")
+    public ApiResponse<MentorStatisticsResponse> getMentorStatistics() {
+        MentorStatisticsResponse data = dashboardService.getMentorStatistics();
+        return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
+    }
+
+    @GetMapping("/mentor/chart/intern-status-distribution")
+    @PreAuthorize("hasRole('MENTOR')")
+    public ApiResponse<ChartDataResponse> getMentorInternStatusDistribution() {
+        ChartDataResponse data = dashboardService.getMentorInternStatusDistribution();
         return ApiResponse.buildSuccessResponse(data, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
     }
 }

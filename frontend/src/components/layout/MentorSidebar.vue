@@ -12,7 +12,7 @@ const t = computed(() => localeStore.t)
 const menuItems = [
   { key: 'dashboard', path: '/mentor/dashboard', icon: 'dashboard' },
   { key: 'myInterns', path: '/mentor/my-interns', icon: 'interns' },
-  { key: 'reports', path: '/mentor/reports', icon: 'reports' },
+  { key: 'reports', path: '/mentor/my-reports', icon: 'reports' },
   { key: 'settings', path: '/mentor/settings', icon: 'settings' }
 ]
 
