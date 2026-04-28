@@ -477,6 +477,7 @@ CREATE TABLE IF NOT EXISTS roadmap_nodes(
     estimated_hours DECIMAL(5,2),
     -- Thứ tự sắp xếp (1.1, 1.2...)
     order_index INT DEFAULT 0,
+    is_expanded tinyint(1) default '0',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     -- Indexes & FK

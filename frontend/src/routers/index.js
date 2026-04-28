@@ -1,6 +1,5 @@
 import { useAuthStore } from "@/stores/auth";
 import { createRouter, createWebHistory } from "vue-router";
-
 const routes = [
   {
     path: "/login",
@@ -150,67 +149,78 @@ const routes = [
   {
     path: "/admin/evaluation-criteria",
     name: "EvaluationCriteriaList",
-    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaListView.vue"),
+    component: () =>
+      import("@/views/evaluation-criteria/EvaluationCriteriaListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/evaluation-criteria/create",
     name: "EvaluationCriteriaCreate",
-    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
+    component: () =>
+      import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/evaluation-criteria/:id",
     name: "EvaluationCriteriaDetail",
-    component: () => import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
+    component: () =>
+      import("@/views/evaluation-criteria/EvaluationCriteriaDetailView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/evaluation-sessions",
     name: "EvaluationSessionList",
-    component: () => import("@/views/evaluation-session/EvaluationSessionListView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionListView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/mentor/evaluation-sessions",
     name: "MentorEvaluationSessionList",
-    component: () => import("@/views/evaluation-session/EvaluationSessionListView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionListView.vue"),
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
     path: "/admin/evaluation-sessions/create",
     name: "EvaluationSessionCreate",
-    component: () => import("@/views/evaluation-session/EvaluationSessionCreateView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionCreateView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/mentor/evaluation-sessions/create",
     name: "MentorEvaluationSessionCreate",
-    component: () => import("@/views/evaluation-session/EvaluationSessionCreateView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionCreateView.vue"),
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
     path: "/admin/evaluation-sessions/:id",
     name: "EvaluationSessionDetail",
-    component: () => import("@/views/evaluation-session/EvaluationSessionDetailView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionDetailView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/mentor/evaluation-sessions/:id",
     name: "MentorEvaluationSessionDetail",
-    component: () => import("@/views/evaluation-session/EvaluationSessionDetailView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionDetailView.vue"),
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
     path: "/admin/evaluation-sessions/:id/edit",
     name: "EvaluationSessionEdit",
-    component: () => import("@/views/evaluation-session/EvaluationSessionEditView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionEditView.vue"),
     meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/mentor/evaluation-sessions/:id/edit",
     name: "MentorEvaluationSessionEdit",
-    component: () => import("@/views/evaluation-session/EvaluationSessionEditView.vue"),
+    component: () =>
+      import("@/views/evaluation-session/EvaluationSessionEditView.vue"),
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
@@ -221,6 +231,30 @@ const routes = [
     path: "/:pathMatch(.*)*",
     name: "NotFound",
     component: () => import("@/views/NotFoundView.vue"),
+  },
+  {
+    path: "/roadmap-tester",
+    name: "RouteTester",
+    component: () => import("@/views/roadmap/RouteTesterView.vue"),
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/roadmaps/builder",
+    name: "RoadmapBuilder",
+    component: () => import("@/views/roadmap/RoadmapBuilderView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/admin/roadmaps/list",
+    name: "AdminRoadmapList",
+    component: () => import("@/views/roadmap/RoadmapListView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
+  },
+  {
+    path: "/admin/roadmaps/:id",
+    name: "AdminRoadmapDetail",
+    component: () => import("@/views/roadmap/RoadmapDetailView.vue"),
+    meta: { requiresAuth: true, role: "ADMIN" },
   },
 ];
 

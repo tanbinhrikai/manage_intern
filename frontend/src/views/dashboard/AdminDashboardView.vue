@@ -34,12 +34,12 @@ const analysisData = ref({
 });
 
 const stats = computed(() => [
-  {
-    key: "totalInterns",
-    value: analysisData.value.totalInterns,
-    icon: "users",
-    color: "blue",
-  },
+  // {
+  //   key: "totalInterns",
+  //   value: analysisData.value.totalInterns,
+  //   icon: "users",
+  //   color: "blue",
+  // },
   {
     key: "internsActive",
     value: analysisData.value.activeInterns,
@@ -52,12 +52,12 @@ const stats = computed(() => [
     icon: "warning",
     color: "yellow",
   },
-  {
-    key: "internsCompleted",
-    value: analysisData.value.completedInterns,
-    icon: "completed",
-    color: "teal",
-  },
+  // {
+  //   key: "internsCompleted",
+  //   value: analysisData.value.completedInterns,
+  //   icon: "completed",
+  //   color: "teal",
+  // },
   {
     key: "internsDropped",
     value: analysisData.value.droppedInterns,
@@ -90,11 +90,11 @@ const chartData = computed(() => [
     value: analysisData.value.droppedInterns,
     color: "#ef4444",
   },
-  {
-    label: t.value("internManagement.status.COMPLETE"),
-    value: analysisData.value.completedInterns,
-    color: "#22c55e",
-  },
+  // {
+  //   label: t.value("internManagement.status.COMPLETE"),
+  //   value: analysisData.value.completedInterns,
+  //   color: "#22c55e",
+  // },
 ]);
 
 async function fetchAnalysis() {
@@ -190,8 +190,8 @@ onMounted(() => {
       <el-row :gutter="20" class="mb-4">
         <el-col
           :xs="12"
-          :sm="8"
-          :md="4"
+          :sm="12"
+          :md="6"
           v-for="stat in stats"
           :key="stat.key"
           class="mb-col"

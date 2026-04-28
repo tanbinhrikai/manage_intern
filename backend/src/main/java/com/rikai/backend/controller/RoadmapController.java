@@ -1,74 +1,158 @@
 package com.rikai.backend.controller;
 
+
+import com.rikai.backend.ai.agent.RoadmapEditorAgent;
 import com.rikai.backend.ai.dto.response.ChatResponseDto;
-import com.rikai.backend.dto.request.agent_ai.ChatAIDto;
+import com.rikai.backend.common.ApiResponse;
+import com.rikai.backend.common.PageResponse;
+import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.agent_ai.ChatRequestDto;
+import com.rikai.backend.dto.response.roadmap.DraftRoadmapResponseDto;
+import com.rikai.backend.dto.response.roadmap.RoadmapNodeResponse;
 import com.rikai.backend.model.RoadmapNode;
-import com.rikai.backend.service.roadmap.RoadmapGeneratorService;
+import com.rikai.backend.ai.service.roadmap.IRoadmapGeneratorService;
+import com.rikai.backend.ai.service.roadmap.DraftRoadmapManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/roadmaps")
+@RequestMapping("/roadmaps")
 @RequiredArgsConstructor
+@Slf4j
 public class RoadmapController {
 
-    private final RoadmapGeneratorService roadmapGeneratorService;
+    private final IRoadmapGeneratorService roadmapGeneratorService;
+    private final RoadmapEditorAgent roadmapEditorAgent;
+    private final DraftRoadmapManager draftRoadmapManager;
 
     /**
-     * API Chat xã giao (Debug/Test): Chỉ trả về text, không xử lý logic phức tạp.
-     * Dành cho Mentor/Admin test model.
-     */
-    @PostMapping("/chat")
-    @PreAuthorize("hasRole('MENTOR') or hasRole('ADMIN')")
-    public ResponseEntity<String> chatAI(@RequestBody ChatAIDto message) {
-        String response = roadmapGeneratorService.chatWithAI(message);
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * API CHÍNH (User UI): Chat thông minh & Tạo lộ trình
-     * - Tự động phát hiện ý định (Chat hay Tạo lộ trình)
-     * - Tự động hỏi lại nếu thiếu thông tin (Position, Duration)
-     * - Trả về ActionType để Frontend render (Dropdown/Text/Roadmap)
+     * Main API: Handles chat, creates draft routes, or extends nodes.
+     * Automatically detects intent and processing flow (Expansion vs Creation).
      */
     @PostMapping("/chat-process")
-    public ResponseEntity<ChatResponseDto> processMessage(
-            @RequestBody ChatRequestDto request
-    ) {
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<ChatResponseDto> processMessage(@RequestBody ChatRequestDto request) {
+        log.info("Chat Process - PosID: {}, Duration: {}, Session: {}, ConvID: {}",
+                request.getPositionId(), request.getDuration(),
+                request.getSessionId(), request.getConversationId());
         ChatResponseDto response = roadmapGeneratorService.processUserMessage(
                 request.getMessage(),
                 request.getPositionId(),
                 request.getDuration(),
-                request.getBatchId()
+                request.getBatchId(),
+                request.getSessionId(),
+                request.getConversationId()
         );
-        return ResponseEntity.ok(response);
+        return ApiResponse.buildSuccessResponse(response, SuccessCode.CHAT_PROCESS_SUCCESSFUL);
     }
 
     /**
-     * API ADMIN: Tạo lộ trình nhanh (Bỏ qua chat)
-     * URL: POST /api/roadmaps/generate?topic=Java&positionId=1&batchId=1&duration=6 tháng
-     * - Thêm param 'duration' để Admin tùy chỉnh thời gian.
+     * Confirm saving the draft to the official database.
+     */
+    @PostMapping("/drafts/{sessionId}/confirm")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<RoadmapNodeResponse> confirmDraftRoadmap(@PathVariable String sessionId) {
+        RoadmapNode savedRoadmap = roadmapGeneratorService.confirmAndSaveDraft(sessionId);
+        RoadmapNodeResponse response = RoadmapNodeResponse.toRoadmapResponse(savedRoadmap);
+        return ApiResponse.buildSuccessResponse(response, SuccessCode.CREATE_ROADMAP_SUCCESSFUL);
+    }
+
+    /**
+     * Edit a draft roadmap via natural language.
+     * The AI will call tools (addNode, removeNode, updateNode) automatically.
+     */
+    @PostMapping("/drafts/{sessionId}/edit")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<ChatResponseDto> editDraftRoadmap(
+            @PathVariable String sessionId,
+            @RequestBody ChatRequestDto request) {
+        if (!draftRoadmapManager.exists(sessionId)) {
+            throw new RuntimeException("Draft not found or expired: " + sessionId);
+        }
+        log.info("Edit Draft - Session: {}, Message: {}", sessionId, request.getMessage());
+        String editResult = roadmapEditorAgent.processEditRequest(
+                request.getMessage(), sessionId,
+                request.getConversationId() != null ? request.getConversationId() : sessionId
+        );
+        RoadmapNode updatedRoot = draftRoadmapManager.getDraft(sessionId).getRootNode();
+        ChatResponseDto response = ChatResponseDto.builder()
+                .action(ChatResponseDto.ActionType.EDIT_ROADMAP)
+                .message(editResult)
+                .data(java.util.Map.of(
+                        "sessionId", sessionId,
+                        "roadmapTree", updatedRoot
+                ))
+                .build();
+        return ApiResponse.buildSuccessResponse(response, SuccessCode.CHAT_PROCESS_SUCCESSFUL);
+    }
+
+    /**
+     * API ADMIN: Quickly create routes (Skip the chat step).
+     * Logic: Call to create Draft -> Get SessionId -> Call Confirm immediately.
      */
     @PostMapping("/generate")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
-    public ResponseEntity<?> generateRoadmap(
+    public ApiResponse<RoadmapNodeResponse> generateRoadmapQuickly(
             @RequestParam String topic,
             @RequestParam Long positionId,
             @RequestParam Long batchId,
             @RequestParam(required = false, defaultValue = "3 tháng") String duration
     ) {
+        log.info("Admin Quick Generate: Topic={}, Duration={}", topic, duration);
+        DraftRoadmapResponseDto draft = roadmapGeneratorService.generateOutline(
+                topic, duration, "Admin generated via Quick Tool", positionId, batchId, null
+        );
         try {
-            String notes = "Thời gian đào tạo: " + duration;
-            RoadmapNode rootNode = roadmapGeneratorService.generateAndSaveRoadmap(topic, notes, positionId, batchId);
-            return ResponseEntity.ok()
-                    .body("Tạo lộ trình thành công! Root Node ID: " + rootNode.getId());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi logic: " + e.getMessage());
+            RoadmapNode savedRoadmap = roadmapGeneratorService.confirmAndSaveDraft(draft.sessionId());
+            RoadmapNodeResponse response = RoadmapNodeResponse.toRoadmapResponse(savedRoadmap);
+            return ApiResponse.buildSuccessResponse(response, SuccessCode.CREATE_ROADMAP_SUCCESSFUL);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Lỗi hệ thống: " + e.getMessage());
+            // Cleanup draft if save fails
+            draftRoadmapManager.removeDraft(draft.sessionId());
+            throw e;
         }
+    }
+
+    /**
+     * Debug: View a list of existing drafts in RAM.
+     */
+    @GetMapping("/drafts/debug")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<?> listAllDrafts() {
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.listAllDrafts(),
+                SuccessCode.GET_SUCCESSFUL_DRAFTS
+        );
+    }
+
+    @GetMapping("/list")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<PageResponse<RoadmapNodeResponse>> getAllRoadmaps(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.getAllRoadmaps(pageRequest),
+                SuccessCode.GET_ALL_ROADMAPS_SUCCESSFUL
+        );
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<RoadmapNodeResponse> getRoadmapById(@PathVariable Long id) {
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.getRoadmapById(id),
+                SuccessCode.GET_ROADMAP_SUCCESSFUL
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<?> deleteRoadmapById(@PathVariable Long id) {
+        roadmapGeneratorService.deleteRoadmapById(id);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_ROADMAP_SUCCESSFUL);
     }
 }

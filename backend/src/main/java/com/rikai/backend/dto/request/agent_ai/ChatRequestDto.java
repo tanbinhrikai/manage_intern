@@ -14,5 +14,7 @@ public class ChatRequestDto {
     Long positionId;
     String duration;
     Long batchId;
+    String sessionId; // For draft roadmap expansion
+    String conversationId; // For per-user chat memory isolation
 
 }

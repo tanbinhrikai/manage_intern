@@ -14,6 +14,7 @@ public class ChatResponseDto {
         NORMAL_CHAT,
         SELECT_POSITION,
         SELECT_DURATION,
-        DISPLAY_ROADMAP
+        DISPLAY_ROADMAP,
+        EDIT_ROADMAP
     }
 }

@@ -95,7 +95,16 @@ public enum SuccessCode {
     
     // Dashboard success codes
     GET_RECENT_ACTIVITIES_SUCCESSFUL("Get recent activities successful", HttpStatus.OK),
-    ;
+
+    GET_SUCCESSFUL_DRAFTS("Get successful drafts", HttpStatus.OK),
+    CREATE_ROADMAP_SUCCESSFUL("Create roadmap successful", HttpStatus.CREATED),
+
+    CHAT_PROCESS_SUCCESSFUL("Chat process successful", HttpStatus.OK),
+
+
+    GET_ALL_ROADMAPS_SUCCESSFUL("Get all roadmaps successful", HttpStatus.OK),
+    GET_ROADMAP_SUCCESSFUL("Get roadmap successful", HttpStatus.OK),
+    DELETE_ROADMAP_SUCCESSFUL("Delete roadmap successful", HttpStatus.OK);
 
     SuccessCode(String message, HttpStatusCode statusCode) {
         this.message = message;

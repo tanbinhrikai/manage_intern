@@ -40,6 +40,7 @@ const menuGroups = [
       { key: "departments", path: "/admin/departments" },
       { key: "positions", path: "/admin/positions" },
       { key: "batches", path: "/admin/batches" },
+      { key: "roadmapBuilder", path: "/admin/roadmaps/builder" },
     ],
   },
   {
@@ -113,7 +114,7 @@ watch(
     </div>
 
     <nav class="sidebar-nav">
-      <template v-for="group in menuGroups" :key="group.key">
+      <div v-for="group in menuGroups" :key="group.key">
         <router-link
           v-if="group.type === 'link'"
           :to="group.path"
@@ -240,7 +241,7 @@ watch(
             </router-link>
           </div>
         </div>
-      </template>
+      </div>
     </nav>
   </aside>
 </template>

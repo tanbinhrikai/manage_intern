@@ -71,7 +71,6 @@ public class InternService implements IInternService {
                 throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
             }
         }
-
         Page<Intern> internPage = internRepository
                 .getAllInternByKeyword(pageRequest, keywordValue, internStatus, startDate, endDate, positionId,
                         mentorId);
@@ -93,9 +92,7 @@ public class InternService implements IInternService {
         Position position = getPosition(request.getPositionId());
         Users mentor = getMentor(request.getMentorId());
         InternshipBatch internshipBatch = getBatch(request.getInternshipBatchId());
-
         Intern intern = internMapper.toIntern(request);
-
         String uniqueEmail = AutoGenerateEmail.generateUniqueEmail(
                 request.getFullName(),
                 internRepository::existsByEmail);
@@ -104,7 +101,6 @@ public class InternService implements IInternService {
         intern.setPosition(position);
         intern.setMentor(mentor);
         intern.setInternshipBatch(internshipBatch);
-
         Intern saved = internRepository.save(intern);
         return internMapper.toInternResponse(saved);
     }
@@ -112,33 +108,23 @@ public class InternService implements IInternService {
     @Override
     @Transactional
     public InternResponse updateIntern(Long id, InternUpdateRequest request) {
-
         Intern intern = internRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
-
         validateDateRange(request.getStartDate(), request.getEndDate());
-
         Position position = getPosition(request.getPositionId());
         Users mentor = getMentor(request.getMentorId());
-
-        // Only update batch if provided
         if (request.getInternShipBatchId() != null) {
             InternshipBatch batch = getBatch(request.getInternShipBatchId());
             intern.setInternshipBatch(batch);
         }
-
         intern.setFullName(request.getFullName());
         intern.setPosition(position);
         intern.setMentor(mentor);
         intern.setStartDate(request.getStartDate());
         intern.setEndDate(request.getEndDate());
         intern.setInternStatus(request.getInternStatus());
-
         Intern saved = internRepository.save(intern);
-
-        // Publish event để DashboardService có thể bắt được
         eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
-
         return internMapper.toInternResponse(saved);
     }
 
@@ -147,41 +133,30 @@ public class InternService implements IInternService {
     public void deleteIntern(Long id) {
         Intern intern = internRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
-
-        // Lưu thông tin trước khi delete để publish event
         Long internId = intern.getId();
         String internName = intern.getFullName();
-
         intern.setInternStatus(InternStatus.DROPPED);
         internRepository.save(intern);
-
-        // Publish event sau khi delete (soft delete)
         eventPublisher.publishEvent(new InternDeletedEvent(this, internId, internName));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<InternResponse> getInternsByMentor(UUID mentorId, Pageable pageable) {
-
         if (!usersRepository.existsById(mentorId)) {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
         }
-
         Page<Intern> internPage = internRepository.findByMentor_Id(mentorId, pageable);
-
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<InternResponse> getInternsByPositionId(Long positionId, Pageable pageable) {
-
         if (!positionRepository.existsById(positionId)) {
             throw new AppException(ErrorCode.POSITION_NOT_EXISTED);
         }
-
         Page<Intern> internPage = internRepository.findByPosition_Id(positionId, pageable);
-
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -199,7 +174,6 @@ public class InternService implements IInternService {
         if (!usersRepository.existsById(mentorId)) {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
         }
-
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         InternStatus internStatus = null;
         if (status != null && !status.trim().isEmpty()) {
@@ -219,9 +193,7 @@ public class InternService implements IInternService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<InternResponse> getInternsByStatus(InternStatus status, Pageable pageable) {
-
         Page<Intern> internPage = internRepository.findByInternStatus(status, pageable);
-
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -234,7 +206,6 @@ public class InternService implements IInternService {
         }
         LocalDate today = LocalDate.now();
         LocalDate weekStartDate = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-
         Page<Intern> internPage;
         if ("ADMIN".equals(currentUser.getRole().getRoleName())) {
             internPage = internRepository.findAllInternsNotEvaluatedThisWeek(weekStartDate, pageable);
@@ -242,7 +213,6 @@ public class InternService implements IInternService {
             UUID mentorId = currentUser.getId();
             internPage = internRepository.findInternsNotEvaluatedThisWeekByMentor(mentorId, weekStartDate, pageable);
         }
-
         return PageResponse.fromPage(internPage.map(internMapper::toInternResponse));
     }
 
@@ -255,7 +225,6 @@ public class InternService implements IInternService {
         long warningInterns = internRepository.countByInternStatus(InternStatus.WARNING);
         long droppedInterns = internRepository.countByInternStatus(InternStatus.DROPPED);
         long completedInterns = internRepository.countByInternStatus(InternStatus.COMPLETED);
-
         return InternAnalysisResponse.builder()
                 .totalInterns(totalInterns)
                 .totalMentors(totalMentors)
@@ -330,17 +299,14 @@ public class InternService implements IInternService {
         if (internIds == null || internIds.isEmpty()) {
             return;
         }
-
         validateDateRange(request.getStartDate(), request.getEndDate());
         Position position = getPosition(request.getPositionId());
         Users mentor = getMentor(request.getMentorId());
         InternshipBatch batch = getBatch(request.getInternShipBatchId());
-
         List<Intern> interns = internRepository.findAllById(internIds);
         if (interns.isEmpty()) {
             throw new AppException(ErrorCode.INTERN_NOT_EXISTED);
         }
-
         for (Intern intern : interns) {
             intern.setFullName(request.getFullName());
             intern.setPosition(position);
@@ -350,7 +316,6 @@ public class InternService implements IInternService {
             intern.setEndDate(request.getEndDate());
             intern.setInternStatus(request.getInternStatus());
         }
-
         internRepository.saveAll(interns);
     }
 
@@ -360,16 +325,13 @@ public class InternService implements IInternService {
         if (internIds == null || internIds.isEmpty()) {
             return;
         }
-
         List<Intern> interns = internRepository.findAllById(internIds);
         if (interns.isEmpty()) {
             throw new AppException(ErrorCode.INTERN_NOT_EXISTED);
         }
-
         for (Intern intern : interns) {
             intern.setInternStatus(InternStatus.DROPPED);
         }
-
         internRepository.saveAll(interns);
     }
 

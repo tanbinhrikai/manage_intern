@@ -1,49 +1,62 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
-import { Search, View, Delete, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
-import { useLocaleStore } from '@/locales/locale'
-import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
-import { useRouter } from 'vue-router'
-import { getMyReports, deleteWeeklyReport } from '@/api/weekly-report'
-import { getMyIntern } from '@/api/intern'
-import { usePagination, useLoading, useApi, useDateFormat, useConfirm, useDialog } from '@/composables'
-import { ElMessage as message } from 'element-plus'
+import { ref, computed, onMounted, watch } from "vue";
+import {
+  Search,
+  View,
+  Delete,
+  ArrowDown,
+  ArrowUp,
+} from "@element-plus/icons-vue";
+import { useLocaleStore } from "@/locales/locale";
+import MentorLayout from "@/layouts/dashboard/MentorLayout.vue";
+import { useRouter } from "vue-router";
+import { getMyReports, deleteWeeklyReport } from "@/api/weekly-report";
+import { getMyIntern } from "@/api/intern";
+import {
+  usePagination,
+  useLoading,
+  useApi,
+  useDateFormat,
+  useConfirm,
+  useDialog,
+} from "@/composables";
+import { ElMessage as message } from "element-plus";
 
-const router = useRouter()
-const localeStore = useLocaleStore()
-const t = computed(() => localeStore.t)
+const router = useRouter();
+const localeStore = useLocaleStore();
+const t = computed(() => localeStore.t);
 
 // Composables
 const pagination = usePagination({
   initialPage: 1,
   initialPageSize: 10,
-  onPageChange: () => fetchReports()
-})
+  onPageChange: () => fetchReports(),
+});
 
-const { loading, withLoading } = useLoading()
+const { loading, withLoading } = useLoading();
 const { execute: executeApi } = useApi({
   showErrorMessage: true,
-  showSuccessMessage: false
-})
-const { formatDate } = useDateFormat()
-const { showConfirm } = useConfirm()
+  showSuccessMessage: false,
+});
+const { formatDate } = useDateFormat();
+const { showConfirm } = useConfirm();
 
 // Data
-const reports = ref([])
-const interns = ref([])
+const reports = ref([]);
+const interns = ref([]);
 
 // Filters
-const showFilters = ref(false)
-const selectedIntern = ref(null)
-const startDate = ref(null)
-const endDate = ref(null)
+const showFilters = ref(false);
+const selectedIntern = ref(null);
+const startDate = ref(null);
+const endDate = ref(null);
 
 /**
  * Fetch interns for filter dropdown
  */
 async function fetchInterns() {
-  const res = await executeApi(() => getMyIntern({ limit: 100 }))
-  interns.value = res.data?.data?.items || []
+  const res = await executeApi(() => getMyIntern({ limit: 100 }));
+  interns.value = res.data?.data?.items || [];
 }
 
 /**
@@ -55,43 +68,45 @@ async function fetchReports() {
       ...pagination.apiParams.value,
       intern_id: selectedIntern.value || undefined,
       start_date: startDate.value || undefined,
-      end_date: endDate.value || undefined
-    }
-    
+      end_date: endDate.value || undefined,
+    };
+
     const res = await executeApi(
       () => getMyReports(params),
       null,
-      'weeklyReport.messages.loadError'
-    )
-    
-    reports.value = res.data?.data?.items || []
-    pagination.setTotalItems(res.data?.data?.totalItems || 0)
-  })
+      "weeklyReport.messages.loadError"
+    );
+
+    reports.value = res.data?.data?.items || [];
+    pagination.setTotalItems(res.data?.data?.totalItems || 0);
+  });
 }
 
 /**
  * Handle filter change
  */
 function handleSearch() {
-  pagination.firstPage()
-  fetchReports()
+  pagination.firstPage();
+  fetchReports();
 }
 
 /**
  * Clear all filters
  */
 function clearFilters() {
-  selectedIntern.value = null
-  startDate.value = null
-  endDate.value = null
-  handleSearch()
+  selectedIntern.value = null;
+  startDate.value = null;
+  endDate.value = null;
+  handleSearch();
 }
 
 /**
  * Navigate to report detail
  */
 function viewReport(report) {
-  router.push(`/mentor/my-interns/${report.internId}/edit?tab=reports&reportId=${report.id}`)
+  router.push(
+    `/mentor/my-interns/${report.internId}/edit?tab=reports&reportId=${report.id}`
+  );
 }
 
 /**
@@ -99,16 +114,16 @@ function viewReport(report) {
  */
 async function handleDelete(report) {
   const confirmed = await showConfirm(
-    t.value('common.confirm.delete'),
-    t.value('common.confirm.title'),
-    'warning'
-  )
-  
+    t.value("common.confirm.delete"),
+    t.value("common.confirm.title"),
+    "warning"
+  );
+
   if (confirmed) {
-    const res = await executeApi(() => deleteWeeklyReport(report.id))
+    const res = await executeApi(() => deleteWeeklyReport(report.id));
     if (res.data?.success) {
-      message.success(t.value('weeklyReport.messages.deleteSuccess'))
-      fetchReports()
+      message.success(t.value("weeklyReport.messages.deleteSuccess"));
+      fetchReports();
     }
   }
 }
@@ -118,7 +133,7 @@ async function handleDelete(report) {
  */
 function createReport() {
   if (interns.value.length > 0) {
-    router.push(`/mentor/my-interns/${interns.value[0].id}/edit?tab=reports`)
+    router.push(`/mentor/my-interns/${interns.value[0].id}/edit?tab=reports`);
   }
 }
 
@@ -126,14 +141,14 @@ function createReport() {
  * Handle pagination page change
  */
 function handlePageChange(page) {
-  pagination.setPage(page)
+  pagination.setPage(page);
 }
 
 // Fetch data on mount
 onMounted(() => {
-  fetchInterns()
-  fetchReports()
-})
+  fetchInterns();
+  fetchReports();
+});
 </script>
 
 <template>
@@ -142,7 +157,7 @@ onMounted(() => {
       <el-card class="main-card" shadow="never">
         <template #header>
           <div class="card-header">
-            <h2 class="page-title">{{ t('myReports.title') }}</h2>
+            <h2 class="page-title">{{ t("myReports.title") }}</h2>
           </div>
         </template>
 
@@ -163,13 +178,17 @@ onMounted(() => {
                 :value="intern.id"
               />
             </el-select>
-            <el-button 
-              type="info" 
+            <el-button
+              type="info"
               plain
               :icon="showFilters ? ArrowUp : ArrowDown"
               @click="showFilters = !showFilters"
             >
-              {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+              {{
+                showFilters
+                  ? t("internManagement.hideFilters")
+                  : t("internManagement.moreFilters")
+              }}
             </el-button>
           </div>
         </div>
@@ -208,74 +227,74 @@ onMounted(() => {
           </div>
         </el-collapse-transition>
 
-        <el-table 
-          :data="reports" 
-          stripe 
+        <el-table
+          :data="reports"
+          stripe
           style="width: 100%"
           v-loading="loading"
         >
-          <el-table-column 
-            prop="internName" 
-            :label="t('myReports.table.internName')" 
-            min-width="150" 
+          <el-table-column
+            prop="internName"
+            :label="t('myReports.table.internName')"
+            min-width="150"
           />
-          <el-table-column 
-            :label="t('myReports.table.weekStartDate')" 
+          <el-table-column
+            :label="t('myReports.table.weekStartDate')"
             min-width="120"
           >
             <template #default="scope">
               {{ formatDate(scope.row.weekStartDate) }}
             </template>
           </el-table-column>
-          <el-table-column 
+          <el-table-column
             prop="weekNumber"
-            :label="t('myReports.table.weekNumber')" 
+            :label="t('myReports.table.weekNumber')"
             min-width="80"
             align="center"
           >
             <template #default="scope">
               <el-tag type="info" size="small">
-                {{ t('mentorDashboard.week') }} {{ scope.row.weekNumber }}
+                {{ t("mentorDashboard.week") }} {{ scope.row.weekNumber }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('myReports.table.averageScore')" 
+          <el-table-column
+            :label="t('myReports.table.averageScore')"
             min-width="100"
             align="center"
           >
             <template #default="scope">
               <span :class="getScoreClass(scope.row.averageScore)">
-                {{ scope.row.averageScore?.toFixed(1) || '-' }}
+                {{ scope.row.averageScore?.toFixed(1) || "-" }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('myReports.table.createdAt')" 
+          <el-table-column
+            :label="t('myReports.table.createdAt')"
             min-width="120"
           >
             <template #default="scope">
               {{ formatDate(scope.row.createdAt) }}
             </template>
           </el-table-column>
-          <el-table-column 
-            :label="t('common.actions')" 
-            min-width="120" 
-            fixed="right" 
+          <el-table-column
+            :label="t('common.actions')"
+            min-width="120"
+            fixed="right"
             align="center"
           >
             <template #default="scope">
-              <el-button 
-                type="primary" 
-                :icon="View" 
-                size="small" 
+              <el-button
+                type="primary"
+                :icon="View"
+                size="small"
                 circle
                 @click="viewReport(scope.row)"
               />
-              <el-button 
-                type="danger" 
-                :icon="Delete" 
-                size="small" 
+              <el-button
+                type="danger"
+                :icon="Delete"
+                size="small"
                 circle
                 @click="handleDelete(scope.row)"
               />
@@ -302,14 +321,14 @@ onMounted(() => {
 export default {
   methods: {
     getScoreClass(score) {
-      if (!score) return ''
-      if (score >= 8) return 'score-excellent'
-      if (score >= 6) return 'score-good'
-      if (score >= 4) return 'score-average'
-      return 'score-weak'
-    }
-  }
-}
+      if (!score) return "";
+      if (score >= 8) return "score-excellent";
+      if (score >= 6) return "score-good";
+      if (score >= 4) return "score-average";
+      return "score-weak";
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -413,11 +432,15 @@ export default {
   color: #374151;
 }
 
+:deep(.el-select__placeholder) {
+  z-index: 1;
+}
+
 @media (max-width: 768px) {
   .filter-select {
     width: 100%;
   }
-  
+
   .filter-group {
     flex-direction: column;
   }

@@ -77,6 +77,10 @@ public class RoadmapNode {
     @Column(name = "difficulty")
     DifficultyLevel difficulty;
 
+    @Column(name = "is_expanded")
+    @Builder.Default
+    Boolean isExpanded = false;
+
     @ManyToMany
     @JoinTable(
             name = "roadmap_node_tags",
