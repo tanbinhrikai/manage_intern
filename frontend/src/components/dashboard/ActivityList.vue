@@ -12,7 +12,8 @@ const getIconClass = (type) => {
     evaluation: 'icon-green',
     warning: 'icon-yellow',
     system: 'icon-purple',
-    completed: 'icon-cyan'
+    completed: 'icon-cyan',
+    status_change: 'icon-purple'
   }
   return types[type] || 'icon-blue'
 }
@@ -37,6 +38,9 @@ const getIconClass = (type) => {
         <svg v-else-if="activity.type === 'completed'" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
         </svg>
+        <svg v-else-if="activity.type === 'status_change'" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+        </svg>
       </div>
       <div class="activity-content">
         <p class="activity-text" v-html="activity.text"></p>
@@ -55,7 +59,7 @@ const getIconClass = (type) => {
 
 .activity-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
 }
 

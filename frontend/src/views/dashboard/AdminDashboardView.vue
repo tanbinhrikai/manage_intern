@@ -1,417 +1,499 @@
 <script setup>
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useLocaleStore } from '@/locales/locale'
-import AdminLayout from '@/layouts/dashboard/AdminLayout.vue'
-import MentorLayout from '@/layouts/dashboard/MentorLayout.vue'
-import StatCard from '@/components/dashboard/StatCard.vue'
-import DonutChart from '@/components/dashboard/DonutChart.vue'
-import ActivityList from '@/components/dashboard/ActivityList.vue'
+import { computed, ref, onMounted } from "vue";
+import { useLocaleStore } from "@/locales/locale";
+import { Bell, Timer } from "@element-plus/icons-vue";
+import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
+import StatCard from "@/components/dashboard/StatCard.vue";
+import DonutChart from "@/components/dashboard/DonutChart.vue";
+import BarChart from "@/components/dashboard/BarChart.vue";
+import ActivityList from "@/components/dashboard/ActivityList.vue";
+import BatchScoreChart from "@/components/dashboard/BatchScoreChart.vue";
+import { getInternsAnalysis } from "@/api/intern";
+import {
+  getRecentActivities,
+  getInternsByDepartment,
+  getInternsByPosition,
+} from "@/api/dashboard";
+import { useLoading, useApi } from "@/composables";
 
-const authStore = useAuthStore()
-const localeStore = useLocaleStore()
-const t = computed(() => localeStore.t)
+const localeStore = useLocaleStore();
+const t = computed(() => localeStore.t);
 
-const isMentor = computed(() => authStore.userRole === 'MENTOR')
+const { loading, withLoading } = useLoading();
+const { execute: executeApi } = useApi({
+  showErrorMessage: false,
+});
 
-const stats = [
-  { key: 'totalInterns', value: 150, icon: 'users', color: 'blue' },
-  { key: 'internsActive', value: 120, icon: 'active', color: 'green' },
-  { key: 'internsWarning', value: 10, icon: 'warning', color: 'yellow' },
-  { key: 'totalMentors', value: 30, icon: 'mentor', color: 'purple' }
-]
+const analysisData = ref({
+  totalInterns: 0,
+  totalMentors: 0,
+  activeInterns: 0,
+  warningInterns: 0,
+  droppedInterns: 0,
+  completedInterns: 0,
+});
 
-const chartData = [
-  { label: 'Active', value: 120, color: '#3b82f6' },
-  { label: 'Probation', value: 10, color: '#84cc16' },
-  { label: 'Warning', value: 15, color: '#f59e0b' },
-  { label: 'Completed', value: 5, color: '#22c55e' }
-]
-
-const activities = computed(() => [
+const stats = computed(() => [
+  // {
+  //   key: "totalInterns",
+  //   value: analysisData.value.totalInterns,
+  //   icon: "users",
+  //   color: "blue",
+  // },
   {
-    type: 'new',
-    text: '<strong>Nguyen Thi A</strong> was added',
-    time: t.value('dashboard.timeAgo.minutesAgo').replace('{n}', '5')
+    key: "internsActive",
+    value: analysisData.value.activeInterns,
+    icon: "active",
+    color: "green",
   },
   {
-    type: 'evaluation',
-    text: 'Mentor <strong>Tran Van B</strong> completed weekly evaluation for <strong>Le Van C</strong>',
-    time: t.value('dashboard.timeAgo.minutesAgo').replace('{n}', '30')
+    key: "internsWarning",
+    value: analysisData.value.warningInterns,
+    icon: "warning",
+    color: "yellow",
+  },
+  // {
+  //   key: "internsCompleted",
+  //   value: analysisData.value.completedInterns,
+  //   icon: "completed",
+  //   color: "teal",
+  // },
+  {
+    key: "internsDropped",
+    value: analysisData.value.droppedInterns,
+    icon: "dropped",
+    color: "red",
   },
   {
-    type: 'warning',
-    text: 'Status of <strong>Pham Thi D</strong> changed to <strong>Warning</strong>',
-    time: t.value('dashboard.timeAgo.hourAgo')
+    key: "totalMentors",
+    value: analysisData.value.totalMentors,
+    icon: "mentor",
+    color: "purple",
   },
-  {
-    type: 'system',
-    text: 'Admin updated system configuration',
-    time: t.value('dashboard.timeAgo.yesterday')
-  },
-  {
-    type: 'completed',
-    text: '<strong>Hoang Van E</strong> completed internship program',
-    time: t.value('dashboard.timeAgo.daysAgo').replace('{n}', '2')
-  }
-])
+]);
 
-const internsNeedEvaluation = [
-  { name: 'Le Thi C', position: 'Backend Developer', deadline: 3 },
-  { name: 'Nguyen Van D', position: 'Frontend Developer', deadline: 3 },
-  { name: 'Pham Thi E', position: 'Marketing Specialist', deadline: 3 },
-  { name: 'Hoang Minh F', position: 'Data Analyst', deadline: 4 }
-]
+const totalInterns = computed(() => analysisData.value.totalInterns || 0);
 
-const evaluationProgress = {
-  completed: 8,
-  total: 10
+const chartData = computed(() => [
+  {
+    label: t.value("internManagement.status.ACTIVE"),
+    value: analysisData.value.activeInterns,
+    color: "#3b82f6",
+  },
+  {
+    label: t.value("internManagement.status.WARNING"),
+    value: analysisData.value.warningInterns,
+    color: "#f59e0b",
+  },
+  {
+    label: t.value("internManagement.status.DROPPED"),
+    value: analysisData.value.droppedInterns,
+    color: "#ef4444",
+  },
+  // {
+  //   label: t.value("internManagement.status.COMPLETE"),
+  //   value: analysisData.value.completedInterns,
+  //   color: "#22c55e",
+  // },
+]);
+
+async function fetchAnalysis() {
+  await withLoading(async () => {
+    const res = await executeApi(() => getInternsAnalysis());
+    if (res.data?.data) {
+      analysisData.value = res.data.data;
+    }
+  });
 }
 
-const progressPercentage = computed(() => {
-  return (evaluationProgress.completed / evaluationProgress.total) * 100
-})
+const activities = ref([]);
+const internsByDepartment = ref([]);
+const internsByPosition = ref([]);
 
-const internsUnderSupervision = [
-  { name: 'Le Thi C', position: 'Backend Developer', status: 'active', week: 3, totalWeeks: 12 },
-  { name: 'Nguyen Van D', position: 'Frontend Developer', status: 'active', week: 3, totalWeeks: 12 },
-  { name: 'Pham Thi E', position: 'Marketing Specialist', status: 'active', week: 3, totalWeeks: 8 },
-  { name: 'Hoang Minh F', position: 'Data Analyst', status: 'active', week: 2, totalWeeks: 10 }
-]
+function formatTimeAgo(timestamp) {
+  if (!timestamp) return "";
+  const time = new Date(timestamp);
+  if (isNaN(time.getTime())) return "";
+
+  const now = new Date();
+  let diffMs = now.getTime() - time.getTime();
+  diffMs = Math.abs(diffMs);
+
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffSecs < 60) return t.value("dashboard.timeAgo.justNow") || "Just now";
+  if (diffMins < 60)
+    return t
+      .value("dashboard.timeAgo.minutesAgo")
+      .replace("{n}", diffMins.toString());
+  if (diffHours < 24) {
+    return diffHours === 1
+      ? t.value("dashboard.timeAgo.hourAgo")
+      : t
+          .value("dashboard.timeAgo.hoursAgo")
+          ?.replace("{n}", diffHours.toString()) || `${diffHours} hours ago`;
+  }
+  if (diffDays === 1) return t.value("dashboard.timeAgo.yesterday");
+  if (diffDays < 7)
+    return t
+      .value("dashboard.timeAgo.daysAgo")
+      .replace("{n}", diffDays.toString());
+  return time.toLocaleDateString();
+}
+
+const formattedActivities = computed(() => {
+  return activities.value.map((activity) => ({
+    ...activity,
+    time: formatTimeAgo(activity.timestamp),
+  }));
+});
+
+async function fetchActivities() {
+  await withLoading(async () => {
+    const res = await executeApi(() => getRecentActivities({ limit: 100 }));
+    if (res.data?.data) {
+      activities.value = res.data.data;
+    }
+  });
+}
+
+async function fetchChartData() {
+  await withLoading(async () => {
+    const [deptRes, posRes] = await Promise.all([
+      executeApi(() => getInternsByDepartment()),
+      executeApi(() => getInternsByPosition()),
+    ]);
+    if (deptRes.data?.data?.items)
+      internsByDepartment.value = deptRes.data.data.items;
+    if (posRes.data?.data?.items)
+      internsByPosition.value = posRes.data.data.items;
+  });
+}
+
+onMounted(() => {
+  fetchAnalysis();
+  fetchActivities();
+  fetchChartData();
+});
 </script>
 
 <template>
-  <MentorLayout v-if="isMentor">
-    <div class="mentor-dashboard">
-      <h1 class="page-title">{{ t('mentorDashboard.title') }}</h1>
+  <AdminLayout>
+    <div class="dashboard-page" v-loading="loading">
+      <div class="header-section">
+        <h1 class="page-title">{{ t("dashboard.title") }}</h1>
+      </div>
 
-      <section class="section">
-        <h2 class="section-title">{{ t('mentorDashboard.internsNeedEvaluation') }}</h2>
-        <div class="intern-cards">
-          <div v-for="intern in internsNeedEvaluation" :key="intern.name" class="intern-card">
-            <h3 class="intern-name">{{ intern.name }}</h3>
-            <p class="intern-position">
-              {{ t('mentorDashboard.position') }}: <span class="position-value">{{ intern.position }}</span>
-            </p>
-            <p class="intern-deadline">
-              {{ t('mentorDashboard.deadline') }}: {{ t('mentorDashboard.week') }} {{ intern.deadline }}
-            </p>
-            <button class="submit-btn">{{ t('mentorDashboard.submitReport') }}</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2 class="section-title">{{ t('mentorDashboard.evaluationProgress') }}</h2>
-        <div class="progress-card">
-          <div class="progress-info">
-            {{ t('mentorDashboard.reportsCompleted').replace('{completed}', evaluationProgress.completed).replace('{total}', evaluationProgress.total) }}
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="section">
-        <h2 class="section-title">{{ t('mentorDashboard.internsUnderSupervision') }}</h2>
-        <div class="table-card">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t('mentorDashboard.table.fullName') }}</th>
-                <th>{{ t('mentorDashboard.table.position') }}</th>
-                <th>{{ t('mentorDashboard.table.status') }}</th>
-                <th>{{ t('mentorDashboard.table.internshipDuration') }}</th>
-                <th>{{ t('mentorDashboard.table.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="intern in internsUnderSupervision" :key="intern.name">
-                <td>{{ intern.name }}</td>
-                <td>{{ intern.position }}</td>
-                <td>
-                  <span :class="['status-badge', `status-${intern.status}`]">
-                    {{ t('mentorDashboard.status.' + intern.status) }}
-                  </span>
-                </td>
-                <td>{{ t('mentorDashboard.week') }} {{ intern.week }} / {{ intern.totalWeeks }}</td>
-                <td>
-                  <button class="action-btn">{{ t('mentorDashboard.table.viewDetails') }}</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  </MentorLayout>
-
-  <AdminLayout v-else>
-    <div class="dashboard-page">
-      <h1 class="page-title">{{ t('dashboard.title') }}</h1>
-
-      <div class="stats-grid">
-        <StatCard
+      <el-row :gutter="20" class="mb-4">
+        <el-col
+          :xs="12"
+          :sm="12"
+          :md="6"
           v-for="stat in stats"
           :key="stat.key"
-          :title="t('dashboard.' + stat.key)"
-          :value="stat.value"
-          :icon="stat.icon"
-          :color="stat.color"
-        />
-      </div>
+          class="mb-col"
+        >
+          <StatCard
+            :title="t('dashboard.' + stat.key)"
+            :value="stat.value"
+            :icon="stat.icon"
+            :color="stat.color"
+            class="stat-card-hover"
+          />
+        </el-col>
+      </el-row>
 
-      <div class="content-grid">
-        <div class="chart-card">
-          <h2 class="card-title">{{ t('dashboard.internsByStatus') }}</h2>
-          <DonutChart :data="chartData" />
-        </div>
+      <el-row :gutter="20" class="mb-4">
+        <el-col :span="24">
+          <el-card class="activity-card" shadow="hover">
+            <template #header>
+              <div class="activity-header">
+                <div class="header-left">
+                  <el-icon class="icon-bell"><Bell /></el-icon>
+                  <span class="card-title">{{
+                    t("dashboard.recentActivities")
+                  }}</span>
+                </div>
+                <el-tag size="small" effect="light" round
+                  >{{ activities.length }} new</el-tag
+                >
+              </div>
+            </template>
 
-        <div class="activity-card">
-          <h2 class="card-title">{{ t('dashboard.recentActivities') }}</h2>
-          <ActivityList :activities="activities" />
-        </div>
-      </div>
+            <div class="activity-scroll-area custom-scroll">
+              <ActivityList :activities="formattedActivities" />
+              <div v-if="activities.length === 0" class="empty-activity">
+                <el-icon :size="40" color="#e5e7eb"><Timer /></el-icon>
+                <p>No recent activities</p>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20" class="mb-4 equal-height-row">
+        <el-col :xs="24" :md="12" :lg="12" class="mb-col">
+          <el-card class="chart-card" shadow="hover">
+            <template #header
+              ><span class="card-title">{{
+                t("dashboard.internsByStatus")
+              }}</span></template
+            >
+            <div class="chart-container">
+              <DonutChart :data="chartData" :height="250" />
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :xs="24" :md="12" :lg="12" class="mb-col">
+          <el-card class="chart-card" shadow="hover">
+            <template #header
+              ><span class="card-title">{{
+                t("dashboard.internsByPosition")
+              }}</span></template
+            >
+            <div class="chart-container">
+              <BarChart
+                v-if="internsByPosition.length"
+                :data="internsByPosition"
+                :height="250"
+              />
+              <div v-else class="empty-chart">{{ t("dashboard.noData") }}</div>
+            </div>
+          </el-card>
+        </el-col>
+        <!-- <el-col :xs="24" :md="12" :lg="8" class="mb-col">
+          <el-card class="chart-card" shadow="hover">
+            <template #header
+              ><span class="card-title">{{
+                t("dashboard.internsByDepartment")
+              }}</span></template
+            >
+            <div class="chart-container">
+              <BarChart
+                v-if="internsByDepartment.length"
+                :data="internsByDepartment"
+                :height="250"
+              />
+              <div v-else class="empty-chart">{{ t("dashboard.noData") }}</div>
+            </div>
+          </el-card>
+        </el-col> -->
+      </el-row>
+
+      <!-- Batch Score Trend - Full Row with drill-down -->
+      <el-row :gutter="20" class="mb-4">
+        <el-col :xs="24" class="mb-col">
+          <el-card class="chart-card batch-score-card" shadow="hover">
+            <BatchScoreChart />
+          </el-card>
+        </el-col>
+      </el-row>
     </div>
   </AdminLayout>
 </template>
 
 <style scoped>
-.dashboard-page,
-.mentor-dashboard {
-  max-width: 1200px;
+.dashboard-page {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 10px 20px 10px;
+  font-family: "Inter", sans-serif;
 }
 
+.header-section {
+  margin-bottom: 20px;
+}
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 24px 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
+.stats-row {
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
-@media (max-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-@media (max-width: 1024px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.chart-card,
-.activity-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 24px;
-}
-
-.card-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 20px 0;
-}
-
-.section {
-  margin-bottom: 32px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 16px 0;
-}
-
-.intern-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 1200px) {
-  .intern-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .intern-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-.intern-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.intern-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 8px 0;
-}
-
-.intern-position {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 4px 0;
-}
-
-.position-value {
-  color: #2ecc71;
-  font-weight: 500;
-}
-
-.intern-deadline {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 16px 0;
-}
-
-.submit-btn {
-  width: 100%;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #ffffff;
-  background: #2ecc71;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.submit-btn:hover {
-  background: #27ae60;
-}
-
-.progress-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.progress-info {
-  font-size: 14px;
-  color: #374151;
+.stats-row .el-col {
+  display: flex;
   margin-bottom: 12px;
 }
 
-.progress-bar {
-  height: 12px;
-  background: #e5e7eb;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #2ecc71;
-  border-radius: 6px;
-  transition: width 0.3s;
-}
-
-.table-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.data-table {
+.stat-card-hover {
   width: 100%;
-  border-collapse: collapse;
+  height: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.data-table th,
-.data-table td {
-  padding: 14px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+.stat-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.data-table th {
-  background: #f9fafb;
-  font-size: 13px;
+.activity-card {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  height: auto;
+}
+
+.activity-card :deep(.el-card__header) {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.activity-card :deep(.el-card__body) {
+  padding: 0;
+}
+
+.activity-scroll-area {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px 20px;
+}
+
+.activity-scroll-area :deep(.activity-item) {
+  padding: 12px 0;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.icon-bell {
+  color: #f56c6c;
+  font-size: 18px;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.mb-4 {
+  margin-bottom: 24px;
+}
+.mb-col {
+  margin-bottom: 0;
+}
+
+.equal-height-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+.equal-height-row .el-col {
+  display: flex;
+}
+
+.chart-card {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s;
+}
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: #bfdbfe;
+}
+.chart-card :deep(.el-card__header) {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f9fafb;
+  background: #fff;
+}
+.chart-card :deep(.el-card__body) {
+  padding: 16px;
+  flex: 1;
+}
+
+.batch-score-card :deep(.el-card__body) {
+  padding: 20px;
+  min-height: 450px;
+}
+
+.card-title {
+  font-size: 15px;
   font-weight: 600;
-  color: #6b7280;
-}
-
-.data-table td {
-  font-size: 14px;
   color: #374151;
 }
-
-.data-table tbody tr:last-child td {
-  border-bottom: none;
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chart-container {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 4px;
-}
-
-.status-active {
-  background: #2ecc71;
-  color: #ffffff;
-}
-
-.status-warning {
-  background: #f59e0b;
-  color: #ffffff;
-}
-
-.status-completed {
-  background: #3b82f6;
-  color: #ffffff;
-}
-
-.action-btn {
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffffff;
-  background: #2c3e50;
-  border: none;
-  border-radius: 4px;
+.filter-link {
+  font-size: 12px;
+  color: #3b82f6;
   cursor: pointer;
-  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
-.action-btn:hover {
-  background: #34495e;
+.empty-chart {
+  font-size: 13px;
+  color: #9ca3af;
+  font-style: italic;
+}
+.empty-activity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  color: #9ca3af;
+  gap: 8px;
+}
+
+@media (max-width: 992px) {
+  .mb-col {
+    margin-bottom: 20px;
+  }
+  .equal-height-row {
+    display: block;
+  }
 }
 </style>

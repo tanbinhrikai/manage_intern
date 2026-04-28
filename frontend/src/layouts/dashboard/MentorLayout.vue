@@ -31,7 +31,7 @@ import MentorHeader from '@/components/layout/MentorHeader.vue'
 
 .main-content {
   flex: 1;
-  padding: 24px;
+  padding: 10px;
   overflow-y: auto;
 }
 </style>

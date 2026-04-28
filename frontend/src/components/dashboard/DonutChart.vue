@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 const props = defineProps({
   data: {
@@ -15,6 +15,10 @@ const total = computed(() => props.data.reduce((sum, item) => sum + item.value, 
 onMounted(() => {
   drawChart()
 })
+
+watch(() => props.data, () => {
+  drawChart()
+}, { deep: true })
 
 const drawChart = () => {
   const canvas = canvasRef.value

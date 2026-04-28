@@ -7,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Entity
 @Data
@@ -15,6 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "roles")
 public class Roles {
     @Id
     @Column(name = "role_name", nullable = false)
@@ -22,7 +22,4 @@ public class Roles {
 
     @Column(name = "description")
     String description;
-
-    @OneToMany(mappedBy = "role")
-    Set<Users> users;
 }

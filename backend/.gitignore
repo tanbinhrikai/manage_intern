@@ -1,7 +1,11 @@
 HELP.md
 .gradle
 .env
+db.sql
+docker-compose.yml
 build/
+skills
+.cursorrules
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -36,3 +40,10 @@ out/
 
 ### VS Code ###
 .vscode/
+application-local.yml
+*.bak
+.history/
+Hệ thống quản lý Intern.md
+TỔNG QUAN KIẾN TRÚC MODULE.md
+Schedule Feature.csv
+POSTMAN_TEST_GUIDE.md

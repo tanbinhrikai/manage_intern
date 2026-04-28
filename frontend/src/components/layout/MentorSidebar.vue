@@ -2,19 +2,31 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useLocaleStore } from '@/locales/locale'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const localeStore = useLocaleStore()
+const authStore = useAuthStore()
 const t = computed(() => localeStore.t)
 
 const menuItems = [
-  { key: 'dashboard', path: '/dashboard', icon: 'dashboard' },
-  { key: 'myInterns', path: '/my-interns', icon: 'interns' },
-  { key: 'reports', path: '/reports', icon: 'reports' },
-  { key: 'settings', path: '/settings', icon: 'settings' }
+  { key: 'dashboard', path: '/mentor/dashboard', icon: 'dashboard' },
+  { key: 'myInterns', path: '/mentor/my-interns', icon: 'interns' },
+  { key: 'roadmapBuilder', path: '/mentor/roadmaps/builder', icon: 'reports' },
+  { key: 'reports', path: '/mentor/my-reports', icon: 'reports' },
+  { key: 'settings', path: '/mentor/settings', icon: 'settings' }
 ]
 
-const isActive = (path) => route.path === path
+const isActive = (path) => route.path === path || route.path.startsWith(path + '/')
+
+const userInitials = computed(() => {
+  const name = authStore.user?.fullName || 'MN'
+  const parts = name.split(' ')
+  if (parts.length >= 2) {
+    return parts[0][0] + parts[parts.length - 1][0]
+  }
+  return name.substring(0, 2).toUpperCase()
+})
 </script>
 
 <template>
@@ -30,9 +42,10 @@ const isActive = (path) => route.path === path
         :class="['nav-item', { active: isActive(item.path) }]"
       >
         <svg v-if="item.icon === 'dashboard'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 16v-4"/>
-          <path d="M12 8h.01"/>
+          <rect x="3" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="14" y="14" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
         </svg>
         <svg v-else-if="item.icon === 'interns'" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -59,56 +72,109 @@ const isActive = (path) => route.path === path
 
 <style scoped>
 .sidebar {
-  width: 200px;
+  width: 220px;
   min-height: 100vh;
-  background: #2c3e50;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  border-right: 1px solid #e2e8f0;
 }
 
 .sidebar-header {
-  padding: 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px 20px;
 }
 
 .brand-name {
-  font-family: 'Georgia', serif;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
   font-style: italic;
   font-size: 22px;
-  color: #ffffff;
+  color: #3b82f6;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  padding: 12px 0;
+  padding: 8px 12px;
+  gap: 4px;
+  flex: 1;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
-  color: rgba(255, 255, 255, 0.7);
+  padding: 12px 16px;
+  color: #64748b;
   text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
+  background: #f1f5f9;
+  color: #334155;
 }
 
 .nav-item.active {
-  background: #2ecc71;
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+.nav-item.active .nav-icon {
   color: #ffffff;
 }
 
 .nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+  color: inherit;
+}
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #64748b;
 }
 </style>
