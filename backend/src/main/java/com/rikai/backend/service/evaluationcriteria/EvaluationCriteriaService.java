@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,17 +39,15 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     @Override
     @Transactional(readOnly = true)
     public List<CriteriaGroupResponse> getAllCriteriaHierarchy() {
-        List<CriteriaGroup> groups = criteriaGroupRepository.findAll(Sort.by("displayOrder"));
+        List<CriteriaGroup> groups = criteriaGroupRepository.findAll();
         List<CriteriaGroupResponse> result = new ArrayList<>();
 
         for (CriteriaGroup group : groups) {
-            var mainCriteriaList = evaluationCriteriaRepository
-                    .findMainCriteriaByGroupId(group.getId());
+            var mainCriteriaList = evaluationCriteriaRepository.findMainCriteriaByGroupId(group.getId());
 
             var mainCriteriaResponses = mainCriteriaList.stream()
                     .map(mc -> {
-                        List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository
-                                .findSubCriteriaByParentId(mc.getId());
+                        List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository.findSubCriteriaByParentId(mc.getId());
 
                         var response = evaluationCriteriaMapper.toResponse(mc);
                         response.setChildren(subCriteria.stream()
@@ -57,6 +56,7 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
                         return response;
                     })
                     .toList();
+
             result.add(CriteriaGroupResponse.builder()
                     .id(group.getId())
                     .name(group.getName())
@@ -72,10 +72,9 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<EvaluationCriteriaResponse> getAllMainCriteria() {
         log.info("Getting all main criteria");
         List<EvaluationCriteria> mainCriteria = evaluationCriteriaRepository.findAllMainCriteria();
-        // Force initialize scoreDefinitions to avoid lazy loading issues
         mainCriteria.forEach(criteria -> {
             if (criteria.getScoreDefinitions() != null) {
-                criteria.getScoreDefinitions().size(); // Force initialization
+                criteria.getScoreDefinitions().size();
             }
         });
         return mainCriteria.stream()
@@ -88,10 +87,9 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public List<EvaluationCriteriaResponse> getAllSubCriteria() {
         log.info("Getting all sub-criteria");
         List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository.findAllSubCriteria();
-        // Force initialize scoreDefinitions to avoid lazy loading issues
         subCriteria.forEach(criteria -> {
             if (criteria.getScoreDefinitions() != null) {
-                criteria.getScoreDefinitions().size(); // Force initialization
+                criteria.getScoreDefinitions().size();
             }
         });
         return subCriteria.stream()
@@ -134,10 +132,9 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         }
 
         List<EvaluationCriteria> subCriteria = evaluationCriteriaRepository.findSubCriteriaByParentId(parentId);
-        // Force initialize scoreDefinitions to avoid lazy loading issues
         subCriteria.forEach(criteria -> {
             if (criteria.getScoreDefinitions() != null) {
-                criteria.getScoreDefinitions().size(); // Force initialization
+                criteria.getScoreDefinitions().size();
             }
         });
         return subCriteria.stream()
@@ -150,6 +147,7 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
     public EvaluationCriteriaResponse createEvaluationCriteria(EvaluationCriteriaCreationRequest request) {
         EvaluationCriteria criteria = evaluationCriteriaMapper.toEvaluationCriteria(request);
         applyDefaults(criteria);
+
         CriteriaGroup group = criteriaGroupRepository.findById(request.getGroupId())
                 .orElseThrow(() -> new AppException(ErrorCode.CRITERIA_GROUP_NOT_EXISTED));
         criteria.setGroup(group);
@@ -157,6 +155,7 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         if (request.getParentId() != null) {
             EvaluationCriteria parent = evaluationCriteriaRepository.findById(request.getParentId())
                     .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+
             if (parent.getParent() != null) {
                 throw new AppException(ErrorCode.INVALID_CRITERIA_PARENT);
             }
@@ -165,7 +164,10 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
             }
             criteria.setParent(parent);
         }
-        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
+
+        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(
+                evaluationCriteriaRepository.save(criteria)
+        );
     }
 
     @Override
@@ -174,7 +176,7 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
         EvaluationCriteria criteria = evaluationCriteriaRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
 
-        evaluationCriteriaMapper.updateEvaluationCriteriaFromRequest(criteria , request);
+        evaluationCriteriaMapper.updateEvaluationCriteriaFromRequest(criteria, request);
 
         if (request.getGroupId() != null) {
             CriteriaGroup group = criteriaGroupRepository.findById(request.getGroupId())
@@ -186,6 +188,7 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
             if (request.getParentId().equals(id)) {
                 throw new AppException(ErrorCode.INVALID_CRITERIA_PARENT);
             }
+
             EvaluationCriteria parent = evaluationCriteriaRepository.findById(request.getParentId())
                     .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
 
@@ -201,25 +204,36 @@ public class EvaluationCriteriaService implements IEvaluationCriteriaService {
                 throw new AppException(ErrorCode.INVALID_CRITERIA_GROUP);
             }
         }
+
         applyDefaults(criteria);
-//        if (request.getCategory() != null) {
-//            List<EvaluationCriteria> children = evaluationCriteriaRepository.findSubCriteriaByParentId(criteria.getId());
-//            for (EvaluationCriteria child : children) {
-//                child.setCategory(request.getCategory());
-//            }
-//            evaluationCriteriaRepository.saveAll(children);
-//            criteria.setCategory(request.getCategory());
-//        }
-        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(evaluationCriteriaRepository.save(criteria));
+        return evaluationCriteriaMapper.toEvaluationCriteriaResponse(
+                evaluationCriteriaRepository.save(criteria)
+        );
     }
 
     @Override
     @Transactional
     public void deleteEvaluationCriteria(Long id) {
-        if (!evaluationCriteriaRepository.existsById(id)) {
-            throw new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED);
+        EvaluationCriteria criteria = evaluationCriteriaRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.EVALUATION_CRITERIA_NOT_EXISTED));
+
+        softDeleteCriteriaTree(criteria);
+    }
+
+    @Transactional
+    private void softDeleteCriteriaTree(EvaluationCriteria criteria) {
+        if (criteria == null || Boolean.FALSE.equals(criteria.getIsActive())) {
+            return;
         }
-        evaluationCriteriaRepository.deleteById(id);
+
+        List<EvaluationCriteria> children = evaluationCriteriaRepository.findSubCriteriaByParentId(criteria.getId());
+        for (EvaluationCriteria child : children) {
+            softDeleteCriteriaTree(child);
+        }
+
+        criteria.setIsActive(false);
+        criteria.setDeletedAt(Instant.now());
+        evaluationCriteriaRepository.save(criteria);
     }
 
     private void applyDefaults(EvaluationCriteria criteria) {

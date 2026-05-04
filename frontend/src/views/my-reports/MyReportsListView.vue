@@ -39,7 +39,7 @@ const { execute: executeApi } = useApi({
   showSuccessMessage: false,
 });
 const { formatDate } = useDateFormat();
-const { showConfirm } = useConfirm();
+const { confirmDelete } = useConfirm();
 
 // Data
 const reports = ref([]);
@@ -113,19 +113,17 @@ function viewReport(report) {
  * Delete a report
  */
 async function handleDelete(report) {
-  const confirmed = await showConfirm(
-    t.value("common.confirm.delete"),
-    t.value("common.confirm.title"),
-    "warning"
-  );
-
-  if (confirmed) {
-    const res = await executeApi(() => deleteWeeklyReport(report.id));
-    if (res.data?.success) {
-      message.success(t.value("weeklyReport.messages.deleteSuccess"));
-      fetchReports();
+  await confirmDelete({
+    message: t.value("common.confirm.delete"),
+    title: t.value("common.confirm.title"),
+    onConfirm: async () => {
+      const res = await executeApi(() => deleteWeeklyReport(report.id));
+      if (res.data?.success) {
+        message.success(t.value("weeklyReport.messages.deleteSuccess"));
+        fetchReports();
+      }
     }
-  }
+  });
 }
 
 /**

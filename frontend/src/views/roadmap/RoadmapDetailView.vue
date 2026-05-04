@@ -140,28 +140,28 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleString("vi-VN");
 }
 
-async function load() {
-  loading.value = true;
-  try {
-    const res = await fetchRoadmapById(id);
-    const body = res.data;
-    if (body && body.success) {
-      roadmap.value = body.data;
-    } else {
-      roadmap.value = body || {};
-    }
-  } catch (e) {
-    ElMessage.error("Route details could not be loaded.");
-  } finally {
-    loading.value = false;
-  }
-}
+// async function load() {
+//   loading.value = true;
+//   try {
+//     const res = await fetchRoadmapById(id);
+//     const body = res.data;
+//     if (body && body.success) {
+//       roadmap.value = body.data;
+//     } else {
+//       roadmap.value = body || {};
+//     }
+//   } catch (e) {
+//     ElMessage.error("Route details could not be loaded.");
+//   } finally {
+//     loading.value = false;
+//   }
+// }
 
 function goBack() {
   router.back();
 }
 
-onMounted(load);
+// onMounted(load);
 </script>
 
 <style scoped>
