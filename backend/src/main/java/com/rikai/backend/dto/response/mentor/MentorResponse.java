@@ -1,6 +1,7 @@
 package com.rikai.backend.dto.response.mentor;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rikai.backend.dto.response.department.DepartmentResponse;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,4 +19,5 @@ public class MentorResponse {
     String email;
     String fullName;
     LocalDate dateOfBirth;
+    DepartmentResponse department;
 }

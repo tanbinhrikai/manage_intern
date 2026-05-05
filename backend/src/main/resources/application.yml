@@ -26,6 +26,7 @@ spring:
       memory:
         repository:
           jdbc:
+            enabled: false
             initialize-schema: always
 
 jwt:
