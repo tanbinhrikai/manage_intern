@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
-import { Search, View, Edit, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+import { Search, View, Edit, ArrowDown, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
 import { useRouter } from 'vue-router'
@@ -16,7 +16,6 @@ const pageSizes = [20, 40, 60, 80, 100]
 const pagination = usePagination({
   initialPage: 1,
   initialPageSize: 20,
-  onPageChange: () => fetchMyInterns()
 })
 
 const { loading, withLoading } = useLoading()
@@ -132,6 +131,7 @@ function openEditIntern(intern) {
  */
 function handlePageChange(page) {
   pagination.setPage(page)
+  fetchMyInterns()
 }
 
 // Watch for filter changes (with debounce effect via keyword)
@@ -323,10 +323,16 @@ onMounted(() => {
             v-model:current-page="pagination.currentPage.value"
             v-model:page-size="pagination.pageSize.value"
             :page-sizes="pageSizes"
-            layout="total, sizes, prev, pager, next, jumper"
-            background
+            layout="total, sizes"
             :total="pagination.totalItems.value"
             @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
+            layout="prev, pager, next"
+            :total="pagination.totalItems.value"
             @current-change="handlePageChange"
           />
         </div>
@@ -423,7 +429,8 @@ onMounted(() => {
 
 .pagination-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
 }
 
