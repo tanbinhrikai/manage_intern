@@ -184,14 +184,25 @@ onMounted(() => {
                 :value="pos.id"
               />
             </el-select>
-            <el-button 
-              type="info" 
-              plain
-              :icon="showFilters ? ArrowUp : ArrowDown"
-              @click="showFilters = !showFilters"
-            >
-              {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
-            </el-button>
+            <div class="filter-buttons">
+              <el-button 
+                type="info" 
+                plain
+                :icon="showFilters ? ArrowUp : ArrowDown"
+                @click="showFilters = !showFilters"
+              >
+                {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+              </el-button>
+
+              <el-button
+                type="danger"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t('internManagement.clearFilters') }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -408,6 +419,15 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: 24px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 :deep(.el-table) {

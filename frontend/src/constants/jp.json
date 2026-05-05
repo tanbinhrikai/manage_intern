@@ -346,7 +346,7 @@
         "addNew": "新規インターン追加",
         "moreFilters": "詳細フィルター",
         "hideFilters": "フィルターを隠す",
-        "clearFilters": "クリア",
+        "clearFilters": "フィルタークリア",
         "table": {
             "fullName": "氏名",
             "position": "ポジション",
