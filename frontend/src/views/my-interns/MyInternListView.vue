@@ -11,11 +11,11 @@ import { usePagination, useLoading, useApi, useStatus, useDateFormat } from '@/c
 const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
-
+const pageSizes = [20, 40, 60, 80, 100]
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
+  initialPageSize: 20,
   onPageChange: () => fetchMyInterns()
 })
 
@@ -99,6 +99,15 @@ function clearFilters() {
   startDate.value = null
   endDate.value = null
   handleSearch()
+}
+/**
+ * Handle page size change
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size)
+  pagination.firstPage()
+  fetchMyInterns()
 }
 
 /**
@@ -316,11 +325,13 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
-            :total="pagination.totalItems.value"
-            layout="prev, pager, next"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes, prev, pager, next, jumper"
             background
+            :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
             @current-change="handlePageChange"
           />
         </div>
