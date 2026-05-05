@@ -338,7 +338,7 @@ onMounted(() => {
 
 <style scoped>
 .my-intern-list-view {
-  max-width: 1200px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
