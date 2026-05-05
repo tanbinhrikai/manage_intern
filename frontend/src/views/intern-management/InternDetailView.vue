@@ -78,12 +78,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <component :is="layoutComponent">
+  <component :is="layoutComponent" :page-title="t('internDetail.profileTitle') + ': ' + intern.fullName">
     <div class="intern-detail-view" v-loading="loading">
       <div class="page-header">
-        <h1 class="page-title">
-          {{ t("internDetail.profileTitle") }}: {{ intern.fullName }}
-        </h1>
         <el-button type="primary" :icon="Edit" @click="openEditView">
           {{ t("internDetail.editInfo") }}
         </el-button>

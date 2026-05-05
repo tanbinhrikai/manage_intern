@@ -147,14 +147,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <MentorLayout>
+  <MentorLayout :page-title="t('sidebar.myInterns')">
     <div class="my-intern-list-view">
       <el-card class="main-card" shadow="never">
-        <template #header>
-          <div class="card-header">
-            <h2 class="page-title">{{ t('sidebar.myInterns') }}</h2>
-          </div>
-        </template>
 
         <div class="toolbar">
           <div class="filter-group">

@@ -6,6 +6,13 @@ import { useLocaleStore } from '@/locales/locale'
 import { useToastStore } from '@/stores/toast'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
+const props = defineProps({
+  pageTitle: {
+    type: String,
+    default: ''
+  }
+})
+
 const router = useRouter()
 const authStore = useAuthStore()
 const localeStore = useLocaleStore()
@@ -37,7 +44,7 @@ const handleLogout = () => {
 <template>
   <header class="header" @click="closeDropdowns">
     <div class="header-content">
-      <h1 class="page-title">{{ t('mentorDashboard.title') }}</h1>
+      <h1 class="page-title">{{ pageTitle || t('mentorDashboard.title') }}</h1>
       
       <div class="header-right" @click.stop>
         
