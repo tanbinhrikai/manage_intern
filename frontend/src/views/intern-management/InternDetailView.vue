@@ -113,6 +113,12 @@ onMounted(() => {
                 >
                 <span class="value">{{ intern.mentor?.fullName }}</span>
               </div>
+              <div class="info-item">
+                <span class="label"
+                  >{{ t("internDetail.fields.department") }}:</span
+                >
+                <span class="value">{{ intern.mentor?.department?.title }}</span>
+              </div>
             </div>
           </el-card>
 

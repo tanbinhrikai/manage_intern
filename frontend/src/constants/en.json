@@ -314,7 +314,8 @@
             "duration": "Duration",
             "status": "Current Status",
             "startDate": "Start Date",
-            "endDate": "Expected End Date"
+            "endDate": "Expected End Date",
+            "department": "Department"
         },
         "actions": {
             "viewReports": "View Weekly Reports",

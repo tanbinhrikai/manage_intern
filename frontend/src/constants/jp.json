@@ -314,7 +314,8 @@
             "duration": "実習期間",
             "status": "現在のステータス",
             "startDate": "開始日",
-            "endDate": "終了予定日"
+            "endDate": "終了予定日",
+            "department": "部署"
         },
         "actions": {
             "viewReports": "週報を見る",
