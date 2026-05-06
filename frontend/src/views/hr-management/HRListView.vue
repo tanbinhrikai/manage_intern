@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
 import { onBeforeRouteLeave } from "vue-router"
-import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
+import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
@@ -11,12 +11,11 @@ import { usePagination, useLoading, useApi, useDropdownData, useDialog, useConfi
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
-
+const pageSizes = [20, 40, 60, 80, 100]
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchHRs()
+  initialPageSize: 20,
 })
 
 const { loading, withLoading } = useLoading()
@@ -88,6 +87,16 @@ function openDetailHR(hr) {
  */
 function closeHRDetail() {
   hrDetailDialog.close()
+}
+
+/**
+ * Handle page size change
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size)
+  pagination.firstPage()
+  fetchHRs()
 }
 
 /**
@@ -181,13 +190,35 @@ function handleSearch() {
   fetchHRs()
 }
 
-watch([searchName, filterStatus, filterDepartment], () => {
+let stopWatch
+
+function startWatch() {
+  stopWatch = watch(
+    [searchName],
+    () => {
+      handleSearch()
+    }
+  )
+}
+
+/**
+ * Clear all filters
+ */
+function clearFilters() {
+  stopWatch()
+
+  searchName.value = ""
+  filterStatus.value = ""
+  filterDepartment.value = ""
+
   handleSearch()
-})
+  startWatch()
+}
 
 onMounted(() => {
   fetchHRs()
   fetchDepartments()
+  startWatch()
 })
 
 onBeforeUnmount(() => {
@@ -225,22 +256,25 @@ onBeforeRouteLeave(() => {
               clearable
               class="search-input"
             />
+
             <el-select 
               v-model="filterStatus" 
               :placeholder="t('hrManagement.allStatus')"
               clearable
               class="filter-select"
+              @change="handleSearch"
             >
               <el-option :label="t('hrManagement.allStatus')" value="" />
               <el-option :label="t('hrManagement.status.active')" value="ACTIVE" />
               <el-option :label="t('hrManagement.status.locked')" value="LOCKED" />
             </el-select>
+
             <el-select 
               v-model="filterDepartment" 
               :placeholder="t('hrManagement.allDepartments')"
               clearable
-              class="filter-select"
-              style="width: 200px;"
+              class="filter-select department-select"
+              @change="handleSearch"
             >
               <el-option :label="t('hrManagement.allDepartments')" value="" />
               <el-option
@@ -250,6 +284,17 @@ onBeforeRouteLeave(() => {
                 :value="dept.id"
               />
             </el-select>
+
+            <div class="filter-buttons">
+              <el-button 
+                type="danger"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t('hrManagement.clearFilters') }}
+              </el-button>
+            </div>
           </div>
           
           <el-button 
@@ -334,11 +379,19 @@ onBeforeRouteLeave(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
             :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
             layout="prev, pager, next"
-            background
+            :total="pagination.totalItems.value"
             @current-change="handlePageChange"
           />
         </div>
@@ -390,7 +443,7 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .hr-list-view {
-  max-width: 1400px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
@@ -432,7 +485,8 @@ onBeforeRouteLeave(() => {
   display: flex;
   gap: 12px;
   flex: 1;
-  max-width: 500px;
+  flex-wrap: wrap;
+  max-width: none;
 }
 
 .search-input {
@@ -443,13 +497,28 @@ onBeforeRouteLeave(() => {
   width: 160px;
 }
 
+.department-select {
+  width: 200px;
+}
+
 .text-muted {
   color: #9ca3af;
 }
 
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 .pagination-wrapper {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
 }
 
