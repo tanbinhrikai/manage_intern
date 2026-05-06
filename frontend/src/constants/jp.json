@@ -239,6 +239,7 @@
         "searchByName": "名前で検索...",
         "searchByDepartment": "部署で検索...",
         "addNew": "新規HR追加",
+        "clearFilters": "フィルタークリア",
         "table": {
             "fullName": "氏名",
             "email": "メール",
