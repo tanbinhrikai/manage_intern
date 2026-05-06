@@ -6,6 +6,7 @@ import {
   Delete,
   ArrowDown,
   ArrowUp,
+  Refresh
 } from "@element-plus/icons-vue";
 import { useLocaleStore } from "@/locales/locale";
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue";
@@ -25,12 +26,11 @@ import { ElMessage as message } from "element-plus";
 const router = useRouter();
 const localeStore = useLocaleStore();
 const t = computed(() => localeStore.t);
-
+const pageSizes = [20, 40, 60, 80, 100];
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchReports(),
+  initialPageSize: 20,
 });
 
 const { loading, withLoading } = useLoading();
@@ -39,7 +39,7 @@ const { execute: executeApi } = useApi({
   showSuccessMessage: false,
 });
 const { formatDate } = useDateFormat();
-const { showConfirm } = useConfirm();
+const { confirmDelete } = useConfirm();
 
 // Data
 const reports = ref([]);
@@ -101,6 +101,17 @@ function clearFilters() {
 }
 
 /**
+ * Handle page size change
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size)
+  pagination.firstPage()
+  fetchReports()
+}
+
+
+/**
  * Navigate to report detail
  */
 function viewReport(report) {
@@ -113,19 +124,17 @@ function viewReport(report) {
  * Delete a report
  */
 async function handleDelete(report) {
-  const confirmed = await showConfirm(
-    t.value("common.confirm.delete"),
-    t.value("common.confirm.title"),
-    "warning"
-  );
-
-  if (confirmed) {
-    const res = await executeApi(() => deleteWeeklyReport(report.id));
-    if (res.data?.success) {
-      message.success(t.value("weeklyReport.messages.deleteSuccess"));
-      fetchReports();
+  await confirmDelete({
+    message: t.value("common.confirm.delete"),
+    title: t.value("common.confirm.title"),
+    onConfirm: async () => {
+      const res = await executeApi(() => deleteWeeklyReport(report.id));
+      if (res.data?.success) {
+        message.success(t.value("weeklyReport.messages.deleteSuccess"));
+        fetchReports();
+      }
     }
-  }
+  });
 }
 
 /**
@@ -152,15 +161,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <MentorLayout>
+  <MentorLayout :page-title="t('myReports.title')">
     <div class="my-reports-view">
       <el-card class="main-card" shadow="never">
-        <template #header>
-          <div class="card-header">
-            <h2 class="page-title">{{ t("myReports.title") }}</h2>
-          </div>
-        </template>
-
         <div class="toolbar">
           <div class="filter-group">
             <el-select
@@ -178,18 +181,30 @@ onMounted(() => {
                 :value="intern.id"
               />
             </el-select>
-            <el-button
-              type="info"
-              plain
-              :icon="showFilters ? ArrowUp : ArrowDown"
-              @click="showFilters = !showFilters"
-            >
-              {{
-                showFilters
-                  ? t("internManagement.hideFilters")
-                  : t("internManagement.moreFilters")
-              }}
-            </el-button>
+
+            <div class="filter-buttons">
+              <el-button
+                type="info"
+                plain
+                :icon="showFilters ? ArrowUp : ArrowDown"
+                @click="showFilters = !showFilters"
+              >
+                {{
+                  showFilters
+                    ? t("internManagement.hideFilters")
+                    : t("internManagement.moreFilters")
+                }}
+              </el-button>
+
+              <el-button
+                type="danger"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t("internManagement.clearFilters") }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -304,11 +319,19 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
+            :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
             :page-size="pagination.pageSize.value"
             :total="pagination.totalItems.value"
             layout="prev, pager, next"
-            background
             @current-change="handlePageChange"
           />
         </div>
@@ -333,7 +356,7 @@ export default {
 
 <style scoped>
 .my-reports-view {
-  max-width: 1200px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
@@ -398,7 +421,8 @@ export default {
 
 .pagination-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
 }
 
