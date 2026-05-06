@@ -59,3 +59,7 @@ export function bulkDeleteInterns(internIds) {
 export function permanentDeleteIntern(id) {
     return http.delete(`/interns/${id}/permanent`)
 }
+
+export function updateInternStatus(id, payload) {
+    return http.patch(`/interns/${id}/status`, payload);
+}

@@ -58,4 +58,6 @@ public interface IInternService {
     void bulkDeleteInterns(List<Long> internIds);
 
     void permanentDeleteIntern(Long id);
+
+    InternResponse updateInternStatus(Long id, InternStatus internStatus);
 }

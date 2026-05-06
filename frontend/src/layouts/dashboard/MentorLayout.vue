@@ -1,13 +1,20 @@
 <script setup>
 import MentorSidebar from '@/components/layout/MentorSidebar.vue'
 import MentorHeader from '@/components/layout/MentorHeader.vue'
+
+const props = defineProps({
+  pageTitle: {
+    type: String,
+    default: ''
+  }
+})
 </script>
 
 <template>
   <div class="mentor-layout">
     <MentorSidebar />
     <div class="main-wrapper">
-      <MentorHeader />
+      <MentorHeader :page-title="pageTitle" />
       <main class="main-content">
         <slot />
       </main>

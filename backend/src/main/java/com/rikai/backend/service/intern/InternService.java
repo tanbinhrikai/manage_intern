@@ -343,4 +343,16 @@ public class InternService implements IInternService {
         internRepository.delete(intern);
     }
 
+    @Override
+    @Transactional
+    public InternResponse updateInternStatus(Long id, InternStatus internStatus) {
+        Intern intern = internRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
+
+        intern.setInternStatus(internStatus);
+        Intern saved = internRepository.save(intern);
+
+        eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
+        return internMapper.toInternResponse(saved);
+    }
 }

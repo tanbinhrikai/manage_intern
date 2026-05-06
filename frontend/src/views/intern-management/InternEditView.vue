@@ -49,14 +49,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <component :is="layoutComponent">
+  <component :is="layoutComponent" :page-title="t('internDetail.profileTitle') + ': ' + intern.fullName + ' - ' + (intern.position?.title || '')">
     <div class="intern-edit-view" v-loading="loading">
-      <div class="header-section">
-        <h1 class="page-title">
-          {{ t('internDetail.profileTitle') }}: {{ intern.fullName }} - {{ intern.position?.title }}
-        </h1>
-      </div>
-
       <el-tabs v-model="activeTab" class="detail-tabs">
         <el-tab-pane :label="t('internDetail.tabs.general')" name="general">
           <InternGeneralTab 

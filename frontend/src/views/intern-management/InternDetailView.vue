@@ -1,5 +1,5 @@
 <script setup>
-import { getInternById } from "@/api/intern";
+import { getInternById, updateInternStatus } from "@/api/intern";
 import { useDateFormat, useStatus } from "@/composables";
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue";
@@ -26,6 +26,16 @@ const t = computed(() => localeStore.t);
 const internId = route.params.id;
 const intern = ref({});
 const loading = ref(false);
+
+const statusDialogVisible = ref(false);
+const selectedStatus = ref("");
+
+const statusOptions = [
+  { label: "Active", value: "ACTIVE" },
+  { label: "Warning", value: "WARNING" },
+  { label: "Completed", value: "COMPLETED" },
+  { label: "Dropped", value: "DROPPED" },
+];
 
 const layoutComponent = computed(() => {
   return authStore.userRole === "MENTOR" ? MentorLayout : AdminLayout;
@@ -59,6 +69,43 @@ function openReportsTab() {
   router.push(`${prefix}/${internId}/edit?tab=reports`);
 }
 
+function openUpdateStatusDialog() {
+  selectedStatus.value = intern.value.internStatus || "";
+  statusDialogVisible.value = true;
+}
+
+function closeUpdateStatusDialog() {
+  statusDialogVisible.value = false;
+  selectedStatus.value = "";
+}
+
+async function confirmUpdateStatus() {
+  if (!selectedStatus.value) {
+    ElMessage.warning("Please select a status");
+    return;
+  }
+
+  try {
+    const res = await updateInternStatus(internId, {
+      internStatus: selectedStatus.value,
+    });
+    console.log(res);
+    const updatedIntern = res?.data?.data;
+
+    if (!updatedIntern) {
+      throw new Error("No data returned from updateInternStatus");
+      return;
+    }
+
+    intern.value.internStatus = updatedIntern.internStatus;
+    ElMessage.success("Status updated successfully");
+    closeUpdateStatusDialog();
+  } catch (error) {
+    console.error("Failed to update status:", error);
+    ElMessage.error("Failed to update status");
+  }
+}
+
 const calculateDuration = (start, end) => {
   if (!start || !end) return "-";
   const startDate = new Date(start);
@@ -78,15 +125,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <component :is="layoutComponent">
+  <component :is="layoutComponent" :page-title="t('internDetail.profileTitle') + ': ' + intern.fullName">
     <div class="intern-detail-view" v-loading="loading">
       <div class="page-header">
-        <h1 class="page-title">
-          {{ t("internDetail.profileTitle") }}: {{ intern.fullName }}
-        </h1>
-        <el-button type="primary" :icon="Edit" @click="openEditView">
-          {{ t("internDetail.editInfo") }}
-        </el-button>
+        <div class="page-actions">
+          <el-button type="warning" @click="openUpdateStatusDialog">
+            {{ t("internDetail.updateStatus") }}
+          </el-button>
+
+          <el-button type="primary" :icon="Edit" @click="openEditView">
+            {{ t("internDetail.editInfo") }}
+          </el-button>
+        </div>
       </div>
 
       <el-row :gutter="24">
@@ -115,6 +165,12 @@ onMounted(() => {
                   >{{ t("internDetail.fields.mentor") }}:</span
                 >
                 <span class="value">{{ intern.mentor?.fullName }}</span>
+              </div>
+              <div class="info-item">
+                <span class="label"
+                  >{{ t("internDetail.fields.department") }}:</span
+                >
+                <span class="value">{{ intern.mentor?.department?.title }}</span>
               </div>
             </div>
           </el-card>
@@ -163,6 +219,7 @@ onMounted(() => {
             </div>
           </el-card>
         </el-col>
+
         <el-col :span="8">
           <el-card shadow="hover" class="detail-card mb-24">
             <template #header>
@@ -208,6 +265,37 @@ onMounted(() => {
           </el-card>
         </el-col>
       </el-row>
+
+      <el-dialog
+        v-model="statusDialogVisible"
+        title="Update Status"
+        width="420px"
+        @closed="selectedStatus = ''"
+      >
+        <el-form label-position="top">
+          <el-form-item label="Select new status">
+            <el-select
+              v-model="selectedStatus"
+              placeholder="Choose a status"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="item in statusOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+        </el-form>
+
+        <template #footer>
+          <el-button @click="closeUpdateStatusDialog">Cancel</el-button>
+          <el-button type="primary" @click="confirmUpdateStatus">
+            OK
+          </el-button>
+        </template>
+      </el-dialog>
     </div>
   </component>
 </template>
@@ -220,17 +308,21 @@ onMounted(() => {
 
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 24px;
   background: transparent;
 }
 
-.page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
-  margin: 0;
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-actions :deep(.el-button) {
+  margin-left: 0;
 }
 
 .detail-card {

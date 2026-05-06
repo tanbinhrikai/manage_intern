@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue"
-import { Search, View, Edit, ArrowDown, ArrowUp } from '@element-plus/icons-vue'
+import { Search, View, Edit, ArrowDown, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
 import { useRouter } from 'vue-router'
@@ -11,12 +11,11 @@ import { usePagination, useLoading, useApi, useStatus, useDateFormat } from '@/c
 const router = useRouter()
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
-
+const pageSizes = [20, 40, 60, 80, 100]
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchMyInterns()
+  initialPageSize: 20,
 })
 
 const { loading, withLoading } = useLoading()
@@ -100,6 +99,15 @@ function clearFilters() {
   endDate.value = null
   handleSearch()
 }
+/**
+ * Handle page size change
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size)
+  pagination.firstPage()
+  fetchMyInterns()
+}
 
 /**
  * Navigate to detail page for an intern
@@ -123,6 +131,7 @@ function openEditIntern(intern) {
  */
 function handlePageChange(page) {
   pagination.setPage(page)
+  fetchMyInterns()
 }
 
 // Watch for filter changes (with debounce effect via keyword)
@@ -138,14 +147,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <MentorLayout>
+  <MentorLayout :page-title="t('sidebar.myInterns')">
     <div class="my-intern-list-view">
       <el-card class="main-card" shadow="never">
-        <template #header>
-          <div class="card-header">
-            <h2 class="page-title">{{ t('sidebar.myInterns') }}</h2>
-          </div>
-        </template>
 
         <div class="toolbar">
           <div class="filter-group">
@@ -184,14 +188,25 @@ onMounted(() => {
                 :value="pos.id"
               />
             </el-select>
-            <el-button 
-              type="info" 
-              plain
-              :icon="showFilters ? ArrowUp : ArrowDown"
-              @click="showFilters = !showFilters"
-            >
-              {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
-            </el-button>
+            <div class="filter-buttons">
+              <el-button 
+                type="info" 
+                plain
+                :icon="showFilters ? ArrowUp : ArrowDown"
+                @click="showFilters = !showFilters"
+              >
+                {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+              </el-button>
+
+              <el-button
+                type="danger"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t('internManagement.clearFilters') }}
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -305,11 +320,19 @@ onMounted(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
             :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
             layout="prev, pager, next"
-            background
+            :total="pagination.totalItems.value"
             @current-change="handlePageChange"
           />
         </div>
@@ -321,7 +344,7 @@ onMounted(() => {
 
 <style scoped>
 .my-intern-list-view {
-  max-width: 1200px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
@@ -406,8 +429,18 @@ onMounted(() => {
 
 .pagination-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 :deep(.el-table) {

@@ -300,6 +300,7 @@
     "internDetail": {
         "profileTitle": "インターン詳細",
         "editInfo": "情報を編集",
+        "updateStatus": "ステータスを更新",
         "sections": {
             "basicInfo": "基本情報",
             "internshipInfo": "実習情報",
@@ -314,7 +315,8 @@
             "duration": "実習期間",
             "status": "現在のステータス",
             "startDate": "開始日",
-            "endDate": "終了予定日"
+            "endDate": "終了予定日",
+            "department": "部署"
         },
         "actions": {
             "viewReports": "週報を見る",
@@ -346,7 +348,7 @@
         "addNew": "新規インターン追加",
         "moreFilters": "詳細フィルター",
         "hideFilters": "フィルターを隠す",
-        "clearFilters": "クリア",
+        "clearFilters": "フィルタークリア",
         "table": {
             "fullName": "氏名",
             "position": "ポジション",
