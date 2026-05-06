@@ -300,6 +300,7 @@
     "internDetail": {
         "profileTitle": "インターン詳細",
         "editInfo": "情報を編集",
+        "updateStatus": "ステータスを更新",
         "sections": {
             "basicInfo": "基本情報",
             "internshipInfo": "実習情報",

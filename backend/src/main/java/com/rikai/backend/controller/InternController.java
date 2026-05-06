@@ -6,6 +6,7 @@ import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.intern.InternCreationRequest;
 import com.rikai.backend.dto.request.intern.InternUpdateRequest;
+import com.rikai.backend.dto.request.intern.InternStatusUpdateRequest;
 import com.rikai.backend.dto.response.intern.InternAnalysisResponse;
 import com.rikai.backend.dto.response.intern.InternResponse;
 import com.rikai.backend.service.intern.IInternService;
@@ -177,5 +178,14 @@ public class InternController {
     public ApiResponse<Void> permanentDeleteIntern(@PathVariable Long id) {
         internService.permanentDeleteIntern(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_INTERN_SUCCESSFUL);
+    }
+
+    @PatchMapping("/{id:\\d+}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public ApiResponse<InternResponse> updateInternStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody InternStatusUpdateRequest request) {
+        return ApiResponse.buildSuccessResponse(internService.updateInternStatus(id, request.getInternStatus()),
+                SuccessCode.UPDATE_INTERN_SUCCESSFUL);
     }
 }

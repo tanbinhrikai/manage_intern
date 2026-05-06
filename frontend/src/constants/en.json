@@ -300,6 +300,7 @@
     "internDetail": {
         "profileTitle": "Intern Profile",
         "editInfo": "Update Info",
+        "updateStatus": "Update Status",
         "sections": {
             "basicInfo": "Basic Information",
             "internshipInfo": "Internship Information",
