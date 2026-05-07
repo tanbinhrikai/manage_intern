@@ -73,7 +73,7 @@ const userInitials = computed(() => {
 <style scoped>
 .sidebar {
   width: 220px;
-  min-height: 100vh;
+  max-height: 100vh;
   background: #f8fafc;
   display: flex;
   flex-direction: column;

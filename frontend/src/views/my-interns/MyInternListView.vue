@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue"
+import { ref, computed, onMounted } from "vue"
 import { Search, View, Edit, ArrowDown, ArrowUp, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
@@ -134,11 +134,6 @@ function handlePageChange(page) {
   fetchMyInterns()
 }
 
-// Watch for filter changes (with debounce effect via keyword)
-watch([searchName], () => {
-  handleSearch()
-})
-
 // Fetch data on mount
 onMounted(() => {
   fetchPositions()
@@ -159,6 +154,7 @@ onMounted(() => {
               :prefix-icon="Search"
               clearable
               class="search-input"
+              @keyup.enter="handleSearch"
             />
             <el-select
               v-model="selectedStatus"
@@ -199,7 +195,7 @@ onMounted(() => {
               </el-button>
 
               <el-button
-                type="danger"
+                type="info"
                 plain
                 :icon="Refresh"
                 @click="clearFilters"
@@ -248,6 +244,7 @@ onMounted(() => {
           :data="interns" 
           stripe 
           style="width: 100%"
+          height="calc(100vh - 240px)"
           v-loading="loading"
         >
           <el-table-column 
