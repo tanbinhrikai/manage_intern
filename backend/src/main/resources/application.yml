@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: ${URL_DATABASE}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  ai:
+    openai:
+      api-key: ${GEMINI_API_KEY}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat:
+        options:
+          model: gemini-flash-latest
+          temperature: 0.7
+    chat:
+      memory:
+        repository:
+          jdbc:
+            enabled: false
+            initialize-schema: always
+
+jwt:
+  signerKey: ${SIGNER_KEY}
+app:
+  ai:
+    router:
+      model: gemini-2.5-pro
+      temperature: 0.15
+      top-p: 0.85
+      max-output-tokens: 60000
+
+    creator:
+      model: gemini-2.5-flash
+      temperature: 0.7
+      top-p: 0.95
+      max-output-tokens: 50000

@@ -1,0 +1,4 @@
+ALTER TABLE internship_batches
+    MODIFY COLUMN status
+    ENUM('ONGOING', 'CANCEL', 'COMPLETED')
+    DEFAULT 'ONGOING';
