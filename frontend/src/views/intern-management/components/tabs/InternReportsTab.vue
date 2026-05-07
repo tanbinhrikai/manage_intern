@@ -29,12 +29,11 @@ const props = defineProps({
 
 const localeStore = useLocaleStore();
 const t = computed(() => localeStore.t);
-
+const pageSizes = [20, 40, 60, 80, 100];
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchWeeklyReports(),
+  initialPageSize: 20,
 });
 
 const {
@@ -178,6 +177,12 @@ const initReportForm = (report = null) => {
   }
 };
 
+function handleSizeChange(size) {
+  pagination.setPageSize(size);
+  pagination.firstPage();
+  fetchWeeklyReports();
+}
+
 function updateEndDate() {
   if (reportForm.weekStartDate) {
     const d = new Date(reportForm.weekStartDate);
@@ -219,6 +224,7 @@ async function fetchWeeklyReports() {
  */
 function handlePageChange(page) {
   pagination.setPage(page);
+  fetchWeeklyReports();
 }
 
 function openNewReportForm() {
@@ -340,6 +346,7 @@ onMounted(async () => {
         :data="weeklyReports"
         stripe
         style="width: 100%"
+        height="calc(100vh - 280px)"
         class="shadow-table"
       >
         <el-table-column
@@ -379,12 +386,21 @@ onMounted(async () => {
         </el-table-column>
       </el-table>
 
-      <div class="pagination-right" v-if="pagination.totalItems.value > 0">
+      <div class="pagination-wrapper" v-if="pagination.totalItems.value > 0">
         <el-pagination
-          :current-page="pagination.currentPage.value"
-          :page-size="pagination.pageSize.value"
+          v-model:current-page="pagination.currentPage.value"
+          v-model:page-size="pagination.pageSize.value"
+          :page-sizes="pageSizes"
+          layout="total, sizes"
           :total="pagination.totalItems.value"
+          @size-change="handleSizeChange"
+        />
+
+        <el-pagination
+          v-model:current-page="pagination.currentPage.value"
+          :page-size="pagination.pageSize.value"
           layout="prev, pager, next"
+          :total="pagination.totalItems.value"
           @current-change="handlePageChange"
         />
       </div>
@@ -580,9 +596,10 @@ onMounted(async () => {
   
   <style scoped>
 .report-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding-bottom: 50px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 50px;
 }
 .header-actions {
   display: flex;
@@ -595,10 +612,13 @@ onMounted(async () => {
   border-radius: 8px;
   overflow: hidden;
 }
-.pagination-right {
+.pagination-wrapper {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .sticky-header {
