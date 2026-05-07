@@ -842,6 +842,7 @@
         "bulkDeleteConfirm": "{count}個のバッチを削除してもよろしいですか？",
         "bulkDeleteSuccess": "バッチが正常に削除されました",
         "bulkDeleteError": "バッチの削除に失敗しました",
+        "clearFilters": "フィルタークリア",
         "detail": {
             "title": "バッチ詳細",
             "batchInfo": "バッチ情報",
