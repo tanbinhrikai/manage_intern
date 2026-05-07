@@ -18,129 +18,145 @@
           </el-button>
         </div>
       </div>
+      <div class="batch-content">
+        <div class="filter-bar">
+          <el-input
+            v-model="searchKeyword"
+            :placeholder="t('batch.search')"
+            :prefix-icon="Search"
+            class="search-input"
+            clearable
+            @keyup.enter="handleSearch"
+          />
+          
+          <el-select
+            v-model="filterStatus"
+            :placeholder="t('batch.filterByStatus')"
+            clearable
+            class="status-select"
+            @change="handleSearch"
+          >
+            <el-option label="Ongoing" value="ONGOING" />
+            <el-option label="Cancel" value="CANCEL" />
+            <el-option label="Completed" value="COMPLETED" />
+          </el-select>
 
-      <div class="filter-bar">
-        <el-input
-          v-model="searchKeyword"
-          :placeholder="t('batch.search')"
-          prefix-icon="Search"
-          class="search-input"
-          clearable
-          @clear="handleSearch"
-          @keyup.enter="handleSearch"
-        />
-        <el-select
-          v-model="filterStatus"
-          :placeholder="t('batch.filterByStatus')"
-          clearable
-          class="status-select"
-          @change="handleSearch"
-        >
-          <el-option label="ONGOING" value="ONGOING" />
-          <el-option label="CANCEL" value="CANCEL" />
-          <el-option label="COMPLETED" value="COMPLETED" />
-        </el-select>
-      </div>
+          <el-button 
+            type="info" 
+            plain 
+            :icon="Refresh" 
+            @click="clearFilters"
+          >
+            {{ t('batch.clearFilters') }}
+          </el-button>
+        </div>
 
-      <div class="batch-grid" v-loading="loading">
-        <div v-for="batch in batches" :key="batch.id" class="batch-card">
-          <div class="card-top">
-            <div class="batch-title-group">
-              <span class="batch-id">#{{ batch.id }}</span>
-              <h3 class="batch-name" :title="batch.name">{{ batch.name }}</h3>
+        <div class="batch-grid" v-loading="loading">
+          <div v-for="batch in batches" :key="batch.id" class="batch-card">
+            <div class="card-top">
+              <div class="batch-title-group">
+                <span class="batch-id">#{{ batch.id }}</span>
+                <h3 class="batch-name" :title="batch.name">{{ batch.name }}</h3>
+              </div>
+              <el-tag
+                :type="getStatusType(batch.status)"
+                effect="dark"
+                round
+                size="small"
+              >
+                {{ batch.status }}
+              </el-tag>
             </div>
-            <el-tag
-              :type="getStatusType(batch.status)"
-              effect="dark"
-              round
-              size="small"
-            >
-              {{ batch.status }}
-            </el-tag>
+
+            <div class="card-body">
+              <div class="info-row">
+                <el-icon><Calendar /></el-icon>
+                <span class="date-text">
+                  {{ formatDate(batch.startDate) }} -
+                  {{ formatDate(batch.endDate) }}
+                </span>
+              </div>
+
+              <div class="info-row description">
+                <el-icon><Document /></el-icon>
+                <span class="desc-text" :title="batch.description">
+                  {{ batch.description || t("common.noDescription") }}
+                </span>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="card-footer">
+                <div class="stat-item">
+                  <el-icon :size="18" color="#409eff"><UserFilled /></el-icon>
+                  <span class="stat-value">{{ batch.internCount || 0 }}</span>
+                  <span class="stat-label">Interns</span>
+                </div>
+
+                <div class="action-buttons">
+                  <el-tooltip :content="t('common.view')" placement="top">
+                    <el-button circle size="small" @click="handleView(batch)">
+                      <el-icon><View /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                  <el-tooltip
+                    :content="t('common.edit')"
+                    placement="top"
+                    v-if="userRole === 'ADMIN'"
+                  >
+                    <el-button
+                      circle
+                      size="small"
+                      type="primary"
+                      plain
+                      @click="handleEdit(batch)"
+                    >
+                      <el-icon><Edit /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                  <el-tooltip
+                    :content="t('common.delete')"
+                    placement="top"
+                    v-if="userRole === 'ADMIN'"
+                  >
+                    <el-button
+                      circle
+                      size="small"
+                      type="info"
+                      plain
+                      @click="handleDelete(batch)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="card-body">
-            <div class="info-row">
-              <el-icon><Calendar /></el-icon>
-              <span class="date-text">
-                {{ formatDate(batch.startDate) }} -
-                {{ formatDate(batch.endDate) }}
-              </span>
-            </div>
-
-            <div class="info-row description">
-              <el-icon><Document /></el-icon>
-              <span class="desc-text" :title="batch.description">
-                {{ batch.description || t("common.noDescription") }}
-              </span>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="card-footer">
-              <div class="stat-item">
-                <el-icon :size="18" color="#409eff"><UserFilled /></el-icon>
-                <span class="stat-value">{{ batch.internCount || 0 }}</span>
-                <span class="stat-label">Interns</span>
-              </div>
-
-              <div class="action-buttons">
-                <el-tooltip :content="t('common.view')" placement="top">
-                  <el-button circle size="small" @click="handleView(batch)">
-                    <el-icon><View /></el-icon>
-                  </el-button>
-                </el-tooltip>
-                <el-tooltip
-                  :content="t('common.edit')"
-                  placement="top"
-                  v-if="userRole === 'ADMIN'"
-                >
-                  <el-button
-                    circle
-                    size="small"
-                    type="primary"
-                    plain
-                    @click="handleEdit(batch)"
-                  >
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
-                </el-tooltip>
-                <el-tooltip
-                  :content="t('common.delete')"
-                  placement="top"
-                  v-if="userRole === 'ADMIN'"
-                >
-                  <el-button
-                    circle
-                    size="small"
-                    type="danger"
-                    plain
-                    @click="handleDelete(batch)"
-                  >
-                    <el-icon><Delete /></el-icon>
-                  </el-button>
-                </el-tooltip>
-              </div>
-            </div>
+          <div v-if="!loading && batches.length === 0" class="empty-state">
+            <el-empty :description="t('common.noData')" />
           </div>
         </div>
 
-        <div v-if="!loading && batches.length === 0" class="empty-state">
-          <el-empty :description="t('common.noData')" />
-        </div>
-      </div>
+        <div class="pagination-wrapper" v-if="totalItems > 0">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[8, 16, 40, 80]"
+            layout="total, sizes"
+            :total="totalItems"
+            @size-change="handleSearch"
+          />
 
-      <div class="pagination-wrapper" v-if="totalItems > 0">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[8, 16, 40, 80]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="totalItems"
-          @size-change="handleSearch"
-          @current-change="handleSearch"
-          background
-        />
+          <el-pagination
+            v-model:current-page="currentPage"
+            :page-size="pageSize"
+            layout="prev, pager, next"
+            :total="totalItems"
+            @current-change="handlePageChange" 
+          />
+        </div>
       </div>
 
       <el-dialog
@@ -244,6 +260,7 @@ import {
   Calendar,
   Document,
   UserFilled,
+  Refresh
 } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { computed, onMounted, ref } from "vue";
@@ -327,6 +344,17 @@ const fetchBatches = async () => {
 const handleSearch = () => {
   currentPage.value = 1;
   fetchBatches();
+};
+
+const handlePageChange = (newPage) => {
+  currentPage.value = newPage;
+  fetchBatches();
+};
+
+const clearFilters = () => {
+  searchKeyword.value = "";
+  filterStatus.value = "";
+  handleSearch();
 };
 
 const handleCreate = () => {
@@ -436,7 +464,8 @@ onMounted(() => {
 .batch-container {
   padding: 24px;
   background-color: #f8f9fa;
-  min-height: calc(100vh - 60px);
+  box-sizing: border-box;
+  height: calc(100vh - 60px);
   font-family: "Inter", sans-serif;
 }
 
@@ -478,11 +507,37 @@ onMounted(() => {
   width: 180px;
 }
 
-/* GRID LAYOUT */
+.batch-container {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
 .batch-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  align-content: start;
+  padding-right: 10px;
   gap: 24px;
+}
+
+.pagination-wrapper {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* BATCH CARD DESIGN */
@@ -611,9 +666,10 @@ onMounted(() => {
   border: 1px dashed #e5e7eb;
 }
 .pagination-wrapper {
-  margin-top: 32px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
 }
 .form-row {
   display: flex;

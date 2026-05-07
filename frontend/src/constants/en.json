@@ -841,6 +841,7 @@
         "bulkDeleteConfirm": "Are you sure you want to delete {count} batches?",
         "bulkDeleteSuccess": "Batches deleted successfully",
         "bulkDeleteError": "Failed to delete batches",
+        "clearFilters":"Clear Filters",
         "detail": {
             "title": "Batch Details",
             "batchInfo": "Batch Information",
