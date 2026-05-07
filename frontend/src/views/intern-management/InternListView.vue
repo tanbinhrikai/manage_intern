@@ -11,6 +11,7 @@ import {
   ArrowDown,
   ArrowUp,
   Filter,
+  Refresh
 } from "@element-plus/icons-vue";
 import { useLocaleStore } from "@/locales/locale";
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
@@ -26,12 +27,11 @@ import { usePagination, useLoading, useApi, useDropdownData, useDialog, useStatu
 const localeStore = useLocaleStore();
 const router = useRouter();
 const t = computed(() => localeStore.t);
-
+const pageSizes = [20, 40, 60, 80, 100];
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchInterns()
+  initialPageSize: 20,
 });
 
 const { loading, withLoading } = useLoading();
@@ -160,11 +160,22 @@ function handleDeleteIntern(intern) {
 }
 
 /**
+ * Handle pagination page size change
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size);
+  pagination.firstPage();
+  fetchInterns();
+}
+
+/**
  * Handle pagination page change
  * @param {number} page - New page number
  */
 function handlePageChange(page) {
   pagination.setPage(page);
+  fetchInterns();
 }
 
 
@@ -175,20 +186,19 @@ function handleSearch() {
   pagination.firstPage();
   fetchInterns();
 }
+/**
+ * Clear all filters and search
+ */
+function clearFilters() {
+  searchName.value = "";
+  filterStatus.value = "";
+  filterPosition.value = "";
+  filterMentor.value = "";
+  filterStartDate.value = null;
+  filterEndDate.value = null;
 
-watch(
-  [
-    searchName,
-    filterStatus,
-    filterPosition,
-    filterMentor,
-    filterStartDate,
-    filterEndDate,
-  ],
-  () => {
-    handleSearch();
-  }
-);
+  handleSearch();
+}
 
 onMounted(() => {
   fetchInterns();
@@ -231,12 +241,15 @@ onBeforeRouteLeave(() => {
               :prefix-icon="Search"
               clearable
               class="search-input"
+              @keyup.enter="handleSearch"
             />
+
             <el-select
               v-model="filterPosition"
               :placeholder="t('internManagement.allPositions')"
               clearable
               class="filter-select"
+              @change="handleSearch"
             >
               <el-option :label="t('internManagement.allPositions')" value="" />
               <el-option
@@ -246,11 +259,13 @@ onBeforeRouteLeave(() => {
                 :value="pos.id"
               />
             </el-select>
+
             <el-select
               v-model="filterMentor"
               :placeholder="t('internManagement.allMentors')"
               clearable
               class="filter-select"
+              @change="handleSearch"
             >
               <el-option :label="t('internManagement.allMentors')" value="" />
               <el-option
@@ -260,18 +275,31 @@ onBeforeRouteLeave(() => {
                 :value="mentor.id"
               />
             </el-select>
-            <el-button
-              text
-              :icon="showAdvancedFilters ? ArrowUp : ArrowDown"
-              @click="showAdvancedFilters = !showAdvancedFilters"
-              class="toggle-filters-btn"
-            >
-              {{
-                showAdvancedFilters
-                  ? t("internManagement.hideFilters")
-                  : t("internManagement.moreFilters")
-              }}
-            </el-button>
+
+            <div class="filter-buttons">
+              <el-button
+                type="info" 
+                plain
+                :icon="showAdvancedFilters ? ArrowUp : ArrowDown"
+                @click="showAdvancedFilters = !showAdvancedFilters"
+                class="toggle-filters-btn"
+              >
+                {{
+                  showAdvancedFilters
+                    ? t("internManagement.hideFilters")
+                    : t("internManagement.moreFilters")
+                }}
+              </el-button>
+
+              <el-button
+                type="info"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t("internManagement.clearFilters") }}
+              </el-button>
+            </div>
           </div>
 
           <el-button type="primary" :icon="Plus" @click="openAddIntern">
@@ -286,6 +314,7 @@ onBeforeRouteLeave(() => {
               :placeholder="t('internManagement.allStatus')"
               clearable
               class="filter-select"
+              @change="handleSearch"
             >
               <el-option :label="t('internManagement.allStatus')" value="" />
               <el-option
@@ -302,6 +331,7 @@ onBeforeRouteLeave(() => {
               clearable
               value-format="YYYY-MM-DD"
               class="date-picker"
+              @change="handleSearch"
             />
             <el-date-picker
               v-model="filterEndDate"
@@ -310,6 +340,7 @@ onBeforeRouteLeave(() => {
               clearable
               value-format="YYYY-MM-DD"
               class="date-picker"
+              @change="handleSearch"
             />
           </div>
         </el-collapse-transition>
@@ -318,6 +349,7 @@ onBeforeRouteLeave(() => {
           :data="interns"
           stripe
           style="width: 100%"
+          height="calc(100vh - 300px)"
           v-loading="loading"
         >
           <el-table-column
@@ -405,11 +437,19 @@ onBeforeRouteLeave(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
             :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
             layout="prev, pager, next"
-            background
+            :total="pagination.totalItems.value"
             @current-change="handlePageChange"
           />
         </div>
@@ -430,7 +470,7 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .intern-list-view {
-  max-width: 1400px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
@@ -475,6 +515,7 @@ onBeforeRouteLeave(() => {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .advanced-filters {
@@ -489,6 +530,11 @@ onBeforeRouteLeave(() => {
 
 .toggle-filters-btn {
   color: #6b7280;
+}
+
+.toggle-filters-btn:hover,
+.toggle-filters-btn:focus {
+  color: #fff;
 }
 
 .search-input {
@@ -509,8 +555,19 @@ onBeforeRouteLeave(() => {
 
 .pagination-wrapper {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 :deep(.el-table) {

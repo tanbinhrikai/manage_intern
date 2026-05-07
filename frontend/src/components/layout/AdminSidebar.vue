@@ -249,7 +249,7 @@ watch(
 <style scoped>
 .sidebar {
   width: 250px;
-  min-height: 100vh;
+  max-height: 100vh;
   background: #ffffff;
   display: flex;
   flex-direction: column;

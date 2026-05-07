@@ -175,6 +175,7 @@
         "searchByName": "Search by name...",
         "searchByDepartment": "Search by department...",
         "addNew": "Add New Mentor",
+        "clearFilters": "Clear Filters",
         "table": {
             "fullName": "Full Name",
             "email": "Email",
@@ -239,6 +240,7 @@
         "searchByName": "Search by name...",
         "searchByDepartment": "Search by department...",
         "addNew": "Add New HR",
+        "clearFilters": "Clear Filters",
         "table": {
             "fullName": "Full Name",
             "email": "Email",

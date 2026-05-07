@@ -1,7 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated } from "vue"
 import { onBeforeRouteLeave } from "vue-router"
-import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock } from '@element-plus/icons-vue'
+import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue"
 import MentorFormDialog from "@/components/mentor/MentorFormDialog.vue"
@@ -11,12 +11,11 @@ import { usePagination, useLoading, useApi, useDropdownData, useDialog, useConfi
 
 const localeStore = useLocaleStore()
 const t = computed(() => localeStore.t)
-
+const pageSizes = [20, 40, 60, 80, 100]
 // Composables
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchMentors()
+  initialPageSize: 20,
 })
 
 const { loading, withLoading } = useLoading()
@@ -89,6 +88,15 @@ function openDetailMentor(mentor) {
  */
 function closeMentorDetail() {
   mentorDetailDialog.close()
+}
+
+/**
+ * @param {number} size - New page size
+ */
+function handleSizeChange(size) {
+  pagination.setPageSize(size)
+  pagination.firstPage()
+  fetchMentors()
 }
 
 /**
@@ -182,9 +190,16 @@ function handleSearch() {
   fetchMentors()
 }
 
-watch([searchName, filterStatus, filterDepartment], () => {
+/**
+ * Clear all filters
+ */
+function clearFilters() {
+  searchName.value = ""
+  filterStatus.value = ""
+  filterDepartment.value = ""
+
   handleSearch()
-})
+}
 
 onMounted(() => {
   fetchMentors()
@@ -225,23 +240,28 @@ onBeforeRouteLeave(() => {
               :prefix-icon="Search"
               clearable
               class="search-input"
+              @keyup.enter="handleSearch"
             />
+
             <el-select 
               v-model="filterStatus" 
               :placeholder="t('mentorManagement.allStatus')"
               clearable
               class="filter-select"
+              @change="handleSearch"
             >
               <el-option :label="t('mentorManagement.allStatus')" value="" />
               <el-option :label="t('mentorManagement.status.active')" value="ACTIVE" />
               <el-option :label="t('mentorManagement.status.locked')" value="LOCKED" />
             </el-select>
+
             <el-select 
               v-model="filterDepartment" 
               :placeholder="t('mentorManagement.allDepartments')"
               clearable
               class="filter-select"
               style="width: 200px;"
+              @change="handleSearch"
             >
               <el-option :label="t('mentorManagement.allDepartments')" value="" />
               <el-option
@@ -251,6 +271,17 @@ onBeforeRouteLeave(() => {
                 :value="dept.id"
               />
             </el-select>
+
+            <div class="filter-buttons">
+              <el-button 
+                type="info"
+                plain
+                :icon="Refresh"
+                @click="clearFilters"
+              >
+                {{ t('mentorManagement.clearFilters') }}
+              </el-button>
+            </div>
           </div>
           
           <el-button 
@@ -266,6 +297,7 @@ onBeforeRouteLeave(() => {
           :data="mentors" 
           stripe 
           style="width: 100%"
+          height="calc(100vh - 300px)"
           v-loading="loading"
         >
           <el-table-column 
@@ -334,14 +366,22 @@ onBeforeRouteLeave(() => {
 
         <div class="pagination-wrapper">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
             :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
             layout="prev, pager, next"
-            background
+            :total="pagination.totalItems.value"
             @current-change="handlePageChange"
           />
-        </div>
+        </div>  
       </el-card>
 
       <MentorFormDialog
@@ -392,7 +432,7 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .mentor-list-view {
-  max-width: 1400px;
+  min-height: calc(100vh - 60px);
   margin: 0 auto;
 }
 
@@ -434,7 +474,8 @@ onBeforeRouteLeave(() => {
   display: flex;
   gap: 12px;
   flex: 1;
-  max-width: 500px;
+  flex-wrap: wrap;
+  max-width: none;
 }
 
 .search-input {
@@ -449,9 +490,20 @@ onBeforeRouteLeave(() => {
   color: #9ca3af;
 }
 
+.filter-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 .pagination-wrapper {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
 }
 
