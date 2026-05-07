@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   Search,
   View,
@@ -197,7 +197,7 @@ onMounted(() => {
               </el-button>
 
               <el-button
-                type="danger"
+                type="info"
                 plain
                 :icon="Refresh"
                 @click="clearFilters"
@@ -246,6 +246,7 @@ onMounted(() => {
           :data="reports"
           stripe
           style="width: 100%"
+          height="calc(100vh - 240px)"
           v-loading="loading"
         >
           <el-table-column
@@ -444,6 +445,16 @@ export default {
 .score-weak {
   color: #ef4444;
   font-weight: 600;
+}
+
+.filter-buttons { 
+  display: flex; 
+  gap: 12px; 
+  align-items: center; 
+}
+
+.filter-buttons :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 :deep(.el-table) {

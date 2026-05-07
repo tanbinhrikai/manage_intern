@@ -37,8 +37,9 @@ const props = defineProps({
 }
 
 .main-content {
-  flex: 1;
   padding: 10px;
-  overflow-y: auto;
+  overflow-y: hidden;
+  min-height: 0;
+  height: calc(100vh - 60px);
 }
 </style>
