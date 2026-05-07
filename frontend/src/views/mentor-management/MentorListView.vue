@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, onDeactivated, watch } from "vue"
+import { ref, computed, onMounted, onBeforeUnmount, onDeactivated } from "vue"
 import { onBeforeRouteLeave } from "vue-router"
 import { Search, OfficeBuilding, Plus, View, Edit, Lock, Unlock, Refresh } from '@element-plus/icons-vue'
 import { useLocaleStore } from '@/locales/locale'
@@ -194,31 +194,16 @@ function handleSearch() {
  * Clear all filters
  */
 function clearFilters() {
-  stopWatch()
-
   searchName.value = ""
   filterStatus.value = ""
   filterDepartment.value = ""
 
   handleSearch()
-  startWatch()
-}
-
-let stopWatch
-
-function startWatch() {
-  stopWatch = watch(
-    [searchName],
-    () => {
-      handleSearch()
-    }
-  )
 }
 
 onMounted(() => {
   fetchMentors()
   fetchDepartments()
-  startWatch()
 })
 
 onBeforeUnmount(() => {
@@ -255,6 +240,7 @@ onBeforeRouteLeave(() => {
               :prefix-icon="Search"
               clearable
               class="search-input"
+              @keyup.enter="handleSearch"
             />
 
             <el-select 
@@ -288,7 +274,7 @@ onBeforeRouteLeave(() => {
 
             <div class="filter-buttons">
               <el-button 
-                type="danger"
+                type="info"
                 plain
                 :icon="Refresh"
                 @click="clearFilters"
@@ -311,6 +297,7 @@ onBeforeRouteLeave(() => {
           :data="mentors" 
           stripe 
           style="width: 100%"
+          height="calc(100vh - 300px)"
           v-loading="loading"
         >
           <el-table-column 

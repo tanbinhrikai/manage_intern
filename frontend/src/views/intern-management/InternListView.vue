@@ -190,7 +190,6 @@ function handleSearch() {
  * Clear all filters and search
  */
 function clearFilters() {
-  stopWatch();
   searchName.value = "";
   filterStatus.value = "";
   filterPosition.value = "";
@@ -199,17 +198,6 @@ function clearFilters() {
   filterEndDate.value = null;
 
   handleSearch();
-  startWatch();
-}
-
-let stopWatch;
-function startWatch() {
-  stopWatch = watch(
-    [searchName],
-    () => {
-      handleSearch();
-    }
-  );
 }
 
 onMounted(() => {
@@ -217,7 +205,6 @@ onMounted(() => {
   fetchPositions();
   fetchMentors({ is_active: true });
   fetchInternshipBatches();
-  startWatch();
 });
 
 onBeforeUnmount(() => {
@@ -254,6 +241,7 @@ onBeforeRouteLeave(() => {
               :prefix-icon="Search"
               clearable
               class="search-input"
+              @keyup.enter="handleSearch"
             />
 
             <el-select
@@ -304,7 +292,7 @@ onBeforeRouteLeave(() => {
               </el-button>
 
               <el-button
-                type="danger"
+                type="info"
                 plain
                 :icon="Refresh"
                 @click="clearFilters"
@@ -361,6 +349,7 @@ onBeforeRouteLeave(() => {
           :data="interns"
           stripe
           style="width: 100%"
+          height="calc(100vh - 300px)"
           v-loading="loading"
         >
           <el-table-column
@@ -526,6 +515,7 @@ onBeforeRouteLeave(() => {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .advanced-filters {
