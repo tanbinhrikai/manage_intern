@@ -293,77 +293,78 @@ onBeforeRouteLeave(() => {
           </el-button>
         </div>
 
-        <el-table 
-          :data="mentors" 
-          stripe 
-          style="width: 100%"
-          height="calc(100vh - 300px)"
-          v-loading="loading"
-        >
-          <el-table-column 
-            prop="fullName" 
-            :label="t('mentorManagement.table.fullName')" 
-            min-width="150" 
-          />
-          <el-table-column 
-            prop="email" 
-            :label="t('mentorManagement.table.email')" 
-            min-width="200" 
-          />
-          <el-table-column 
-            :label="t('mentorManagement.table.department')" 
-            min-width="150"
+        <div class="table-section">
+          <el-table 
+            :data="mentors" 
+            stripe 
+            style="width: 100%"
+            height="100%"
+            v-loading="loading"
           >
-            <template #default="scope">
-              <el-tag type="info" v-if="scope.row.department">
-                {{ scope.row.department.title }}
-              </el-tag>
-              <span v-else class="text-muted">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('mentorManagement.table.status')" 
-            min-width="120" 
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="scope.row.active ? 'success' : 'danger'">
-                {{ scope.row.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('mentorManagement.table.actions')" 
-            min-width="200" 
-            fixed="right" 
-            align="center"
-          >
-            <template #default="scope">
-              <el-button 
-                type="primary" 
-                :icon="View" 
-                size="small" 
-                circle
-                @click="openDetailMentor(scope.row)"
-              />
-              <el-button 
-                type="warning" 
-                :icon="Edit" 
-                size="small" 
-                circle
-                @click="openEditMentor(scope.row)"
-              />
-              <el-button 
-                :type="scope.row.active ? 'danger' : 'success'" 
-                :icon="scope.row.active ? Lock : Unlock" 
-                size="small" 
-                circle
-                @click="handleToggleStatus(scope.row)"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-
+            <el-table-column 
+              prop="fullName" 
+              :label="t('mentorManagement.table.fullName')" 
+              min-width="150" 
+            />
+            <el-table-column 
+              prop="email" 
+              :label="t('mentorManagement.table.email')" 
+              min-width="200" 
+            />
+            <el-table-column 
+              :label="t('mentorManagement.table.department')" 
+              min-width="150"
+            >
+              <template #default="scope">
+                <el-tag type="info" v-if="scope.row.department">
+                  {{ scope.row.department.title }}
+                </el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('mentorManagement.table.status')" 
+              min-width="120" 
+              align="center"
+            >
+              <template #default="scope">
+                <el-tag :type="scope.row.active ? 'success' : 'danger'">
+                  {{ scope.row.active ? t('mentorManagement.status.active') : t('mentorManagement.status.locked') }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('mentorManagement.table.actions')" 
+              min-width="200" 
+              fixed="right" 
+              align="center"
+            >
+              <template #default="scope">
+                <el-button 
+                  type="primary" 
+                  :icon="View" 
+                  size="small" 
+                  circle
+                  @click="openDetailMentor(scope.row)"
+                />
+                <el-button 
+                  type="warning" 
+                  :icon="Edit" 
+                  size="small" 
+                  circle
+                  @click="openEditMentor(scope.row)"
+                />
+                <el-button 
+                  :type="scope.row.active ? 'danger' : 'success'" 
+                  :icon="scope.row.active ? Lock : Unlock" 
+                  size="small" 
+                  circle
+                  @click="handleToggleStatus(scope.row)"
+                />
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
         <div class="pagination-wrapper">
           <el-pagination
             v-model:current-page="pagination.currentPage.value"
@@ -432,12 +433,19 @@ onBeforeRouteLeave(() => {
 
 <style scoped>
 .mentor-list-view {
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 60px);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card {
   border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card :deep(.el-card__header) {
@@ -447,6 +455,18 @@ onBeforeRouteLeave(() => {
 
 .main-card :deep(.el-card__body) {
   padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -501,10 +521,19 @@ onBeforeRouteLeave(() => {
 }
 
 .pagination-wrapper {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 16px;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.pagination-wrapper :deep(.el-pagination) {
+  flex-shrink: 0;
 }
 
 :deep(.el-table) {

@@ -240,81 +240,82 @@ onMounted(() => {
           </div>
         </el-collapse-transition>
 
-        <el-table 
-          :data="interns" 
-          stripe 
-          style="width: 100%"
-          height="calc(100vh - 240px)"
-          v-loading="loading"
-        >
-          <el-table-column 
-            prop="fullName" 
-            :label="t('internManagement.table.fullName')" 
-            min-width="150" 
-          />
-          <el-table-column 
-            :label="t('internManagement.table.position')" 
-            min-width="140"
+        <div class="table-section">
+          <el-table
+            :data="interns"
+            stripe
+            style="width: 100%"
+            height="100%"
+            v-loading="loading"
           >
-            <template #default="scope">
-              <el-tag type="info" v-if="scope.row.position">
-                {{ scope.row.position.title }}
-              </el-tag>
-              <span v-else class="text-muted">-</span>
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.startDate')" 
-            min-width="120"
-          >
-            <template #default="scope">
-              {{ formatDate(scope.row.startDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.endDate')" 
-            min-width="120"
-          >
-            <template #default="scope">
-              {{ formatDate(scope.row.endDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.status')" 
-            min-width="120" 
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag :type="getStatusType(scope.row.internStatus)">
-                {{ t('internManagement.status.' + scope.row.internStatus) }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column 
-            :label="t('internManagement.table.actions')" 
-            min-width="100" 
-            fixed="right" 
-            align="center"
-          >
-            <template #default="scope">
-              <el-button 
-                type="primary" 
-                :icon="View" 
-                size="small" 
-                circle
-                @click="openDetailIntern(scope.row)"
-              />
-              <el-button 
-                type="warning" 
-                :icon="Edit" 
-                size="small" 
-                circle
-                @click="openEditIntern(scope.row)"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-
+            <el-table-column 
+              prop="fullName" 
+              :label="t('internManagement.table.fullName')" 
+              min-width="150" 
+            />
+            <el-table-column 
+              :label="t('internManagement.table.position')" 
+              min-width="140"
+            >
+              <template #default="scope">
+                <el-tag type="info" v-if="scope.row.position">
+                  {{ scope.row.position.title }}
+                </el-tag>
+                <span v-else class="text-muted">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('internManagement.table.startDate')" 
+              min-width="120"
+            >
+              <template #default="scope">
+                {{ formatDate(scope.row.startDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('internManagement.table.endDate')" 
+              min-width="120"
+            >
+              <template #default="scope">
+                {{ formatDate(scope.row.endDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('internManagement.table.status')" 
+              min-width="120" 
+              align="center"
+            >
+              <template #default="scope">
+                <el-tag :type="getStatusType(scope.row.internStatus)">
+                  {{ t('internManagement.status.' + scope.row.internStatus) }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              :label="t('internManagement.table.actions')" 
+              min-width="100" 
+              fixed="right" 
+              align="center"
+            >
+              <template #default="scope">
+                <el-button 
+                  type="primary" 
+                  :icon="View" 
+                  size="small" 
+                  circle
+                  @click="openDetailIntern(scope.row)"
+                />
+                <el-button 
+                  type="warning" 
+                  :icon="Edit" 
+                  size="small" 
+                  circle
+                  @click="openEditIntern(scope.row)"
+                />
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
         <div class="pagination-wrapper">
           <el-pagination
             v-model:current-page="pagination.currentPage.value"
@@ -341,12 +342,19 @@ onMounted(() => {
 
 <style scoped>
 .my-intern-list-view {
-  min-height: calc(100vh - 60px);
+  height: calc(100vh - 80px);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card {
   border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card :deep(.el-card__header) {
@@ -356,6 +364,16 @@ onMounted(() => {
 
 .main-card :deep(.el-card__body) {
   padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .card-header {
@@ -428,7 +446,10 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 16px;
+  flex-shrink: 0;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .filter-buttons {
