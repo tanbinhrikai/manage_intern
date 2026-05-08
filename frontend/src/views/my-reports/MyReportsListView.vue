@@ -242,82 +242,83 @@ onMounted(() => {
           </div>
         </el-collapse-transition>
 
-        <el-table
-          :data="reports"
-          stripe
-          style="width: 100%"
-          height="calc(100vh - 240px)"
-          v-loading="loading"
-        >
-          <el-table-column
-            prop="internName"
-            :label="t('myReports.table.internName')"
-            min-width="150"
-          />
-          <el-table-column
-            :label="t('myReports.table.weekStartDate')"
-            min-width="120"
+        <div class="table-section">
+          <el-table
+            :data="reports"
+            stripe
+            style="width: 100%"
+            height="100%"
+            v-loading="loading"
           >
-            <template #default="scope">
-              {{ formatDate(scope.row.weekStartDate) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="weekNumber"
-            :label="t('myReports.table.weekNumber')"
-            min-width="80"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag type="info" size="small">
-                {{ t("mentorDashboard.week") }} {{ scope.row.weekNumber }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('myReports.table.averageScore')"
-            min-width="100"
-            align="center"
-          >
-            <template #default="scope">
-              <span :class="getScoreClass(scope.row.averageScore)">
-                {{ scope.row.averageScore?.toFixed(1) || "-" }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('myReports.table.createdAt')"
-            min-width="120"
-          >
-            <template #default="scope">
-              {{ formatDate(scope.row.createdAt) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            :label="t('common.actions')"
-            min-width="120"
-            fixed="right"
-            align="center"
-          >
-            <template #default="scope">
-              <el-button
-                type="primary"
-                :icon="View"
-                size="small"
-                circle
-                @click="viewReport(scope.row)"
-              />
-              <el-button
-                type="danger"
-                :icon="Delete"
-                size="small"
-                circle
-                @click="handleDelete(scope.row)"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-
+            <el-table-column
+              prop="internName"
+              :label="t('myReports.table.internName')"
+              min-width="150"
+            />
+            <el-table-column
+              :label="t('myReports.table.weekStartDate')"
+              min-width="120"
+            >
+              <template #default="scope">
+                {{ formatDate(scope.row.weekStartDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="weekNumber"
+              :label="t('myReports.table.weekNumber')"
+              min-width="80"
+              align="center"
+            >
+              <template #default="scope">
+                <el-tag type="info" size="small">
+                  {{ t("mentorDashboard.week") }} {{ scope.row.weekNumber }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="t('myReports.table.averageScore')"
+              min-width="100"
+              align="center"
+            >
+              <template #default="scope">
+                <span :class="getScoreClass(scope.row.averageScore)">
+                  {{ scope.row.averageScore?.toFixed(1) || "-" }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="t('myReports.table.createdAt')"
+              min-width="120"
+            >
+              <template #default="scope">
+                {{ formatDate(scope.row.createdAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              :label="t('common.actions')"
+              min-width="120"
+              fixed="right"
+              align="center"
+            >
+              <template #default="scope">
+                <el-button
+                  type="primary"
+                  :icon="View"
+                  size="small"
+                  circle
+                  @click="viewReport(scope.row)"
+                />
+                <el-button
+                  type="danger"
+                  :icon="Delete"
+                  size="small"
+                  circle
+                  @click="handleDelete(scope.row)"
+                />
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
         <div class="pagination-wrapper">
           <el-pagination
             v-model:current-page="pagination.currentPage.value"
@@ -358,11 +359,19 @@ export default {
 <style scoped>
 .my-reports-view {
   min-height: calc(100vh - 60px);
+  height: calc(100vh - 80px);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card {
   border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .main-card :deep(.el-card__header) {
@@ -372,6 +381,10 @@ export default {
 
 .main-card :deep(.el-card__body) {
   padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .card-header {
@@ -385,6 +398,12 @@ export default {
   font-weight: 600;
   color: #1f2937;
   margin: 0;
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .toolbar {
@@ -424,7 +443,10 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 16px;
+  flex-shrink: 0;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .score-excellent {
