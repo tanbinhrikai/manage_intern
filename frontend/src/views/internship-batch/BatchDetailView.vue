@@ -13,19 +13,21 @@
             </h1>
           </div>
         </div>
-        <div class="header-actions" v-if="userRole === 'ADMIN'">
-          <el-button type="primary" @click="handleEdit">
+        <div class="header-actions">
+          <el-button v-if="userRole === 'ADMIN'" type="primary" @click="handleEdit">
             <el-icon><Edit /></el-icon>
             {{ t("batch.edit") }}
           </el-button>
+
+          <el-button
+            type="success"
+            :disabled="batch.status !== 'ONGOING'"
+            @click="handleGenRoadmap"
+          >
+            <el-icon><View /></el-icon>
+            Gen Roadmap
+          </el-button>
         </div>
-        <el-button
-          type="success"
-          :disabled="batch.status !== 'ONGOING'"
-          @click="handleGenRoadmap">
-          <el-icon><View /></el-icon>
-          Gen Roadmap
-        </el-button>
       </div>
 
       <!-- Batch Info Card -->
@@ -96,7 +98,9 @@
             v-model="searchKeyword"
             :placeholder="t('internManagement.searchByName')"
             clearable
-            style="width: 300px; margin-right: 16px">
+            style="width: 300px;"
+            @keyup.enter="handleSearch"
+            >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
@@ -106,21 +110,34 @@
             v-model="filterStatus"
             :placeholder="t('internManagement.filterByStatus')"
             clearable
-            style="width: 200px">
+            style="width: 200px"
+            @change="handleSearch"
+          >
             <el-option
               v-for="(label, value) in statusOptions"
               :key="value"
               :label="label"
-              :value="value" />
+              :value="value" 
+              />
           </el-select>
+          <el-button
+            type="info"
+            plain
+            :icon="Refresh"
+            @click="clearFilters"
+          >
+            {{ t("internManagement.clearFilters") }}
+          </el-button>
         </div>
 
         <!-- Table -->
         <el-table
           :data="interns"
           v-loading="loadingInterns"
-          style="width: 100%; margin-top: 20px"
-          stripe>
+          style="width: 100%"
+          height="calc(100vh - 620px)"
+          stripe
+        >
           <el-table-column prop="id" label="ID" width="80" />
 
           <el-table-column
@@ -199,12 +216,21 @@
         <!-- Pagination -->
         <div class="pagination-wrapper" v-if="pagination.totalItems.value > 0">
           <el-pagination
-            :current-page="pagination.currentPage.value"
-            :page-size="pagination.pageSize.value"
+            v-model:current-page="pagination.currentPage.value"
+            v-model:page-size="pagination.pageSize.value"
+            :page-sizes="pageSizes"
+            layout="total, sizes"
             :total="pagination.totalItems.value"
+            @size-change="handleSizeChange"
+          />
+
+          <el-pagination
+            v-model:current-page="pagination.currentPage.value"
+            :page-size="pagination.pageSize.value"
             layout="prev, pager, next"
-            background
-            @current-change="handlePageChange" />
+            :total="pagination.totalItems.value"
+            @current-change="handlePageChange"
+          />
         </div>
 
         <!-- Empty State -->
@@ -213,6 +239,55 @@
           :description="t('batch.detail.noInterns')"
           style="padding: 40px 0" />
       </el-card>
+      <el-dialog
+        v-model="dialogVisible"
+        :title="isEditMode ? t('batch.edit') : t('batch.create')"
+        width="600px"
+        class="custom-dialog"
+      >
+        <el-form :model="form" ref="formRef" label-position="top">
+          <el-form-item :label="t('batch.name')" prop="name">
+            <el-input v-model="form.name" />
+          </el-form-item>
+
+          <div class="form-row">
+            <el-form-item :label="t('batch.startDate')" prop="startDate" style="flex: 1">
+              <el-date-picker
+                v-model="form.startDate"
+                type="date"
+                style="width: 100%"
+                value-format="YYYY-MM-DD"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('batch.endDate')" prop="endDate" style="flex: 1">
+              <el-date-picker
+                v-model="form.endDate"
+                type="date"
+                style="width: 100%"
+                value-format="YYYY-MM-DD"
+              />
+            </el-form-item>
+          </div>
+
+          <el-form-item :label="t('batch.status')" v-if="isEditMode">
+            <el-select v-model="form.status" style="width: 100%">
+              <el-option label="ONGOING" value="ONGOING" />
+              <el-option label="CANCEL" value="CANCEL" />
+              <el-option label="COMPLETED" value="COMPLETED" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item :label="t('batch.description')">
+            <el-input v-model="form.description" type="textarea" :rows="4" />
+          </el-form-item>
+        </el-form>
+
+        <template #footer>
+          <el-button @click="dialogVisible = false">{{ t("common.cancel") }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ t("common.submit") }}</el-button>
+        </template>
+      </el-dialog>
     </div>
   </AdminLayout>
 </template>
@@ -229,9 +304,9 @@ import {
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
 import { useLocaleStore } from "@/locales/locale";
 import { useAuthStore } from "@/stores/auth";
-import { ArrowLeft, Edit, Search, View } from "@element-plus/icons-vue";
+import { ArrowLeft, Edit, Search, View, Refresh } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
@@ -244,12 +319,11 @@ const { getStatusType } = useStatus();
 
 const userRole = computed(() => authStore.userRole);
 const batchId = computed(() => route.params.id);
-
+const pageSizes = [20, 40, 60, 80, 100];
 // Pagination composable
 const pagination = usePagination({
   initialPage: 1,
-  initialPageSize: 10,
-  onPageChange: () => fetchInterns(),
+  initialPageSize: 20,
 });
 
 // Loading composable
@@ -261,6 +335,44 @@ const batch = ref({});
 const interns = ref([]);
 const searchKeyword = ref("");
 const filterStatus = ref("");
+const dialogVisible = ref(false);
+const isEditMode = ref(false);
+const form = ref({
+  id: null,
+  name: "",
+  startDate: "",
+  endDate: "",
+  status: "ONGOING",
+  description: "",
+});
+const formRef = ref(null);
+
+const handleSubmit = async () => {
+  if (!formRef.value) return;
+
+  try {
+    await formRef.value.validate();
+
+    const payload = {
+      name: form.value.name,
+      startDate: form.value.startDate,
+      endDate: form.value.endDate,
+      description: form.value.description,
+      ...(isEditMode.value && { status: form.value.status }),
+    };
+
+    if (isEditMode.value) {
+      await batchApi.updateBatch(form.value.id, payload);
+      ElMessage.success(t.value("batch.updateSuccess"));
+    }
+
+    dialogVisible.value = false;
+    await fetchBatchDetail();
+  } catch (error) {
+    console.error("Failed to save batch:", error);
+    ElMessage.error(t.value("batch.saveError"));
+  }
+};
 
 // Status options
 const statusOptions = computed(() => ({
@@ -308,14 +420,28 @@ const fetchInterns = async () => {
   }
 };
 
+const clearFilters = () => {
+  searchKeyword.value = "";
+  filterStatus.value = "";
+  handleSearch();
+};
+
 // Handlers
 const goBack = () => {
   router.back();
 };
 
 const handleEdit = () => {
-  // Navigate back to list view - edit can be done from there
-  router.push("/admin/batches");
+  isEditMode.value = true;
+  form.value = {
+    id: batch.value.id,
+    name: batch.value.name || "",
+    startDate: batch.value.startDate || "",
+    endDate: batch.value.endDate || "",
+    status: batch.value.status || "ONGOING",
+    description: batch.value.description || "",
+  };
+  dialogVisible.value = true;
 };
 
 const handleSearch = () => {
@@ -327,10 +453,11 @@ const handlePageChange = (page) => {
   pagination.setPage(page);
 };
 
-// Watch filters and auto-trigger search
-watch([searchKeyword, filterStatus], () => {
-  handleSearch();
-});
+const handleSizeChange = (size) => {
+  pagination.setPageSize(size);
+  pagination.firstPage();
+  fetchInterns();
+};
 
 const viewIntern = (intern) => {
   router.push(`/admin/interns/${intern.id}`);
@@ -376,8 +503,13 @@ const handleGenRoadmap = () => {
   padding: 24px;
   background-color: #f8f9fa;
   min-height: calc(100vh - 60px);
+  box-sizing: border-box;
 }
 
+.interns-card :deep(.el-card__body) {
+  display: flex;
+  flex-direction: column;
+}
 /* Header */
 .page-header {
   display: flex;
@@ -413,12 +545,15 @@ const handleGenRoadmap = () => {
 .header-actions {
   display: flex;
   gap: 12px;
+  align-items: center;
 }
 
 /* Cards */
 .info-card,
 .interns-card {
   margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-header {
@@ -493,13 +628,18 @@ const handleGenRoadmap = () => {
 
 /* Pagination */
 .pagination-wrapper {
+  width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
 }
 
-:deep(.el-pagination) {
-  justify-content: flex-start;
+.pagination-wrapper :deep(.el-pagination) {
+  flex-shrink: 0;
 }
 
 /* Responsive */
@@ -512,6 +652,11 @@ const handleGenRoadmap = () => {
 
   .filter-section {
     flex-direction: column;
+  }
+
+  .pagination-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
