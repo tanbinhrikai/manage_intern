@@ -137,4 +137,6 @@ public interface InternRepository extends JpaRepository<Intern, Long> {
         // Select deleted intern (Filtered by updatedAt)
         @Query("SELECT i FROM Intern i WHERE i.updatedAt > :date AND i.internStatus = 'DROPPED'")
         List<Intern> findRecentlyDeleted(@Param("date") Instant date, Pageable pageable);
+
+        List<Intern> findAllByInternStatus(InternStatus internStatus);
 }

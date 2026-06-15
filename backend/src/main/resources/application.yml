@@ -2,9 +2,10 @@ spring:
   application:
     name: backend
   datasource:
-    url: ${URL_DATABASE}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://localhost:3306/intern_hub_db
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
       ddl-auto: none
@@ -16,7 +17,7 @@ spring:
 
   ai:
     openai:
-      api-key: ${GEMINI_API_KEY}
+      api-key: ${GCP_API_KEY}
       base-url: https://generativelanguage.googleapis.com/v1beta/openai/
       chat:
         options:
@@ -37,10 +38,15 @@ app:
       model: gemini-2.5-pro
       temperature: 0.15
       top-p: 0.85
-      max-output-tokens: 60000
+      max-output-tokens: 8192
 
     creator:
       model: gemini-2.5-flash
       temperature: 0.7
       top-p: 0.95
-      max-output-tokens: 50000
+      max-output-tokens: 8192
+
+
+ADMIN_EMAIL: admin@gmail.com
+ADMIN_PASSWORD : admin1245
+SIGNER_KEY:  abcxyzsjfvwehvjhsdnvfwehhvyusdfnwebsfgeh12345678abcdefghijklmnopqr

@@ -35,7 +35,8 @@ public class SecurityConfig {
             "/swagger-ui.html",
             "/auth/**",
             "/actuator/**",
-            "/error/**"
+            "/error/**",
+            "/generic"
     };
 
     CustomJwtDecoder customJwtDecoder;
