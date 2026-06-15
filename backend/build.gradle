@@ -51,6 +51,7 @@ dependencies {
 
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
+    implementation 'me.paulschwarz:spring-dotenv:5.1.0'
 }
 
 dependencyManagement {

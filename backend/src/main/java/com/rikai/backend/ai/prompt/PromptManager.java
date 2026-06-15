@@ -5,6 +5,8 @@ package com.rikai.backend.ai.prompt;
 * Hierarchical structure: ROOT → PHASE → MODULE → LESSON → TASK
 * Strategy: Outline-first (create the framework), then expand each part
 */
+
+// class chứ prom cho AL phân tích
 public class PromptManager {
 
     //JSON SCHEMA TEMPLATES

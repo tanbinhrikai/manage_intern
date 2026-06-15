@@ -9,9 +9,13 @@ import java.util.Map;
 
 import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
 
+
+// chỉnh sửa roadmap
 @Service
 public class RoadmapEditorAgent {
     private final ChatClient chatClient;
+
+    // quản lý roadmap tạm thời
     private final DraftRoadmapManager draftManager;
 
     public RoadmapEditorAgent(@Qualifier("creatorClient") ChatClient chatClient, DraftRoadmapManager draftManager) {
@@ -19,9 +23,12 @@ public class RoadmapEditorAgent {
         this.draftManager = draftManager;
     }
 
+
+    // fix sau : nên lấy theo userId vì sesionId có thể bị thay đổi liên tục
     public String processEditRequest(String userMessage, String sessionId) {
         return processEditRequest(userMessage, sessionId, sessionId);
     }
+
 
     public String processEditRequest(String userMessage, String sessionId, String conversationId) {
         String currentStructure = draftManager.getSkeletonStructure(sessionId);

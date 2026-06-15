@@ -42,9 +42,12 @@ public class AiConfig {
     private Double topPRouter;
 
     @Bean
+    // class là nơi lưu lịch sử cho chat
     public ChatMemory chatMemory(JdbcChatMemoryRepository repository) {
         return MessageWindowChatMemory.builder()
+                // lưu vào db để k mất khi restart
                 .chatMemoryRepository(repository)
+                // chỉ nhớ 30 tin nhắn gần nhất -> do bị giới hạn về token
                 .maxMessages(30)
                 .build();
     }
@@ -55,20 +58,26 @@ public class AiConfig {
             ChatMemory chatMemory
     ) {
         return builder
+                // gắn lịch sử vào cho nó nhớ
                 .defaultAdvisors(
                         MessageChatMemoryAdvisor
                                 .builder(chatMemory)
                                 .build()
                 )
                 .defaultOptions(ChatOptions.builder()
-                        .model(routerModel)
-                        .temperature(routerTemperature)
-                        .topP(topPRouter)
-                        .maxTokens(maxTokensRouter)
-                        .build())
+                        .model(routerModel)           // model AI dùng (GPT-4, Gemini,...)
+                        .temperature(routerTemperature) // độ sáng tạo (0=chính xác, 1=sáng tạo)
+                        .topP(topPRouter)             // kiểm soát độ đa dạng câu trả lời
+                        .maxTokens(maxTokensRouter)   // giới hạn độ dài response
+                        .build()
+                )
+
                 .defaultToolNames("searchPositionTool")
+// Cho phép AI gọi tool search position
+// VD: user hỏi "Java Intern" → AI tự search position trong DB
                 .build();
     }
+
 
 
     @Bean("creatorClient")

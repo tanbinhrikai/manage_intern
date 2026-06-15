@@ -1,4 +1,4 @@
 package com.rikai.backend.model.Enum;
-
-public class NotificationType {
+public enum NotificationType {
+    INTERN_EVALUATION_REMINDER
 }

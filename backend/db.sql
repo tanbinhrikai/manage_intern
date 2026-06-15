@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS departments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI;
 
+
 -- =====================================================
 -- 3. USERS TABLE (Mentors, Admins)
 -- =====================================================
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS internship_batches (
     start_date DATE NOT NULL,
     end_date DATE,
     description TEXT,
+    status ENUM('ONGOING', 'CANCEL', 'COMPLETED') DEFAULT 'ONGOING',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_batch_name (name),
     INDEX idx_batch_dates (start_date , end_date)
@@ -448,10 +450,10 @@ CREATE TABLE IF NOT EXISTS weekly_report_details (
 )  ENGINE=INNODB DEFAULT CHARSET=UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI;
 
 alter table weekly_reports drop column status;
-
-ALTER TABLE positions DROP FOREIGN KEY positions_ibfk_1;
-ALTER TABLE positions DROP INDEX idx_position_department;
-ALTER TABLE positions DROP COLUMN department_id;
+#
+# ALTER TABLE positions DROP FOREIGN KEY positions_ibfk_1;
+# ALTER TABLE positions DROP INDEX idx_position_department;
+# ALTER TABLE positions DROP COLUMN department_id;
 
 
 DROP TABLE IF EXISTS intern_roadmap_progress;
@@ -580,16 +582,18 @@ ALTER TABLE roadmap_nodes
 ADD CONSTRAINT fk_roadmap_batch
 FOREIGN KEY (batch_id) REFERENCES internship_batches(id);
 
+ALTER TABLE internship_batches
+    MODIFY COLUMN status
+    ENUM('ONGOING', 'CANCEL', 'COMPLETED')
+    DEFAULT 'ONGOING';
+
+
 UPDATE internship_batches
 SET status = 'ONGOING'
 WHERE status = 'DRAFT';
 
 
-ALTER TABLE internship_batches
-    MODIFY COLUMN status
-    ENUM('ONGOING', 'CANCEL', 'COMPLETED')
-    DEFAULT 'ONGOING';
-    
+
 
 DELIMITER //
 CREATE PROCEDURE GenerateWeeklyReports(

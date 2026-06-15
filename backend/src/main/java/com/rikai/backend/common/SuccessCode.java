@@ -104,6 +104,8 @@ public enum SuccessCode {
 
     GET_ALL_ROADMAPS_SUCCESSFUL("Get all roadmaps successful", HttpStatus.OK),
     GET_ROADMAP_SUCCESSFUL("Get roadmap successful", HttpStatus.OK),
+    GET_MY_NOTIFICATION_SUCCESSFUL("get my notification successful",HttpStatus.OK),
+    UNREAD_COUNT_NOTIFICATION_SUCCESSFUL("get count notification successful",HttpStatus.OK),
     DELETE_ROADMAP_SUCCESSFUL("Delete roadmap successful", HttpStatus.OK);
 
     SuccessCode(String message, HttpStatusCode statusCode) {

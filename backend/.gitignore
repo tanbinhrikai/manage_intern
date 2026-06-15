@@ -1,6 +1,7 @@
 HELP.md
 .gradle
 .env
+mysql_data
 db.sql
 docker-compose.yml
 build/

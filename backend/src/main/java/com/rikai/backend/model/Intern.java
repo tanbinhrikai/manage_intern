@@ -76,6 +76,8 @@ public class Intern {
     @Column(name = "updated_at")
     Instant updatedAt;
 
+//    boolean evaluationReminderSent = true;
+
     @PrePersist
     public void setDefaultStatus() {
         if (internStatus == null) {
