@@ -15,4 +15,6 @@ public interface IDepartmentService {
     DepartmentResponse createDepartment(DepartmentCreationRequest request);
 
     DepartmentResponse updateDepartment(Long id, DepartmentUpdateRequest request);
+
+    boolean deleteDepartment(Long id);
 }

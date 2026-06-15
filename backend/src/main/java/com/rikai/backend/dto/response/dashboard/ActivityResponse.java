@@ -17,9 +17,4 @@ public class ActivityResponse {
     String type; // "new", "evaluation", "warning", "completed", "status_change"
     String text; // HTML formatted text
     Instant timestamp;
-    String internName;
-    String mentorName;
-    Long internId;
-    String oldStatus;
-    String newStatus;
 }

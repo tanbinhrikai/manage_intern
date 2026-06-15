@@ -1,5 +1,7 @@
 import http from "./http"
 
+export const ACTIVITY_STREAM_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/dashboard/recent-activities/stream`
+
 export function getRecentActivities(params = {}) {
     return http.get("/dashboard/recent-activities", { params })
 }

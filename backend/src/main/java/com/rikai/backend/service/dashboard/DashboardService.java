@@ -56,6 +56,7 @@ public class DashboardService implements IDashboardService {
         PositionRepository positionRepository;
         InternshipBatchRepository internshipBatchRepository;
         AuthenticationService authenticationService;
+        AuditLogRepository auditLogRepository;
 
         /**
          * Fetch recent activities including intern creations, updates, deletions,
@@ -74,167 +75,40 @@ public class DashboardService implements IDashboardService {
         @Override
         @Transactional(readOnly = true)
         public List<ActivityResponse> getRecentActivities(int limit) {
-                List<ActivityResponse> activities = new ArrayList<>();
-                Instant sevenDaysAgo = Instant.now().minus(7, ChronoUnit.DAYS);
-
-                // Apply limit to each sub-query to prevent over-fetching,
-                // but fetch a slightly larger buffer (limit) to ensure enough data after
-                // merging and re-sorting.
-                // Sort at the DB level to retrieve the most recent records efficiently.
                 PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
-                PageRequest updatePageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "updatedAt"));
-                // 1. Interns Created
-                List<Intern> recentInterns = internRepository.findByCreatedAtAfter(sevenDaysAgo, pageRequest);
-                for (Intern intern : recentInterns) {
-                        activities.add(ActivityResponse.builder()
-                                        .type("new")
-                                        .text(String.format("<strong>%s</strong> was added", intern.getFullName()))
-                                        .timestamp(intern.getCreatedAt())
-                                        .internName(intern.getFullName())
-                                        .internId(intern.getId())
-                                        .build());
-                }
-
-                // 2. Weekly Reports Created (Optimized with JOIN FETCH)
-                List<WeeklyReport> recentReports = weeklyReportRepository.findByCreatedAtAfter(sevenDaysAgo,
-                                pageRequest);
-                for (WeeklyReport report : recentReports) {
-                        activities.add(ActivityResponse.builder()
-                                        .type("evaluation")
-                                        .text(String.format(
-                                                        "Mentor <strong>%s</strong> completed weekly evaluation for <strong>%s</strong>",
-                                                        report.getMentor().getFullName(), // No secondary query
-                                                                                          // triggered
-                                                        report.getIntern().getFullName()))
-                                        .timestamp(report.getCreatedAt())
-                                        .internName(report.getIntern().getFullName())
-                                        .mentorName(report.getMentor().getFullName())
-                                        .internId(report.getIntern().getId())
-                                        .build());
-                }
-
-                // 3. Evaluation Sessions Created (Optimized with JOIN FETCH)
-                List<EvaluationSession> recentSessions = evaluationSessionRepository.findByCreatedAtAfter(sevenDaysAgo,
-                                pageRequest);
-                for (EvaluationSession session : recentSessions) {
-                        activities.add(ActivityResponse.builder()
-                                        .type("evaluation")
-                                        .text(String.format(
-                                                        "Mentor <strong>%s</strong> completed %s evaluation for <strong>%s</strong>",
-                                                        session.getMentor().getFullName(),
-                                                        formatSessionType(session.getSessionType()),
-                                                        session.getIntern().getFullName()))
-                                        .timestamp(session.getCreatedAt())
-                                        .internName(session.getIntern().getFullName())
-                                        .mentorName(session.getMentor().getFullName())
-                                        .internId(session.getIntern().getId())
-                                        .build());
-                }
-
-                // 4. Updated Interns
-                // Filter logic (updatedAt != createdAt) in Java as complex SQL checks aren't
-                // necessary for small datasets
-                List<Intern> updatedInterns = internRepository.findRecentlyUpdated(sevenDaysAgo, updatePageRequest);
-                for (Intern intern : updatedInterns) {
-                        if (!intern.getUpdatedAt().equals(intern.getCreatedAt())) {
-                                activities.add(ActivityResponse.builder()
-                                                .type("system")
-                                                .text(String.format("<strong>%s</strong> was updated",
-                                                                intern.getFullName()))
-                                                .timestamp(intern.getUpdatedAt())
-                                                .internName(intern.getFullName())
-                                                .internId(intern.getId())
-                                                .build());
-                        }
-                }
-
-                // 5. Updated Reports
-                List<WeeklyReport> updatedReports = weeklyReportRepository.findByUpdatedAtAfter(sevenDaysAgo,
-                                updatePageRequest);
-                for (WeeklyReport report : updatedReports) {
-                        if (!report.getUpdatedAt().equals(report.getCreatedAt())) {
-                                activities.add(ActivityResponse.builder()
-                                                .type("evaluation")
-                                                .text(String.format(
-                                                                "Weekly evaluation for <strong>%s</strong> was updated by <strong>%s</strong>",
-                                                                report.getIntern().getFullName(),
-                                                                report.getMentor().getFullName()))
-                                                .timestamp(report.getUpdatedAt())
-                                                .internName(report.getIntern().getFullName())
-                                                .mentorName(report.getMentor().getFullName())
-                                                .internId(report.getIntern().getId())
-                                                .build());
-                        }
-                }
-
-                // 6. Updated Sessions
-                List<EvaluationSession> updatedSessions = evaluationSessionRepository.findByUpdatedAtAfter(sevenDaysAgo,
-                                updatePageRequest);
-                for (EvaluationSession session : updatedSessions) {
-                        if (!session.getUpdatedAt().equals(session.getCreatedAt())) {
-                                activities.add(ActivityResponse.builder()
-                                                .type("evaluation")
-                                                .text(String.format(
-                                                                "%s evaluation for <strong>%s</strong> was updated by <strong>%s</strong>",
-                                                                formatSessionType(session.getSessionType()),
-                                                                session.getIntern().getFullName(),
-                                                                session.getMentor().getFullName()))
-                                                .timestamp(session.getUpdatedAt())
-                                                .internName(session.getIntern().getFullName())
-                                                .mentorName(session.getMentor().getFullName())
-                                                .internId(session.getIntern().getId())
-                                                .build());
-                        }
-                }
-
-                // 7. Deleted Interns
-                List<Intern> deletedInterns = internRepository.findRecentlyDeleted(sevenDaysAgo, updatePageRequest);
-                for (Intern intern : deletedInterns) {
-                        activities.add(ActivityResponse.builder()
-                                        .type("warning")
-                                        .text(String.format("<strong>%s</strong> was removed", intern.getFullName()))
-                                        .timestamp(intern.getUpdatedAt())
-                                        .internName(intern.getFullName())
-                                        .internId(intern.getId())
-                                        .build());
-                }
-
-                // 8. Status Changes (Maintain existing logic but ensure Repository is
-                // optimized)
-                PageRequest statusPageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "changedAt"));
-                // Assumes findRecentStatusChanges uses @Query with JOIN FETCH for the intern
-                // entity
-                List<InternStatusHistory> recentStatusChanges = internStatusHistoryRepository
-                                .findRecentStatusChanges(sevenDaysAgo, statusPageRequest)
-                                .getContent();
-
-                for (InternStatusHistory history : recentStatusChanges) {
-                        String activityType = switch (history.getNewStatus().toString()) {
-                                case "WARNING" -> "warning";
-                                case "COMPLETE" -> "completed";
-                                default -> "status_change";
-                        };
-
-                        activities.add(ActivityResponse.builder()
-                                        .type(activityType)
-                                        .text(String.format(
-                                                        "Status of <strong>%s</strong> changed to <strong>%s</strong>",
-                                                        history.getIntern().getFullName(),
-                                                        history.getNewStatus()))
-                                        .timestamp(history.getChangedAt())
-                                        .internName(history.getIntern().getFullName())
-                                        .internId(history.getIntern().getId())
-                                        .oldStatus(history.getOldStatus() != null ? history.getOldStatus().toString()
-                                                        : null)
-                                        .newStatus(history.getNewStatus().toString())
-                                        .build());
-                }
-
-                // Final Merge, Sort, and Global Limit
-                return activities.stream()
-                                .sorted(Comparator.comparing(ActivityResponse::getTimestamp).reversed())
-                                .limit(limit)
+                return auditLogRepository.findAll(pageRequest).getContent().stream()
+                                .map(this::mapToActivityResponse)
                                 .toList();
+        }
+
+        private ActivityResponse mapToActivityResponse(AuditLog log) {
+                String type = "system";
+                String action = log.getAction();
+                String entityType = log.getEntityType();
+                String details = log.getDetails();
+
+                if ("CREATE".equals(action) && "INTERN".equals(entityType)) {
+                        type = "new";
+                } else if ("DELETE".equals(action) && "INTERN".equals(entityType)) {
+                        type = "warning";
+                } else if ("WEEKLY_REPORT".equals(entityType) || "EVALUATION_SESSION".equals(entityType)) {
+                        type = "evaluation";
+                } else if ("STATUS_CHANGE".equals(action)) {
+                        if (details != null) {
+                                if (details.contains("WARNING")) {
+                                        type = "warning";
+                                } else if (details.contains("COMPLETE")) {
+                                        type = "completed";
+                                }
+                        }
+                        type = "status_change";
+                }
+
+                return ActivityResponse.builder()
+                                .type(type)
+                                .text(details)
+                                .timestamp(log.getCreatedAt())
+                                .build();
         }
 
         private String formatSessionType(SessionType sessionType) {
@@ -300,26 +174,9 @@ public class DashboardService implements IDashboardService {
         @EventListener
         @Async
         @Transactional
-        public void handleInternCreated(InternCreatedEvent event) {
+        public void handleCRUDInternEvent(InternCudEvent event) {
         }
 
-        @EventListener
-        @Async
-        @Transactional
-        public void handleInternUpdated(InternUpdatedEvent event) {
-        }
-
-        @EventListener
-        @Async
-        @Transactional
-        public void handleInternDeleted(InternDeletedEvent event) {
-        }
-
-        @EventListener
-        @Async
-        @Transactional
-        public void handleInternStatusChanged(InternStatusChangedEvent event) {
-        }
 
         /**
          * Get the number of mentors grouped by their respective departments.

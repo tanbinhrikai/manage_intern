@@ -15,4 +15,6 @@ public interface IPositionService {
     PositionResponse createPosition(PositionCreationRequest request);
 
     PositionResponse updatePosition(Long id, PositionUpdateRequest request);
+
+    boolean deletePostion(Long id);
 }

@@ -1,6 +1,18 @@
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
+import { useActivityStreamStore } from '@/stores/activityStream'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 import AdminHeader from '@/components/layout/AdminHeader.vue'
+
+const activityStore = useActivityStreamStore()
+
+onMounted(() => {
+  activityStore.registerLayout()
+})
+
+onUnmounted(() => {
+  activityStore.unregisterLayout()
+})
 </script>
 
 <template>
@@ -33,6 +45,5 @@ import AdminHeader from '@/components/layout/AdminHeader.vue'
   padding: 10px;
   overflow-y: hidden;
   min-height: 0;
-  height: calc(100vh - 60px);
 }
 </style>
