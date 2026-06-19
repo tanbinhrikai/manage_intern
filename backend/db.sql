@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS internship_batches (
     start_date DATE NOT NULL,
     end_date DATE,
     description TEXT,
+    status ENUM('ONGOING', 'CANCEL', 'COMPLETED'),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_batch_name (name),
     INDEX idx_batch_dates (start_date , end_date)

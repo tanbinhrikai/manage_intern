@@ -17,20 +17,20 @@ import java.time.Instant;
 public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Integer id;
+    Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    Users user;
+    Users user; // actor (người thực hiện)
 
     @Column(name = "action", nullable = false)
     String action;
 
     @Column(name = "entity_type")
-    String entityType;
+    String entityType; // Loại đối tượng bị thay đổi
 
     @Column(name = "entity_id")
-    Integer entityId;
+    String entityId; // Mã của đối tượng bị thay đổi
 
     @Column(name = "old_value", columnDefinition = "TEXT")
     String oldValue;
@@ -39,7 +39,7 @@ public class AuditLog {
     String newValue;
 
     @Column(name = "details", columnDefinition = "TEXT")
-    String details;
+    String details; 
 
     @Column(name = "ip_address")
     String ipAddress;

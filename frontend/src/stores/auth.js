@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as authApi from '@/api/auth'
 import router from '@/routers'
+import { useActivityStreamStore } from './activityStream'
 
 const USER_KEY = 'user_data'
 
@@ -35,6 +36,12 @@ export const useAuthStore = defineStore('auth', () => {
     const clearAuth = () => {
         user.value = null
         localStorage.removeItem(USER_KEY)
+        try {
+            const activityStore = useActivityStreamStore()
+            activityStore.closeConnection()
+        } catch (error) {
+            console.error('Failed to close activity stream on logout:', error)
+        }
     }
 
     const logout = async () => {

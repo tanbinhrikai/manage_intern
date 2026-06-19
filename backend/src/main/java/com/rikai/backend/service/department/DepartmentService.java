@@ -5,6 +5,7 @@ import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.department.DepartmentCreationRequest;
 import com.rikai.backend.dto.request.department.DepartmentUpdateRequest;
 import com.rikai.backend.dto.response.department.DepartmentResponse;
+import com.rikai.backend.event.DepartmentCudEvent;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.DepartmentMapper;
 import com.rikai.backend.model.Department;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class DepartmentService implements IDepartmentService {
     DepartmentRepository departmentRepository;
     DepartmentMapper departmentMapper;
     UsersRepository usersRepository;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -53,6 +56,7 @@ public class DepartmentService implements IDepartmentService {
     public DepartmentResponse createDepartment(DepartmentCreationRequest request) {
         Department department = departmentMapper.toDepartment(request);
         Department saved = departmentRepository.save(department);
+        eventPublisher.publishEvent(new DepartmentCudEvent(this, "CREATED", saved));
         return departmentMapper.toDepartmentResponse(saved);
     }
 
@@ -65,6 +69,21 @@ public class DepartmentService implements IDepartmentService {
         department.setTitle(request.getTitle());
 
         Department saved = departmentRepository.save(department);
+        eventPublisher.publishEvent(new DepartmentCudEvent(this, "UPDATED", saved));
         return departmentMapper.toDepartmentResponse(saved);
+    }
+
+    @Override
+    public boolean deleteDepartment(Long id) {
+        try {
+            Department department = departmentRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            departmentRepository.delete(department);
+            eventPublisher.publishEvent(new DepartmentCudEvent(this, "DELETED", department));
+            return true;
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+            return false;
+        }
     }
 }

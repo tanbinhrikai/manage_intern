@@ -1,6 +1,6 @@
 package com.rikai.backend.model;
 
-import com.rikai.backend.model.Enum.InternStatus;
+import com.rikai.backend.common.InternStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

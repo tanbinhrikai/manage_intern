@@ -244,10 +244,10 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
-    path: "/roadmaps/builder",
+    path: "/admin/roadmaps/builder",
     name: "RoadmapBuilder",
     component: () => import("@/views/roadmap/RoadmapBuilderView.vue"),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, role: "ADMIN" },
   },
   {
     path: "/admin/roadmaps/list",

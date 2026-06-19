@@ -5,6 +5,8 @@ import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
+import com.rikai.backend.event.UserCudEvent;
+import com.rikai.backend.event.UserStatusChangedEvent;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
 import com.rikai.backend.model.Department;
@@ -21,6 +23,8 @@ import com.rikai.backend.validation.PasswordValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,6 +46,7 @@ public class UserService implements IUserService {
     DepartmentRepository departmentRepository;
     InternRepository internRepository;
     IAuthenticationService authenticationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -145,6 +150,7 @@ public class UserService implements IUserService {
         }
 
         Users savedUser = usersRepository.save(user);
+        eventPublisher.publishEvent(new UserCudEvent(this, "CREATED", savedUser));
         return userMapper.toUserResponse(savedUser);
     }
 
@@ -164,6 +170,7 @@ public class UserService implements IUserService {
         }
 
         Users savedUser = usersRepository.save(user);
+        eventPublisher.publishEvent(new UserCudEvent(this, "UPDATED", savedUser));
         return userMapper.toUserResponse(savedUser);
     }
 
@@ -174,6 +181,7 @@ public class UserService implements IUserService {
         Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
         currentUser.setDepartment(department);
         Users savedUser = usersRepository.save(currentUser);
+        eventPublisher.publishEvent(new UserCudEvent(this, "UPDATED", savedUser));
         return userMapper.toUserResponse(savedUser);
     }
 
@@ -182,6 +190,7 @@ public class UserService implements IUserService {
         Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         user.setIsActive(!user.getIsActive());
         Users savedUser = usersRepository.save(user);
+        eventPublisher.publishEvent(new UserStatusChangedEvent(this, savedUser));
         return UserResponse.fromUser(savedUser);
     }
 

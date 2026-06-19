@@ -55,4 +55,18 @@ public class DepartmentController {
         return ApiResponse.buildSuccessResponse(departmentService.updateDepartment(id, request),
                 SuccessCode.UPDATE_DEPARTMENT_SUCCESSFUL);
     }
+
+     @DeleteMapping("/{id}")
+     @PreAuthorize("hasRole('ADMIN')")
+     public ApiResponse<Boolean> deleteDepartment(@PathVariable Long id) {
+         boolean isDeleted = departmentService.deleteDepartment(id);
+         if(isDeleted) {
+             return ApiResponse.buildSuccessResponse(true,
+                     SuccessCode.DELETE_DEPARTMENT_SUCCESSFUL);
+         }
+         else {
+             return ApiResponse.buildFailedResponse(false,
+                     SuccessCode.DELETE_DEPARTMENT_SUCCESSFUL);
+         }
+     }
 }

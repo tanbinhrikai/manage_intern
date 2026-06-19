@@ -29,4 +29,14 @@ public class ApiResponse<T> {
                 .timestamp(Instant.now().toString())
                 .build();
     }
+
+    static public  <T> ApiResponse<T> buildFailedResponse(T data, SuccessCode successCode) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .statusCode(successCode.getStatusCode().value())
+                .message(successCode.getMessage())
+                .data(data)
+                .timestamp(Instant.now().toString())
+                .build();
+    }
 }

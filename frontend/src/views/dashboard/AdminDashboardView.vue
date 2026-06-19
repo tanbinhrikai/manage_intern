@@ -6,6 +6,7 @@ import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
 import StatCard from "@/components/dashboard/StatCard.vue";
 import DonutChart from "@/components/dashboard/DonutChart.vue";
 import BarChart from "@/components/dashboard/BarChart.vue";
+import HorizontalBarChart from "@/components/dashboard/HorizontalBarChart.vue";
 import ActivityList from "@/components/dashboard/ActivityList.vue";
 import BatchScoreChart from "@/components/dashboard/BatchScoreChart.vue";
 import { getInternsAnalysis } from "@/api/intern";
@@ -15,6 +16,7 @@ import {
   getInternsByPosition,
 } from "@/api/dashboard";
 import { useLoading, useApi } from "@/composables";
+import { useActivityStreamStore } from "@/stores/activityStream";
 
 const localeStore = useLocaleStore();
 const t = computed(() => localeStore.t);
@@ -106,7 +108,8 @@ async function fetchAnalysis() {
   });
 }
 
-const activities = ref([]);
+const activityStore = useActivityStreamStore();
+const activities = computed(() => activityStore.activities);
 const internsByDepartment = ref([]);
 const internsByPosition = ref([]);
 
@@ -151,11 +154,20 @@ const formattedActivities = computed(() => {
   }));
 });
 
+const deptColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#14b8a6"];
+const formattedDepartmentChartData = computed(() => {
+  return internsByDepartment.value.map((item, index) => ({
+    label: item.label,
+    value: item.value,
+    color: deptColors[index % deptColors.length],
+  }));
+});
+
 async function fetchActivities() {
   await withLoading(async () => {
     const res = await executeApi(() => getRecentActivities({ limit: 100 }));
     if (res.data?.data) {
-      activities.value = res.data.data;
+      activityStore.setActivities(res.data.data);
     }
   });
 }
@@ -187,6 +199,7 @@ onMounted(() => {
         <h1 class="page-title">{{ t("dashboard.title") }}</h1>
       </div>
 
+      <!-- Row 1: KPI Summary Cards (100% width) -->
       <el-row :gutter="20" class="mb-4">
         <el-col
           :xs="12"
@@ -206,9 +219,18 @@ onMounted(() => {
         </el-col>
       </el-row>
 
-      <el-row :gutter="20" class="mb-4">
-        <el-col :span="24">
-          <el-card class="activity-card" shadow="hover">
+      <!-- Row 2: Prominent Batch Average Score Trend & Recent Activities (70/30 layout) -->
+      <el-row :gutter="20" class="mb-4 equal-height-row">
+        <!-- Batch Average Score Trend Chart (70% width on desktop) -->
+        <el-col :xs="24" :md="17" class="mb-col">
+          <el-card class="chart-card batch-score-card h-full" shadow="hover">
+            <BatchScoreChart />
+          </el-card>
+        </el-col>
+
+        <!-- Recent Activities Log (30% width on desktop) -->
+        <el-col :xs="24" :md="7" class="mb-col">
+          <el-card class="activity-card h-full" shadow="hover">
             <template #header>
               <div class="activity-header">
                 <div class="header-left">
@@ -234,28 +256,16 @@ onMounted(() => {
         </el-col>
       </el-row>
 
+      <!-- Row 3: Distribution & Segmentation Analytics (50/50 layout) -->
       <el-row :gutter="20" class="mb-4 equal-height-row">
-        <el-col :xs="24" :md="12" :lg="12" class="mb-col">
+        <!-- Interns by Position (Horizontal Bar Chart) -->
+        <el-col :xs="24" :md="12" class="mb-col">
           <el-card class="chart-card" shadow="hover">
-            <template #header
-              ><span class="card-title">{{
-                t("dashboard.internsByStatus")
-              }}</span></template
-            >
+            <template #header>
+              <span class="card-title">{{ t("dashboard.internsByPosition") }}</span>
+            </template>
             <div class="chart-container">
-              <DonutChart :data="chartData" :height="250" />
-            </div>
-          </el-card>
-        </el-col>
-        <el-col :xs="24" :md="12" :lg="12" class="mb-col">
-          <el-card class="chart-card" shadow="hover">
-            <template #header
-              ><span class="card-title">{{
-                t("dashboard.internsByPosition")
-              }}</span></template
-            >
-            <div class="chart-container">
-              <BarChart
+              <HorizontalBarChart
                 v-if="internsByPosition.length"
                 :data="internsByPosition"
                 :height="250"
@@ -264,13 +274,13 @@ onMounted(() => {
             </div>
           </el-card>
         </el-col>
-        <!-- <el-col :xs="24" :md="12" :lg="8" class="mb-col">
+
+        <!-- Interns by Department (Vertical Bar Chart) -->
+        <el-col :xs="24" :md="12" class="mb-col">
           <el-card class="chart-card" shadow="hover">
-            <template #header
-              ><span class="card-title">{{
-                t("dashboard.internsByDepartment")
-              }}</span></template
-            >
+            <template #header>
+              <span class="card-title">{{ t("dashboard.internsByDepartment") }}</span>
+            </template>
             <div class="chart-container">
               <BarChart
                 v-if="internsByDepartment.length"
@@ -279,15 +289,6 @@ onMounted(() => {
               />
               <div v-else class="empty-chart">{{ t("dashboard.noData") }}</div>
             </div>
-          </el-card>
-        </el-col> -->
-      </el-row>
-
-      <!-- Batch Score Trend - Full Row with drill-down -->
-      <el-row :gutter="20" class="mb-4">
-        <el-col :xs="24" class="mb-col">
-          <el-card class="chart-card batch-score-card" shadow="hover">
-            <BatchScoreChart />
           </el-card>
         </el-col>
       </el-row>
@@ -357,7 +358,8 @@ onMounted(() => {
 }
 
 .activity-scroll-area {
-  max-height: 200px;
+  height: 430px;
+  max-height: 100%;
   overflow-y: auto;
   padding: 10px 20px;
 }
@@ -486,6 +488,10 @@ onMounted(() => {
   height: 150px;
   color: #9ca3af;
   gap: 8px;
+}
+
+.h-full {
+  height: 100%;
 }
 
 @media (max-width: 992px) {

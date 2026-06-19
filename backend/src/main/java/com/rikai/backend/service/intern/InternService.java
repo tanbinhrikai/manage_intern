@@ -13,13 +13,14 @@ import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.InternshipBatch;
 import com.rikai.backend.model.Position;
 import com.rikai.backend.model.Users;
+import com.rikai.backend.model.InternStatusHistory;
 import com.rikai.backend.repository.InternRepository;
 import com.rikai.backend.repository.InternshipBatchRepository;
 import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.repository.UsersRepository;
-import com.rikai.backend.event.InternCreatedEvent;
-import com.rikai.backend.event.InternDeletedEvent;
-import com.rikai.backend.event.InternUpdatedEvent;
+import com.rikai.backend.repository.InternStatusHistoryRepository;
+import com.rikai.backend.event.InternCudEvent;
+import com.rikai.backend.event.InternStatusChangedEvent;
 import com.rikai.backend.service.auth.AuthenticationService;
 import com.rikai.backend.validation.AutoGenerateEmail;
 import lombok.AccessLevel;
@@ -32,13 +33,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.Normalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +47,7 @@ public class InternService implements IInternService {
     PositionRepository positionRepository;
     InternshipBatchRepository internshipBatchRepository;
     UsersRepository usersRepository;
+    InternStatusHistoryRepository internStatusHistoryRepository;
     InternMapper internMapper;
     AuthenticationService authenticationService;
     ApplicationEventPublisher eventPublisher;
@@ -102,6 +102,7 @@ public class InternService implements IInternService {
         intern.setMentor(mentor);
         intern.setInternshipBatch(internshipBatch);
         Intern saved = internRepository.save(intern);
+        eventPublisher.publishEvent(new InternCudEvent(this, "CREATE", saved));
         return internMapper.toInternResponse(saved);
     }
 
@@ -122,9 +123,22 @@ public class InternService implements IInternService {
         intern.setMentor(mentor);
         intern.setStartDate(request.getStartDate());
         intern.setEndDate(request.getEndDate());
+        InternStatus oldStatus = intern.getInternStatus();
         intern.setInternStatus(request.getInternStatus());
         Intern saved = internRepository.save(intern);
-        eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
+        eventPublisher.publishEvent(new InternCudEvent(this, "UPDATE", saved));
+        if (oldStatus != request.getInternStatus()) {
+            Users actor = authenticationService.getCurrentUser();
+            InternStatusHistory history = InternStatusHistory.builder()
+                    .intern(saved)
+                    .oldStatus(oldStatus)
+                    .newStatus(request.getInternStatus())
+                    .changedBy(actor)
+                    .reason("Intern details updated")
+                    .build();
+            internStatusHistoryRepository.save(history);
+            eventPublisher.publishEvent(new InternStatusChangedEvent(this, history));
+        }
         return internMapper.toInternResponse(saved);
     }
 
@@ -133,11 +147,9 @@ public class InternService implements IInternService {
     public void deleteIntern(Long id) {
         Intern intern = internRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
-        Long internId = intern.getId();
-        String internName = intern.getFullName();
         intern.setInternStatus(InternStatus.DROPPED);
         internRepository.save(intern);
-        eventPublisher.publishEvent(new InternDeletedEvent(this, internId, internName));
+        eventPublisher.publishEvent(new InternCudEvent(this, "DROPPED", intern));
     }
 
     @Override
@@ -349,10 +361,22 @@ public class InternService implements IInternService {
         Intern intern = internRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.INTERN_NOT_EXISTED));
 
-        intern.setInternStatus(internStatus);
-        Intern saved = internRepository.save(intern);
-
-        eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
-        return internMapper.toInternResponse(saved);
+        InternStatus oldStatus = intern.getInternStatus();
+        if (oldStatus != internStatus) {
+            intern.setInternStatus(internStatus);
+            Intern saved = internRepository.save(intern);
+            Users actor = authenticationService.getCurrentUser();
+            InternStatusHistory history = InternStatusHistory.builder()
+                    .intern(saved)
+                    .oldStatus(oldStatus)
+                    .newStatus(internStatus)
+                    .changedBy(actor)
+                    .reason("Status updated manually")
+                    .build();
+            internStatusHistoryRepository.save(history);
+            eventPublisher.publishEvent(new InternStatusChangedEvent(this, history));
+            return internMapper.toInternResponse(saved);
+        }
+        return internMapper.toInternResponse(intern);
     }
 }

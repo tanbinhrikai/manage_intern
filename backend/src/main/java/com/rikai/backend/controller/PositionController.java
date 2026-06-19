@@ -55,4 +55,11 @@ public class PositionController {
         return ApiResponse.buildSuccessResponse(positionService.updatePosition(id, request),
                 SuccessCode.UPDATE_POSITION_SUCCESSFUL);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Boolean> deletePosition(@PathVariable Long id) {
+        return ApiResponse.buildSuccessResponse(positionService.deletePostion(id),
+                SuccessCode.DELETE_POSITION_SUCCESS);
+    }
 }

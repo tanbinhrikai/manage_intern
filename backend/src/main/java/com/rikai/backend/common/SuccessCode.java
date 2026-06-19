@@ -51,11 +51,16 @@ public enum SuccessCode {
     CREATE_DEPARTMENT_SUCCESSFUL("Create department successful", HttpStatus.CREATED),
     GET_DEPARTMENT_SUCCESSFUL("Get department successful", HttpStatus.OK),
     UPDATE_DEPARTMENT_SUCCESSFUL("Update department successful", HttpStatus.OK),
+    DELETE_DEPARTMENT_SUCCESSFUL("Department department successful", HttpStatus.OK),
+    DELETE_DEPARTMENT_FAILED("Department department FAILED", HttpStatus.BAD_REQUEST),
+
+
 
     CREATE_POSITION_SUCCESSFUL("Create position successful", HttpStatus.CREATED),
     GET_POSITION_SUCCESSFUL("Get position successful", HttpStatus.OK),
     GET_ALL_POSITIONS_SUCCESSFUL("Get all positions successful", HttpStatus.OK),
     UPDATE_POSITION_SUCCESSFUL("Update position successful", HttpStatus.OK),
+    DELETE_POSITION_SUCCESS("Delete position successful", HttpStatus.OK),
 
     CREATE_EVALUATION_CRITERIA_SUCCESSFUL("Create evaluation criteria successful", HttpStatus.CREATED),
     GET_EVALUATION_CRITERIA_SUCCESSFUL("Get evaluation criteria successful", HttpStatus.OK),

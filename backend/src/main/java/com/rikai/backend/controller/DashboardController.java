@@ -7,12 +7,15 @@ import com.rikai.backend.dto.response.dashboard.ChartDataResponse;
 import com.rikai.backend.dto.response.dashboard.MentorStatisticsResponse;
 import com.rikai.backend.dto.response.dashboard.MultiSeriesChartResponse;
 import com.rikai.backend.service.dashboard.IDashboardService;
+import com.rikai.backend.service.notification.SseNotificationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -25,6 +28,7 @@ import java.util.List;
 public class DashboardController {
 
     IDashboardService dashboardService;
+    SseNotificationService sseNotificationService;
 
     /**
      * Endpoint to retrieve recent activities for admin and mentor roles.
@@ -40,6 +44,12 @@ public class DashboardController {
             @RequestParam(defaultValue = "100") int limit) {
         List<ActivityResponse> activities = dashboardService.getRecentActivities(limit);
         return ApiResponse.buildSuccessResponse(activities, SuccessCode.GET_RECENT_ACTIVITIES_SUCCESSFUL);
+    }
+
+    @GetMapping(value = "/recent-activities/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
+    public SseEmitter streamRecentActivities() {
+        return sseNotificationService.subscribe();
     }
 
     @GetMapping("/chart/mentors-by-department")
