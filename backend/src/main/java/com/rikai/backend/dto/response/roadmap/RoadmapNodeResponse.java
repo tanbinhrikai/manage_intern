@@ -18,6 +18,7 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoadmapNodeResponse {
     Long id;
+    Long roadmapId;
     String title;
     String description;
     NodeType nodeType;
@@ -36,6 +37,7 @@ public class RoadmapNodeResponse {
     public static RoadmapNodeResponse toRoadmapResponse(RoadmapNode node) {
         return RoadmapNodeResponse.builder()
                 .id(node.getId())
+                .roadmapId(node.getRoadmap() != null ? node.getRoadmap().getId() : null)
                 .title(node.getTitle())
                 .description(node.getDescription())
                 .nodeType(node.getNodeType())

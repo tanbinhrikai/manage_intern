@@ -1,12 +1,19 @@
 package com.rikai.backend.controller;
 
-
 import com.rikai.backend.ai.agent.RoadmapEditorAgent;
 import com.rikai.backend.ai.dto.response.ChatResponseDto;
 import com.rikai.backend.common.ApiResponse;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.agent_ai.ChatRequestDto;
+import com.rikai.backend.dto.request.roadmap.GeneratePhasesRequest;
+import com.rikai.backend.dto.request.roadmap.NodeExpansionRequest;
+import com.rikai.backend.dto.request.roadmap.RoadmapDto;
+import com.rikai.backend.dto.request.roadmap.AddNodeRequest;
+import com.rikai.backend.dto.request.roadmap.EditNodeRequest;
+import com.rikai.backend.dto.request.roadmap.MoveNodeRequest;
+import com.rikai.backend.dto.request.roadmap.SaveDraftTreeRequest;
+import com.rikai.backend.dto.response.roadmap.NodeExpansionResponse;
 import com.rikai.backend.dto.response.roadmap.DraftRoadmapResponseDto;
 import com.rikai.backend.dto.response.roadmap.RoadmapNodeResponse;
 import com.rikai.backend.model.RoadmapNode;
@@ -14,6 +21,9 @@ import com.rikai.backend.ai.service.roadmap.IRoadmapGeneratorService;
 import com.rikai.backend.ai.service.roadmap.DraftRoadmapManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class RoadmapController {
-
     private final IRoadmapGeneratorService roadmapGeneratorService;
     private final RoadmapEditorAgent roadmapEditorAgent;
     private final DraftRoadmapManager draftRoadmapManager;
@@ -44,8 +53,7 @@ public class RoadmapController {
                 request.getDuration(),
                 request.getBatchId(),
                 request.getSessionId(),
-                request.getConversationId()
-        );
+                request.getConversationId());
         return ApiResponse.buildSuccessResponse(response, SuccessCode.CHAT_PROCESS_SUCCESSFUL);
     }
 
@@ -75,16 +83,14 @@ public class RoadmapController {
         log.info("Edit Draft - Session: {}, Message: {}", sessionId, request.getMessage());
         String editResult = roadmapEditorAgent.processEditRequest(
                 request.getMessage(), sessionId,
-                request.getConversationId() != null ? request.getConversationId() : sessionId
-        );
+                request.getConversationId() != null ? request.getConversationId() : sessionId);
         RoadmapNode updatedRoot = draftRoadmapManager.getDraft(sessionId).getRootNode();
         ChatResponseDto response = ChatResponseDto.builder()
                 .action(ChatResponseDto.ActionType.EDIT_ROADMAP)
                 .message(editResult)
                 .data(java.util.Map.of(
                         "sessionId", sessionId,
-                        "roadmapTree", updatedRoot
-                ))
+                        "roadmapTree", updatedRoot))
                 .build();
         return ApiResponse.buildSuccessResponse(response, SuccessCode.CHAT_PROCESS_SUCCESSFUL);
     }
@@ -99,12 +105,10 @@ public class RoadmapController {
             @RequestParam String topic,
             @RequestParam Long positionId,
             @RequestParam Long batchId,
-            @RequestParam(required = false, defaultValue = "3 tháng") String duration
-    ) {
+            @RequestParam(required = false, defaultValue = "3 tháng") String duration) {
         log.info("Admin Quick Generate: Topic={}, Duration={}", topic, duration);
         DraftRoadmapResponseDto draft = roadmapGeneratorService.generateOutline(
-                topic, duration, "Admin generated via Quick Tool", positionId, batchId, null
-        );
+                topic, duration, "Admin generated via Quick Tool", positionId, batchId, null);
         try {
             RoadmapNode savedRoadmap = roadmapGeneratorService.confirmAndSaveDraft(draft.sessionId());
             RoadmapNodeResponse response = RoadmapNodeResponse.toRoadmapResponse(savedRoadmap);
@@ -124,29 +128,23 @@ public class RoadmapController {
     public ApiResponse<?> listAllDrafts() {
         return ApiResponse.buildSuccessResponse(
                 roadmapGeneratorService.listAllDrafts(),
-                SuccessCode.GET_SUCCESSFUL_DRAFTS
-        );
+                SuccessCode.GET_SUCCESSFUL_DRAFTS);
     }
 
     @GetMapping("/list")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
-    public ApiResponse<PageResponse<RoadmapNodeResponse>> getAllRoadmaps(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+    public ApiResponse<List<RoadmapDto>> getAllRoadmaps() {
         return ApiResponse.buildSuccessResponse(
-                roadmapGeneratorService.getAllRoadmaps(pageRequest),
-                SuccessCode.GET_ALL_ROADMAPS_SUCCESSFUL
-        );
+                roadmapGeneratorService.getAllRoadmaps(),
+                SuccessCode.GET_ALL_ROADMAPS_SUCCESSFUL);
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
-    public ApiResponse<RoadmapNodeResponse> getRoadmapById(@PathVariable Long id) {
+    public ApiResponse<RoadmapDto> getRoadmapById(@PathVariable Long id) {
         return ApiResponse.buildSuccessResponse(
                 roadmapGeneratorService.getRoadmapById(id),
-                SuccessCode.GET_ROADMAP_SUCCESSFUL
-        );
+                SuccessCode.GET_ROADMAP_SUCCESSFUL);
     }
 
     @DeleteMapping("/{id}")
@@ -154,5 +152,68 @@ public class RoadmapController {
     public ApiResponse<?> deleteRoadmapById(@PathVariable Long id) {
         roadmapGeneratorService.deleteRoadmapById(id);
         return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_ROADMAP_SUCCESSFUL);
+    }
+
+    @PostMapping("/generate-phases")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<List<RoadmapNodeResponse>> generatePhases(@RequestBody GeneratePhasesRequest request) {
+        log.info("API Generate Phases for position: {}", request.getPositionId());
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.generateMockPhases(request),
+                SuccessCode.CREATE_ROADMAP_SUCCESSFUL // We reuse success code
+        );
+    }
+
+    @PostMapping("/nodes/expand")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<NodeExpansionResponse> expandNode(@RequestBody NodeExpansionRequest request) {
+        log.info("API Expand Node ID: {}", request.getNodeId());
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.expandMockNode(request.getNodeId(), request.getPrompt()),
+                SuccessCode.CREATE_ROADMAP_SUCCESSFUL);
+    }
+
+    @PostMapping("/nodes")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<RoadmapNodeResponse> addNode(@RequestBody AddNodeRequest request) {
+        log.info("API Add Node under parent: {}", request.getParentId());
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.addNode(request),
+                SuccessCode.CREATE_ROADMAP_SUCCESSFUL);
+    }
+
+    @PutMapping("/nodes/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<RoadmapNodeResponse> editNode(@PathVariable Long id, @RequestBody EditNodeRequest request) {
+        log.info("API Edit Node ID: {}", id);
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.editMockNode(id, request),
+                SuccessCode.UPDATE_ROADMAP_SUCCESSFUL);
+    }
+
+    @DeleteMapping("/nodes/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<?> deleteNode(@PathVariable Long id) {
+        log.info("API Delete Node ID: {}", id);
+        roadmapGeneratorService.deleteMockNode(id);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.DELETE_ROADMAP_SUCCESSFUL);
+    }
+
+    @PatchMapping("/nodes/{id}/move")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<RoadmapNodeResponse> moveNode(@PathVariable Long id, @RequestBody MoveNodeRequest request) {
+        log.info("API Move Node ID: {}", id);
+        return ApiResponse.buildSuccessResponse(
+                roadmapGeneratorService.moveMockNode(id, request),
+                SuccessCode.UPDATE_ROADMAP_SUCCESSFUL);
+    }
+
+    @PostMapping("/drafts")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MENTOR')")
+    public ApiResponse<?> saveDraftRoadmap(@RequestBody SaveDraftTreeRequest request) {
+        log.info("API Save Draft Roadmap Tree for position: {} batch: {}", request.getPositionId(),
+                request.getBatchId());
+        return ApiResponse.buildSuccessResponse(roadmapGeneratorService.saveDraftTree(request),
+                SuccessCode.CREATE_ROADMAP_SUCCESSFUL);
     }
 }

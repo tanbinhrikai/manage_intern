@@ -40,6 +40,5 @@ const props = defineProps({
   padding: 10px;
   overflow-y: hidden;
   min-height: 0;
-  height: calc(100vh - 60px);
 }
 </style>

@@ -649,3 +649,6 @@ DELIMITER ;
 
 -- Ví dụ: intern_id = 1, mentor_id = 'user-uuid-123'
 CALL GenerateWeeklyReports(46, '2c638c0d-f4bc-4a53-b88d-1a75e9620830');
+
+
+ALTER TABLE roadmap_nodes MODIFY COLUMN node_type ENUM('PHASE','MODULE','LESSON','TASK','TOPIC') NOT NULL;

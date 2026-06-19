@@ -1,0 +1,164 @@
+{
+  "PHASE_RESPONSE": [
+    {
+      "title": "Java Core Foundation",
+      "description": "Nắm vững ngôn ngữ Java từ syntax cơ bản đến OOP, Collections và xử lý lỗi",
+      "estimatedHours": 60.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Viết được chương trình Java độc lập, áp dụng được OOP vào thiết kế class",
+      "passCondition": "Hoàn thành bài kiểm tra Java Core với điểm >= 70%"
+    },
+    {
+      "title": "Database & SQL Fundamentals",
+      "description": "Học thiết kế database quan hệ, viết SQL thành thạo và hiểu Transaction",
+      "estimatedHours": 40.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Thiết kế được schema database cho dự án thực tế, viết được câu SQL phức tạp",
+      "passCondition": "Thiết kế và viết migration script cho mini-project CRUD"
+    },
+    {
+      "title": "Spring Boot & REST API",
+      "description": "Xây dựng RESTful API với Spring Boot, Spring Security và tích hợp JPA/Hibernate",
+      "estimatedHours": 80.0,
+      "difficulty": "INTERMEDIATE",
+      "learningOutcome": "Xây dựng hoàn chỉnh một Backend API có Authentication, phân quyền và kết nối DB",
+      "passCondition": "Hoàn thành dự án API quản lý với đầy đủ CRUD, JWT auth và unit test"
+    },
+    {
+      "title": "Advanced Backend & System Design",
+      "description": "Áp dụng các pattern nâng cao: Microservices, Caching, Message Queue và Deploy",
+      "estimatedHours": 100.0,
+      "difficulty": "ADVANCED",
+      "learningOutcome": "Thiết kế và triển khai hệ thống backend có khả năng scale, resilient và observable",
+      "passCondition": "Demo dự án cuối khoá với kiến trúc Microservices, Redis cache và CI/CD pipeline"
+    }
+  ],
+  "MODULE_RESPONSE": [
+    {
+      "title": "Syntax & Control Flow",
+      "description": "Biến, kiểu dữ liệu, vòng lặp, điều kiện, mảng và phương thức cơ bản",
+      "estimatedHours": 10.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Viết được các chương trình Java giải quyết bài toán logic cơ bản",
+      "passCondition": "Hoàn thành 10 bài tập coding trên HackerRank với Java"
+    },
+    {
+      "title": "Object-Oriented Programming (OOP)",
+      "description": "Class, Object, Inheritance, Polymorphism, Encapsulation, Abstraction và Interface",
+      "estimatedHours": 15.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Thiết kế được hệ thống class áp dụng SOLID principle",
+      "passCondition": "Thiết kế class diagram và implement hệ thống quản lý nhân viên đơn giản"
+    },
+    {
+      "title": "Java Collections Framework",
+      "description": "List, Set, Map, Queue, Stack và các thuật toán sắp xếp, tìm kiếm cơ bản",
+      "estimatedHours": 12.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Lựa chọn đúng cấu trúc dữ liệu cho từng bài toán",
+      "passCondition": "Giải được 5 bài toán Collections trên LeetCode (Easy/Medium)"
+    },
+    {
+      "title": "Exception Handling & Generics",
+      "description": "try-catch-finally, Custom Exception, Checked vs Unchecked, và Generic classes",
+      "estimatedHours": 8.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Viết code an toàn, xử lý lỗi đúng cách trong ứng dụng thực tế",
+      "passCondition": "Refactor một module code để áp dụng xử lý exception hợp lý"
+    },
+    {
+      "title": "Multithreading & Concurrency",
+      "description": "Thread, Runnable, ExecutorService, synchronized, CompletableFuture",
+      "estimatedHours": 15.0,
+      "difficulty": "INTERMEDIATE",
+      "learningOutcome": "Viết được ứng dụng multi-thread an toàn, tránh race condition và deadlock",
+      "passCondition": "Implement một thread pool xử lý task queue"
+    }
+  ],
+  "LESSON_RESPONSE": [
+    {
+      "title": "Khai báo biến và kiểu dữ liệu nguyên thuỷ",
+      "description": "int, long, double, boolean, char, String và boxing/unboxing",
+      "estimatedHours": 2.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Hiểu sự khác biệt giữa kiểu nguyên thuỷ và object, tránh lỗi NullPointerException",
+      "passCondition": "Quiz 10 câu về kiểu dữ liệu đạt >= 80%"
+    },
+    {
+      "title": "Vòng lặp và rẽ nhánh",
+      "description": "if/else, switch, for, while, do-while, break, continue",
+      "estimatedHours": 2.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Giải quyết các bài toán cần lặp và rẽ nhánh logic",
+      "passCondition": "Viết thuật toán tính số nguyên tố, dãy Fibonacci"
+    },
+    {
+      "title": "Phương thức (Method) và truyền tham số",
+      "description": "Khai báo method, overloading, pass-by-value, varargs và recursion",
+      "estimatedHours": 2.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Tổ chức code theo nguyên tắc DRY bằng cách dùng method",
+      "passCondition": "Viết chương trình tính giai thừa bằng cả 2 cách (loop và recursion)"
+    },
+    {
+      "title": "Mảng (Array) một chiều và nhiều chiều",
+      "description": "Khai báo, khởi tạo, duyệt mảng và sắp xếp cơ bản (Bubble Sort, Selection Sort)",
+      "estimatedHours": 3.0,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Thao tác thành thạo với mảng một và nhiều chiều",
+      "passCondition": "Implement ma trận cộng trừ nhân"
+    }
+  ],
+  "TOPIC_RESPONSE": [
+    {
+      "title": "Primitive vs Reference Type",
+      "description": "Phân biệt primitive type (int, double...) và reference type (String, Object), cách lưu trên stack vs heap",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Giải thích được tại sao int a=5; int b=a; b=10; không ảnh hưởng đến a",
+      "passCondition": "Trả lời đúng 5 câu hỏi thực tế về memory model"
+    },
+    {
+      "title": "Autoboxing và Unboxing",
+      "description": "Chuyển đổi tự động giữa int<->Integer, double<->Double và những cạm bẫy với NullPointerException",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Hiểu khi nào dùng int vs Integer và tránh được NPE tiêu biểu",
+      "passCondition": "Debug được đoạn code NPE liên quan đến unboxing"
+    },
+    {
+      "title": "String Pool và String immutability",
+      "description": "String literal vs new String(), intern(), StringBuilder vs String concatenation hiệu năng",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Viết code String hiệu quả, không bị memory leak",
+      "passCondition": "Chọn đúng tool (String/StringBuilder/StringBuffer) cho từng tình huống"
+    }
+  ],
+  "TASK_RESPONSE": [
+    {
+      "title": "Đọc tài liệu Oracle Java Docs về kiểu dữ liệu",
+      "description": "Đọc và tóm tắt phần Primitive Data Types tại docs.oracle.com/javase/tutorial",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Nắm được range giá trị của từng kiểu dữ liệu",
+      "passCondition": "Viết cheat sheet tóm tắt các kiểu dữ liệu"
+    },
+    {
+      "title": "Viết chương trình in bảng cửu chương",
+      "description": "Dùng vòng lặp lồng nhau in ra bảng cửu chương từ 1 đến 9 ra console",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Thực hành vòng lặp lồng và format output",
+      "passCondition": "Chương trình chạy đúng, output đẹp dạng bảng"
+    },
+    {
+      "title": "Giải bài toán đổi đơn vị nhiệt độ",
+      "description": "Viết hàm nhận Celsius trả về Fahrenheit và Kelvin, dùng method overloading",
+      "estimatedHours": 0.5,
+      "difficulty": "BEGINNER",
+      "learningOutcome": "Thực hành khai báo và gọi method với nhiều kiểu tham số",
+      "passCondition": "Kết quả tính toán chính xác, có test case"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ package com.rikai.backend.dto.request.roadmap;
 import java.util.List;
 
 public record RoadmapGenerationDto(
+        Long id,
         String title,
         String description,
         String type,
@@ -12,5 +13,6 @@ public record RoadmapGenerationDto(
         String assessment_method,
         String difficulty,
         List<String> tags,
+        Integer order_index,
         List<RoadmapGenerationDto> children
 ) {}

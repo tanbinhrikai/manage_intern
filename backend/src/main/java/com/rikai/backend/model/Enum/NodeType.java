@@ -4,5 +4,6 @@ public enum NodeType {
     PHASE,
     MODULE,
     LESSON,
-    TASK
+    TASK,
+    TOPIC
 }

@@ -8,6 +8,21 @@ import DonutChart from '@/components/dashboard/DonutChart.vue'
 import { getInternsNotEvaluatedThisWeek, getMyIntern } from '@/api/intern'
 import { getMentorStatistics, getMentorInternStatusDistribution } from '@/api/dashboard'
 import { useLoading, useApi } from '@/composables'
+import { fetchRoadmaps, fetchRoadmapById } from "@/api/roadmap"
+import { getPositions } from "@/api/position"
+import { getBatches } from "@/api/internship-batch"
+import { ElMessage } from "element-plus"
+import {
+  CollectionTag,
+  Folder,
+  Document,
+  List,
+  Check,
+  Clock,
+  Briefcase,
+  Calendar,
+  Refresh
+} from "@element-plus/icons-vue"
 
 const router = useRouter()
 const localeStore = useLocaleStore()
@@ -152,6 +167,155 @@ async function fetchData() {
   })
 }
 
+// Roadmap Detail State & Handlers
+const roadmapDetailDialogVisible = ref(false)
+const selectedIntern = ref(null)
+const selectedRoadmap = ref(null)
+const roadmapLoading = ref(false)
+const roadmapTreeData = ref([])
+const positions = ref([])
+const batches = ref([])
+const hasLoadedMeta = ref(false)
+
+const defaultProps = {
+  children: "children",
+  label: "label",
+}
+
+const transformNodes = (nodes) => {
+  if (!Array.isArray(nodes) || nodes.length === 0) return []
+  return nodes.map((node) => ({
+    uniqueId: `${node.nodeType}-${node.id}`,
+    label: node.title,
+    type: node.nodeType,
+    estimatedHours: node.estimatedHours,
+    difficulty: node.difficulty,
+    description: node.description,
+    children: transformNodes(node.children),
+  }))
+}
+
+const getIcon = (type) => {
+  if (!type) return List
+  const map = {
+    PHASE: CollectionTag,
+    MODULE: Folder,
+    LESSON: Document,
+    TASK: Check,
+    PROJECT: CollectionTag,
+  }
+  return map[type.toUpperCase()] || List
+}
+
+const getTagType = (type) => {
+  if (!type) return "info"
+  const map = {
+    PHASE: "danger",
+    MODULE: "warning",
+    LESSON: "primary",
+    TASK: "success",
+  }
+  return map[type.toUpperCase()] || "info"
+}
+
+function getStatusType(status) {
+  if (!status) return "info"
+  const map = {
+    ACTIVE: "success",
+    WARNING: "warning",
+    COMPLETED: "primary",
+    DROPPED: "danger"
+  }
+  return map[status.toUpperCase()] || "info"
+}
+
+const positionsMap = computed(() => {
+  const map = {}
+  positions.value.forEach(p => {
+    map[p.id] = p.title
+  })
+  return map
+})
+
+const batchesMap = computed(() => {
+  const map = {}
+  batches.value.forEach(b => {
+    map[b.id] = b.name
+  })
+  return map
+})
+
+function getPositionTitle(posId) {
+  if (!posId) return "Mọi vị trí"
+  return positionsMap.value[posId] || `Vị trí #${posId}`
+}
+
+async function fetchMetadata() {
+  if (hasLoadedMeta.value) return
+  try {
+    const [resPos, resBatches] = await Promise.allSettled([
+      getPositions({ limit: 100 }),
+      getBatches({ limit: 100 })
+    ])
+    if (resPos.status === "fulfilled") {
+      const body = resPos.value.data
+      positions.value = body?.data?.items || body || []
+    }
+    if (resBatches.status === "fulfilled") {
+      const body = resBatches.value.data
+      batches.value = body?.data?.items || body || []
+    }
+    hasLoadedMeta.value = true
+  } catch (err) {
+    console.error("Failed to load metadata", err)
+  }
+}
+
+async function handleViewRoadmap(intern) {
+  selectedIntern.value = intern
+  roadmapDetailDialogVisible.value = true
+  roadmapLoading.value = true
+  selectedRoadmap.value = null
+  roadmapTreeData.value = []
+
+  try {
+    await fetchMetadata()
+
+    // 1. Fetch all roadmaps
+    const listRes = await fetchRoadmaps()
+    const allRoadmaps = listRes.data?.data || listRes.data || []
+    
+    // 2. Find roadmap for intern's position and batch
+    const internPosId = intern.position?.id
+    const internBatchId = intern.internshipBatch?.id || intern.batchId
+    
+    const matchedRoadmap = allRoadmaps.find(
+      r => r.positionId === internPosId && r.batchId === internBatchId
+    ) || allRoadmaps.find(
+      r => r.positionId === internPosId
+    )
+    
+    if (!matchedRoadmap) {
+      ElMessage.warning("Không tìm thấy lộ trình phù hợp cho vị trí / đợt thực tập này.")
+      roadmapLoading.value = false
+      return
+    }
+    
+    // 3. Fetch detailed roadmap
+    const detailRes = await fetchRoadmapById(matchedRoadmap.id)
+    const roadmapData = detailRes.data?.data || detailRes.data
+    selectedRoadmap.value = roadmapData
+    
+    const rootNodes = roadmapData.nodes || roadmapData.children || []
+    roadmapTreeData.value = transformNodes(rootNodes)
+  } catch (err) {
+    console.error("Lỗi khi tải chi tiết roadmap", err)
+    ElMessage.error("Không thể tải thông tin lộ trình")
+  } finally {
+    roadmapLoading.value = false
+  }
+}
+
 onMounted(fetchData)
 </script>
 
@@ -247,18 +411,28 @@ onMounted(fetchData)
             </el-table-column>
             <el-table-column 
               :label="t('common.actions')" 
-              min-width="120"
+              min-width="180"
               align="center"
               fixed="right"
             >
               <template #default="scope">
-                <el-button 
-                  type="success" 
-                  size="small"
-                  @click="handleSubmitReport(scope.row)"
-                >
-                  {{ t('mentorDashboard.submitReport') }}
-                </el-button>
+                <div class="table-actions">
+                  <el-button 
+                    type="success" 
+                    size="small"
+                    @click="handleSubmitReport(scope.row)"
+                  >
+                    {{ t('mentorDashboard.submitReport') }}
+                  </el-button>
+                  <el-button 
+                    type="primary" 
+                    plain
+                    size="small"
+                    @click="handleViewRoadmap(scope.row)"
+                  >
+                    Xem Roadmap
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -275,6 +449,137 @@ onMounted(fetchData)
           </div>
         </el-card>
       </section>
+
+      <!-- Interns Under Supervision -->
+      <section class="section" v-if="internsUnderSupervision.length > 0">
+        <el-card shadow="hover" class="eval-card">
+          <template #header>
+            <div class="card-header-flex">
+              <span class="card-title">
+                Thực tập sinh đang quản lý
+                <el-badge :value="internsUnderSupervision.length" type="primary" class="count-badge" />
+              </span>
+            </div>
+          </template>
+          <el-table :data="internsUnderSupervision" stripe size="small" style="width: 100%">
+            <el-table-column 
+              prop="fullName" 
+              label="Họ và tên" 
+              min-width="150"
+            />
+            <el-table-column 
+              label="Vị trí" 
+              min-width="120"
+            >
+              <template #default="scope">
+                <el-tag type="info" size="small">{{ scope.row.position?.title }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              label="Đợt thực tập" 
+              min-width="150"
+            >
+              <template #default="scope">
+                <span>{{ scope.row.internshipBatch?.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              label="Trạng thái" 
+              min-width="120"
+              align="center"
+            >
+              <template #default="scope">
+                <el-tag :type="getStatusType(scope.row.internStatus)" size="small">
+                  {{ scope.row.internStatus }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              label="Hành động" 
+              min-width="180"
+              align="center"
+              fixed="right"
+            >
+              <template #default="scope">
+                <div class="table-actions">
+                  <el-button 
+                    type="primary" 
+                    plain
+                    size="small"
+                    @click="handleViewRoadmap(scope.row)"
+                  >
+                    Xem Roadmap
+                  </el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </section>
+
+      <!-- Roadmap Detail Dialog -->
+      <el-dialog
+        v-model="roadmapDetailDialogVisible"
+        :title="`Chi tiết lộ trình học tập - ${selectedIntern?.fullName || ''}`"
+        width="60%"
+        destroy-on-close
+        class="roadmap-dialog"
+      >
+        <div v-loading="roadmapLoading" class="roadmap-dialog-content">
+          <div v-if="selectedRoadmap">
+            <div class="roadmap-meta-header">
+              <h3>{{ selectedRoadmap.title }}</h3>
+              <p class="description">{{ selectedRoadmap.description }}</p>
+              <div class="meta-tags">
+                <el-tag type="success" effect="plain" class="meta-tag">
+                  <el-icon><Clock /></el-icon> {{ selectedRoadmap.durationMonth || 2 }} tháng
+                </el-tag>
+                <el-tag type="warning" effect="plain" class="meta-tag" v-if="selectedRoadmap.positionId">
+                  <el-icon><Briefcase /></el-icon> {{ getPositionTitle(selectedRoadmap.positionId) }}
+                </el-tag>
+              </div>
+            </div>
+
+            <el-divider>Nội dung chi tiết</el-divider>
+
+            <div class="roadmap-tree-container">
+              <el-tree
+                :data="roadmapTreeData"
+                :props="defaultProps"
+                node-key="uniqueId"
+                default-expand-all
+                :expand-on-click-node="false"
+                :indent="24"
+              >
+                <template #default="{ node, data }">
+                  <div class="custom-tree-node" :class="`node-type-${data.type.toLowerCase()}`">
+                    <div class="node-content-left">
+                      <el-icon class="node-icon">
+                        <component :is="getIcon(data.type)" />
+                      </el-icon>
+                      <span class="node-label">{{ node.label }}</span>
+                    </div>
+                    <div class="node-content-right">
+                      <el-tag size="small" :type="getTagType(data.type)" effect="light">
+                        {{ data.type }}
+                      </el-tag>
+                    </div>
+                  </div>
+                </template>
+              </el-tree>
+            </div>
+          </div>
+          <div v-else-if="!roadmapLoading" class="empty-roadmap">
+            <el-empty description="Không có lộ trình nào được tìm thấy cho thực tập sinh này." />
+          </div>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="roadmapDetailDialogVisible = false">Đóng</el-button>
+          </span>
+        </template>
+      </el-dialog>
+
     </div>
   </MentorLayout>
 </template>
@@ -428,6 +733,105 @@ onMounted(fetchData)
   .equal-height-row {
     display: block;
   }
+}
+
+.table-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.roadmap-dialog-content {
+  min-height: 200px;
+}
+
+.roadmap-meta-header {
+  background-color: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.roadmap-meta-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #1e3a8a;
+}
+
+.roadmap-meta-header .description {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.meta-tags {
+  display: flex;
+  gap: 10px;
+}
+
+.meta-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roadmap-tree-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #fff;
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+  width: 100%;
+}
+
+.node-content-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.node-icon {
+  font-size: 16px;
+  color: #3b82f6;
+}
+
+.node-label {
+  font-weight: 500;
+  color: #334155;
+}
+
+.node-type-phase .node-label {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.node-type-module .node-label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+:deep(.el-tree-node__content) {
+  height: 38px;
+  border-bottom: 1px dashed #f1f5f9;
+}
+
+:deep(.el-tree-node__content:hover) {
+  background-color: #f8fafc;
 }
 </style>
 

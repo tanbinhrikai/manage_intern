@@ -81,6 +81,12 @@ const routes = [
     meta: { requiresAuth: true, role: "MENTOR" },
   },
   {
+    path: "/mentor/roadmaps/builder",
+    name: "MentorRoadmapBuilder",
+    component: () => import("@/views/roadmap/MentorRoadmapView.vue"),
+    meta: { requiresAuth: true, role: "MENTOR" },
+  },
+  {
     path: "/mentor/my-interns/:id",
     name: "MentorInternDetail",
     component: () => import("@/views/intern-management/InternDetailView.vue"),

@@ -11,6 +11,7 @@ public class PromptManager {
 
     public static final String NODE_SCHEMA = """
             {
+              "id": "number (nullable, BẮT BUỘC giữ lại ID cũ của node con hiện tại nếu muốn giữ lại hoặc cập nhật nó)",
               "title": "string (bắt buộc, 5-100 ký tự)",
               "description": "string (bắt buộc, 20-500 ký tự)",
               "type": "ROOT | PHASE | MODULE | LESSON | TASK",
@@ -21,6 +22,7 @@ public class PromptManager {
               "difficulty": "BEGINNER | INTERMEDIATE | ADVANCED",
               "prerequisites": ["string"] (nullable, kiến thức cần có trước),
               "tags": ["string"] (bắt buộc, 2-5 tags),
+              "order_index": "number (bắt buộc, thứ tự sắp xếp của node con, bắt đầu từ 1)",
               "children": [] (array of nodes)
             }
             """;

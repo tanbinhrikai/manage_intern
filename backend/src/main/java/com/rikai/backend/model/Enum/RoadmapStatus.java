@@ -4,5 +4,7 @@ public enum RoadmapStatus {
     PENDING,
     IN_PROGRESS,
     COMPLETED,
-    OVERDUE
+    OVERDUE,
+    DRAFT,
+    PUBLISHED
 }

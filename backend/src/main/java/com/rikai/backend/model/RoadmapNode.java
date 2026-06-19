@@ -27,17 +27,14 @@ public class RoadmapNode {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "position_id")
-    Position position;
-
-    @ManyToOne
-    @JoinColumn(name = "batch_id")
-    InternshipBatch internshipBatch;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "roadmap_id")
+    @JsonBackReference("roadmap_nodes")
+    Roadmap roadmap;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    @JsonBackReference
+    @JsonBackReference("parent_children")
     RoadmapNode parent;
 
     @OneToMany(
@@ -45,6 +42,7 @@ public class RoadmapNode {
             cascade = CascadeType.ALL,
             fetch = FetchType.LAZY
     )
+    @OrderBy("orderIndex ASC")
     @JsonManagedReference
     List<RoadmapNode> children;
 
@@ -87,6 +85,7 @@ public class RoadmapNode {
             joinColumns = @JoinColumn(name = "node_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @Builder.Default
     Set<Tag> tags = new HashSet<>();
 
     @Column(name = "created_at")

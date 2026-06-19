@@ -1,0 +1,17 @@
+package com.rikai.backend.dto.request.roadmap;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class EditNodeRequest {
+    private String title;
+    private String description;
+    private Double estimatedHours;
+    private String nodeType;
+}

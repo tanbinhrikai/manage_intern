@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS roadmap_nodes(
     INDEX idx_node_position (position_id),
     FOREIGN KEY (position_id) REFERENCES positions(id) ON DELETE CASCADE,
     FOREIGN KEY (parent_id) REFERENCES roadmap_nodes(id) ON DELETE CASCADE,
-    CONSTRAINT chk_node_type CHECK (node_type IN ('PHASE', 'MODULE', 'LESSON', 'TASK'))
+    CONSTRAINT chk_node_type CHECK (node_type IN ('PHASE', 'MODULE', 'LESSON', 'TASK', 'TOPIC'))
 ) ENGINE=INNODB DEFAULT CHARSET=UTF8MB4 COLLATE = UTF8MB4_UNICODE_CI;
 
 CREATE TABLE IF NOT EXISTS intern_roadmap_progress (

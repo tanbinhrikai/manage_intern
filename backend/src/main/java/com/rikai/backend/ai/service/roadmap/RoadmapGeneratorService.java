@@ -11,7 +11,19 @@ import com.rikai.backend.ai.prompt.PromptManager;
 import com.rikai.backend.ai.util.ValidationResult;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.dto.request.agent_ai.DraftRoadmap;
+import com.rikai.backend.dto.request.roadmap.GeneratePhasesRequest;
+import com.rikai.backend.dto.request.roadmap.AddNodeRequest;
+import com.rikai.backend.dto.request.roadmap.EditNodeRequest;
+import com.rikai.backend.dto.request.roadmap.MoveNodeRequest;
+import com.rikai.backend.dto.request.roadmap.RoadmapDto;
+import com.rikai.backend.dto.request.roadmap.SaveDraftTreeRequest;
+import com.rikai.backend.dto.request.roadmap.RoadmapNodeDto;
 import com.rikai.backend.dto.request.roadmap.RoadmapGenerationDto;
+import com.rikai.backend.dto.request.roadmap.AiNodeResponseDto;
+import com.rikai.backend.dto.request.roadmap.AiRoadmapDumpDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.ClassPathResource;
+import com.rikai.backend.dto.response.roadmap.NodeExpansionResponse;
 import com.rikai.backend.dto.response.roadmap.DraftRoadmapResponseDto;
 import com.rikai.backend.dto.response.roadmap.RoadmapNodeResponse;
 import com.rikai.backend.model.Enum.DifficultyLevel;
@@ -19,12 +31,17 @@ import com.rikai.backend.model.Enum.ExpansionDepth;
 import com.rikai.backend.model.Enum.NodeType;
 import com.rikai.backend.model.InternshipBatch;
 import com.rikai.backend.model.Position;
+import com.rikai.backend.model.Roadmap;
 import com.rikai.backend.model.RoadmapNode;
 import com.rikai.backend.model.Tag;
+import com.rikai.backend.model.Enum.RoadmapStatus;
 import com.rikai.backend.repository.InternshipBatchRepository;
 import com.rikai.backend.repository.PositionRepository;
+import com.rikai.backend.repository.RoadmapRepository;
 import com.rikai.backend.repository.RoadmapNodeRepository;
 import com.rikai.backend.repository.TagRepository;
+import com.rikai.backend.event.RoadmapPublishedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,6 +62,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import java.util.stream.Collectors;
+
 @Service
 @Slf4j
 public class RoadmapGeneratorService implements IRoadmapGeneratorService {
@@ -57,6 +76,10 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
     private final PositionRepository positionRepository;
     private final InternshipBatchRepository internshipBatchRepository;
     private final DraftRoadmapManager draftManager;
+    private final RoadmapRepository roadmapRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String DUMP_FILE_PATH = "dummy_data/ai_roadmap_dump.json";
     private static final double HOURS_TOLERANCE = 0.5;
     private static final Map<String, Double> DURATION_UNIT_MULTIPLIERS = Map.of(
             "tuần", 40.0,
@@ -64,31 +87,34 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             "tháng", 80.0,
             "month", 80.0,
             "năm", 960.0,
-            "year", 960.0
-    );
-
+            "year", 960.0);
 
     public RoadmapGeneratorService(
             IntentRouterAgent intentRouterAgent,
             RoadmapEditorAgent roadmapEditorAgent,
+            DraftRoadmapManager draftManager,
+            // @Qualifier("roadmapChatClient") ChatClient chatClient,
             @Qualifier("routerClient") ChatClient routerClient,
             @Qualifier("creatorClient") ChatClient creatorClient,
-            RoadmapNodeRepository roadmapNodeRepository,
-            TagRepository tagRepository,
             PositionRepository positionRepository,
             InternshipBatchRepository internshipBatchRepository,
-            DraftRoadmapManager draftManager) {
+            RoadmapNodeRepository roadmapNodeRepository,
+            TagRepository tagRepository,
+            RoadmapRepository roadmapRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.intentRouterAgent = intentRouterAgent;
         this.roadmapEditorAgent = roadmapEditorAgent;
+        this.draftManager = draftManager;
+        // this.chatClient = chatClient;
         this.routerClient = routerClient;
         this.creatorClient = creatorClient;
-        this.roadmapNodeRepository = roadmapNodeRepository;
-        this.tagRepository = tagRepository;
         this.positionRepository = positionRepository;
         this.internshipBatchRepository = internshipBatchRepository;
-        this.draftManager = draftManager;
+        this.roadmapNodeRepository = roadmapNodeRepository;
+        this.tagRepository = tagRepository;
+        this.roadmapRepository = roadmapRepository;
+        this.eventPublisher = eventPublisher;
     }
-
 
     public PageResponse<RoadmapNodeResponse> getAllRoadmaps(PageRequest pageRequest) {
         Page<RoadmapNode> all = roadmapNodeRepository.findByParentIdIsNull(pageRequest);
@@ -101,26 +127,78 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 .build();
     }
 
-    public RoadmapNodeResponse getRoadmapById(Long id) {
-        RoadmapNode node = roadmapNodeRepository.findById(id)
+    @Override
+    public RoadmapDto getRoadmapById(Long id) {
+        Roadmap roadmap = roadmapRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Roadmap not found: " + id));
-        return RoadmapNodeResponse.toRoadmapResponse(node);
+        List<RoadmapNode> rootNodes = roadmapNodeRepository
+                .findByRoadmapIdAndParentIsNullOrderByOrderIndexAsc(roadmap.getId());
+        List<RoadmapNodeDto> nodeDtos = rootNodes.stream().map(this::mapToDto).collect(Collectors.toList());
+
+        return RoadmapDto.builder()
+                .id(roadmap.getId())
+                .roadmapId(roadmap.getId())
+                .title(roadmap.getTitle())
+                .description(roadmap.getDescription())
+                .durationMonth(roadmap.getDurationMonth())
+                .positionId(roadmap.getPosition() != null ? roadmap.getPosition().getId() : null)
+                .batchId(roadmap.getInternshipBatch() != null ? roadmap.getInternshipBatch().getId() : null)
+                .nodes(nodeDtos)
+                .build();
+    }
+
+    private RoadmapNodeDto mapToDto(RoadmapNode node) {
+        RoadmapNodeDto dto = new RoadmapNodeDto();
+        dto.setId(node.getId());
+        dto.setTitle(node.getTitle());
+        dto.setDescription(node.getDescription());
+        dto.setNodeType(node.getNodeType().name());
+        dto.setEstimatedHours(node.getEstimatedHours());
+        dto.setOrderIndex(node.getOrderIndex());
+        dto.setDifficulty(node.getDifficulty() != null ? node.getDifficulty().name() : null);
+        dto.setPassCondition(node.getPassCondition());
+        dto.setLearningOutcome(node.getLearningOutcome());
+        dto.setAssessmentMethod(node.getAssessmentMethod());
+        dto.setTags(node.getTags() != null ?
+                node.getTags().stream().map(Tag::getName).collect(Collectors.toList()) : null);
+        if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+            List<RoadmapNode> sortedChildren = new java.util.ArrayList<>(node.getChildren());
+            sortedChildren.sort(java.util.Comparator.comparing(RoadmapNode::getOrderIndex,
+                    java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder())));
+            dto.setChildren(sortedChildren.stream().map(this::mapToDto).collect(Collectors.toList()));
+        }
+        return dto;
+    }
+
+    @Override
+    public List<RoadmapDto> getAllRoadmaps() {
+        return roadmapRepository.findAll().stream()
+                .map(r -> RoadmapDto.builder()
+                        .id(r.getId())
+                        .roadmapId(r.getId())
+                        .title(r.getTitle())
+                        .description(r.getDescription())
+                        .durationMonth(r.getDurationMonth())
+                        .positionId(r.getPosition() != null ? r.getPosition().getId() : null)
+                        .batchId(r.getInternshipBatch() != null ? r.getInternshipBatch().getId() : null)
+                        .status(r.getStatus() != null ? r.getStatus().name() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public void deleteRoadmapById(Long id) {
-        RoadmapNode node = roadmapNodeRepository.findById(id)
+        Roadmap roadmap = roadmapRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Roadmap not found: " + id));
-        roadmapNodeRepository.delete(node);
+        roadmapRepository.delete(roadmap);
     }
-
 
     /**
      * Generates roadmap OUTLINE only (root + phases).
      * Does NOT save to database - stores in memory as draft.
      */
     public DraftRoadmapResponseDto generateOutline(String topic, String durationStr, String notes,
-                                                   Long positionId, Long batchId, String conversationId) {
+            Long positionId, Long batchId, String conversationId) {
         try {
             String convId = conversationId != null ? conversationId : UUID.randomUUID().toString();
             double totalHours = convertDurationToHours(durationStr);
@@ -130,8 +208,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             String prompt = PromptManager.ROADMAP_OUTLINE_PROMPT.formatted(
                     topic,
                     String.valueOf(totalHours),
-                    notes != null ? notes : "Not found"
-            );
+                    notes != null ? notes : "Not found");
             log.info("Generating outline for: {} ({} hours)", topic, totalHours);
             RoadmapGenerationDto rootDto = creatorClient.prompt()
                     .user(prompt)
@@ -154,14 +231,12 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                     "Successfully created roadmap outline with %d PHASE(s) (total %s hours).%n" +
                             "You can request detailed expansion for each PHASE.",
                     phaseCount,
-                    totalHours
-            );
+                    totalHours);
             return new DraftRoadmapResponseDto(
                     sessionId,
                     message,
                     rootNode,
-                    DraftRoadmapResponseDto.ActionType.OUTLINE_GENERATED
-            );
+                    DraftRoadmapResponseDto.ActionType.OUTLINE_GENERATED);
         } catch (Exception e) {
             log.error("Outline Generation Error", e);
             throw new RuntimeException("Error generating roadmap outline: " + e.getMessage());
@@ -174,7 +249,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
      * Expands a specific node in the draft roadmap.
      */
     public DraftRoadmapResponseDto expandNode(String sessionId, String targetNodeTitle,
-                                              ExpansionDepth depth, String conversationId) {
+            ExpansionDepth depth, String conversationId) {
         try {
             String convId = conversationId != null ? conversationId : UUID.randomUUID().toString();
             DraftRoadmap draft = draftManager.getDraft(sessionId);
@@ -188,8 +263,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                             "Node not found: " + targetNodeTitle +
                                     ". Available nodes: " + listAvailableNodes(rootNode),
                             rootNode,
-                            DraftRoadmapResponseDto.ActionType.ERROR
-                    );
+                            DraftRoadmapResponseDto.ActionType.ERROR);
                 }
             }
             if (!canExpand(targetNode, depth)) {
@@ -198,8 +272,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                         "Cannot expand node this way. " +
                                 getExpansionBlockReason(targetNode, depth),
                         rootNode,
-                        DraftRoadmapResponseDto.ActionType.ERROR
-                );
+                        DraftRoadmapResponseDto.ActionType.ERROR);
             }
             if (targetNode.getChildren() == null) {
                 targetNode.setChildren(new ArrayList<>());
@@ -212,19 +285,19 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             String additionalNotes = draft.getAdditionalNotes() != null ? draft.getAdditionalNotes() : "Not found";
 
             String prompt = PromptManager.ROADMAP_EXPANSION_PROMPT.formatted(
-                    targetNode.getTitle(),               // 1. Node title (for task line)
-                    targetNode.getNodeType(),            // 2. Node type (for task line)
-                    parentContext,                       // 3. Parent Node
-                    siblingContext,                      // 4. The content is ALREADY AVAILABLE
-                    targetNode.getTitle(),               // 5. Node Title (INPUT PARAMETERS)
-                    targetNode.getNodeType(),            // 6. Node Type (INPUT PARAMETERS)
-                    parentContext,                       // 7. Parent Context (INPUT PARAMETERS)
-                    depth.name(),                        // 8. Expansion Depth
-                    targetNode.getEstimatedHours(),      // 9. Estimated hours for this node
-                    draft.getDuration(),                 // 10. Total roadmap duration
-                    additionalNotes,                     // 11. Additional requirements
-                    PromptManager.VALID_TASK_EXAMPLE,    // 12. TASK EXAMPLE
-                    PromptManager.NODE_SCHEMA            // 13. SCHEMA FOR EACH NODE
+                    targetNode.getTitle(), // 1. Node title (for task line)
+                    targetNode.getNodeType(), // 2. Node type (for task line)
+                    parentContext, // 3. Parent Node
+                    siblingContext, // 4. The content is ALREADY AVAILABLE
+                    targetNode.getTitle(), // 5. Node Title (INPUT PARAMETERS)
+                    targetNode.getNodeType(), // 6. Node Type (INPUT PARAMETERS)
+                    parentContext, // 7. Parent Context (INPUT PARAMETERS)
+                    depth.name(), // 8. Expansion Depth
+                    targetNode.getEstimatedHours(), // 9. Estimated hours for this node
+                    draft.getDuration(), // 10. Total roadmap duration
+                    additionalNotes, // 11. Additional requirements
+                    PromptManager.VALID_TASK_EXAMPLE, // 12. TASK EXAMPLE
+                    PromptManager.NODE_SCHEMA // 13. SCHEMA FOR EACH NODE
             );
             log.info("Expanding node: {} (depth: {})", targetNodeTitle, depth);
             RoadmapGenerationDto expandedDto = creatorClient.prompt()
@@ -239,7 +312,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             for (int i = 0; i < expandedDto.children().size(); i++) {
                 RoadmapGenerationDto childDto = expandedDto.children().get(i);
                 RoadmapNode childNode = convertDtoToEntity(childDto, targetNode);
-                childNode.setOrderIndex(i + 1);
+                childNode.setOrderIndex(childDto.order_index() != null ? childDto.order_index() : i + 1);
                 expandedChildren.add(childNode);
             }
             targetNode.setChildren(expandedChildren);
@@ -258,14 +331,12 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                     targetNodeTitle,
                     getChildTypeName(depth),
                     expandedChildren.size(),
-                    childrenTotal
-            );
+                    childrenTotal);
             return new DraftRoadmapResponseDto(
                     sessionId,
                     message,
                     rootNode,
-                    DraftRoadmapResponseDto.ActionType.NODE_EXPANDED
-            );
+                    DraftRoadmapResponseDto.ActionType.NODE_EXPANDED);
         } catch (Exception e) {
             log.error("Expansion Error", e);
             throw new RuntimeException("Error expanding node: " + e.getMessage());
@@ -292,8 +363,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         return Stream.of(
                 "thêm", "xóa", "bỏ", "sửa", "đổi tên", "cập nhật",
                 "rename", "add", "remove", "delete", "update",
-                "thay đổi", "chỉnh sửa", "di chuyển", "move"
-        ).anyMatch(lower::contains);
+                "thay đổi", "chỉnh sửa", "di chuyển", "move").anyMatch(lower::contains);
     }
 
     /**
@@ -304,8 +374,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         boolean isRoadmapRequest = Stream.of(
                 "tạo lộ trình", "làm roadmap", "muốn học",
                 "gợi ý khóa học", "hướng dẫn học", "create roadmap",
-                "học như thế nào", "bắt đầu học"
-        ).anyMatch(lower::contains);
+                "học như thế nào", "bắt đầu học").anyMatch(lower::contains);
         if (!isRoadmapRequest) {
             return new UserIntentDto(
                     false,
@@ -313,8 +382,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                     null,
                     null,
                     null,
-                    "I can help you create a learning plan. What do you want to study?"
-            );
+                    "I can help you create a learning plan. What do you want to study?");
         }
         String topic = extractTopicKeywords(message);
         String duration = extractDurationPattern(message);
@@ -325,8 +393,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 duration,
                 null,
                 null,
-                null
-        );
+                null);
     }
 
     /**
@@ -349,8 +416,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 Map.entry("devops", "DevOps"),
                 Map.entry("frontend", "Frontend Developer"),
                 Map.entry("backend", "Backend Developer"),
-                Map.entry("fullstack", "Full-stack Developer")
-        );
+                Map.entry("fullstack", "Full-stack Developer"));
 
         for (Map.Entry<String, String> entry : techKeywords.entrySet()) {
             if (lower.contains(entry.getKey())) {
@@ -368,8 +434,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         // Pattern: "3 tháng", "6 months", "420 giờ"
         Pattern pattern = Pattern.compile(
                 "(\\d+)\\s*(tuần|tháng|month|năm|year|giờ|hour|weeks?|months?|years?)",
-                Pattern.CASE_INSENSITIVE
-        );
+                Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(message);
         if (matcher.find()) {
             return matcher.group(0); // Return full match (e.g., "3 tháng")
@@ -377,20 +442,19 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         return null;
     }
 
-
     /**
      * Detects if user message is an expansion request.
      * Uses regex first, then LLM fallback.
      */
-    private ExpansionDetectionDto detectExpansionRequest(String userMessage, RoadmapNode rootNode, String conversationId) {
+    private ExpansionDetectionDto detectExpansionRequest(String userMessage, RoadmapNode rootNode,
+            String conversationId) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return new ExpansionDetectionDto(false, null, null, null);
         }
         Pattern expansionPattern = Pattern.compile(
                 "(triển khai|expand|mở rộng|chi tiết|tạo).*?" +
                         "(phase|module|lesson|giai đoạn|gđ|mô đun|bài học)\\s*(\\d+(?:\\.\\d+)?)",
-                Pattern.CASE_INSENSITIVE
-        );
+                Pattern.CASE_INSENSITIVE);
         Matcher matcher = expansionPattern.matcher(userMessage);
         if (matcher.find()) {
             String nodeType = matcher.group(2);
@@ -407,8 +471,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                         true,
                         targetTitle,
                         depth.name(),
-                        null
-                );
+                        null);
             }
         }
         try {
@@ -417,8 +480,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
 
             String prompt = PromptManager.EXPANSION_DETECTION_PROMPT.formatted(
                     userMessage,
-                    availableNodesStr
-            );
+                    availableNodesStr);
             ExpansionDetectionDto llmResult = routerClient.prompt()
                     .user(prompt)
                     .advisors(a -> a.param(CONVERSATION_ID, conversationId))
@@ -436,8 +498,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 false,
                 null,
                 null,
-                "It's unclear which node you want to deploy. Please be more specific (e.g., 'Deploy PHASE 1.')"
-        );
+                "It's unclear which node you want to deploy. Please be more specific (e.g., 'Deploy PHASE 1.')");
     }
 
     /**
@@ -471,23 +532,24 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         return ExpansionDepth.FULL_DEPTH;
     }
 
-
     /**
-     * MAIN ENTRY: Intelligent chat processing (Router & Slot Filling + Expansion Detection + Edit Detection)
+     * MAIN ENTRY: Intelligent chat processing (Router & Slot Filling + Expansion
+     * Detection + Edit Detection)
      */
     public ChatResponseDto processUserMessage(String userMessage, Long positionId, String durationStr,
-                                              Long batchId, String sessionId) {
+            Long batchId, String sessionId) {
         return processUserMessage(userMessage, positionId, durationStr, batchId, sessionId, null);
     }
 
     public ChatResponseDto processUserMessage(String userMessage, Long positionId, String durationStr,
-                                              Long batchId, String sessionId, String conversationId) {
+            Long batchId, String sessionId, String conversationId) {
         // Default conversationId if not provided
         String convId = (conversationId != null && !conversationId.isBlank())
                 ? conversationId
                 : (sessionId != null ? sessionId : UUID.randomUUID().toString());
 
-        log.debug("Processing message - sessionId: {}, conversationId: {}, message: {}", sessionId, convId, userMessage);
+        log.debug("Processing message - sessionId: {}, conversationId: {}, message: {}", sessionId, convId,
+                userMessage);
 
         // --- PHASE 1: If draft exists, check for expansion or edit requests ---
         if (sessionId != null && !sessionId.trim().isEmpty() && draftManager.exists(sessionId)) {
@@ -501,22 +563,18 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                     !expansionIntent.targetNodeTitle().isEmpty()) {
                 try {
                     ExpansionDepth depth = ExpansionDepth.valueOf(
-                            expansionIntent.expansionDepth() != null ?
-                                    expansionIntent.expansionDepth() : "FULL_DEPTH"
-                    );
+                            expansionIntent.expansionDepth() != null ? expansionIntent.expansionDepth() : "FULL_DEPTH");
                     DraftRoadmapResponseDto result = expandNode(
                             sessionId,
                             expansionIntent.targetNodeTitle(),
                             depth,
-                            convId
-                    );
+                            convId);
                     return ChatResponseDto.builder()
                             .action(ActionType.DISPLAY_ROADMAP)
                             .message(result.message())
                             .data(Map.of(
                                     "sessionId", result.sessionId(),
-                                    "roadmapTree", result.roadmapTree()
-                            ))
+                                    "roadmapTree", result.roadmapTree()))
                             .build();
                 } catch (Exception e) {
                     log.error("Expansion failed", e);
@@ -537,8 +595,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                             .message(editResult)
                             .data(Map.of(
                                     "sessionId", sessionId,
-                                    "roadmapTree", updatedRoot
-                            ))
+                                    "roadmapTree", updatedRoot))
                             .build();
                 } catch (Exception e) {
                     log.error("Edit failed", e);
@@ -594,18 +651,15 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 combinedNotes,
                 position.getId(),
                 finalBatchId,
-                convId
-        );
+                convId);
         return ChatResponseDto.builder()
                 .action(ActionType.DISPLAY_ROADMAP)
                 .message(outline.message())
                 .data(Map.of(
                         "sessionId", outline.sessionId(),
-                        "roadmapTree", outline.roadmapTree()
-                ))
+                        "roadmapTree", outline.roadmapTree()))
                 .build();
     }
-
 
     /**
      * Lists all active drafts (for debugging).
@@ -666,8 +720,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         String lower = duration.toLowerCase().trim();
         Pattern pattern = Pattern.compile(
                 "(\\d+(?:\\.\\d+)?)\\s*(tuần|tháng|month|năm|year|giờ|hour|weeks?|months?|years?)",
-                Pattern.CASE_INSENSITIVE
-        );
+                Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(lower);
         if (matcher.find()) {
             double number = Double.parseDouble(matcher.group(1));
@@ -708,32 +761,36 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
     /**
      * Converts DTO to entity with validation.
      */
+    private String cleanTitle(String title) {
+        if (title == null) {
+            return "";
+        }
+        return title.replaceAll("(?i)^(Giai đoạn|Phase|Module|Lesson|Topic|Task|Node)\\s*\\d+(\\.\\d+)*\\s*[:\\-\\.]?\\s*", "").trim();
+    }
+
     private RoadmapNode convertDtoToEntity(RoadmapGenerationDto dto, RoadmapNode parent) {
         RoadmapNode node = RoadmapNode.builder()
-                .title(dto.title())
+                .title(cleanTitle(dto.title()))
                 .description(dto.description())
                 .passCondition(dto.pass_condition())
                 .learningOutcome(dto.learning_outcome())
                 .estimatedHours(dto.estimated_hours())
                 .assessmentMethod(dto.assessment_method())
                 .parent(parent)
-                .orderIndex(1)
+                .orderIndex(dto.order_index() != null ? dto.order_index() : 1)
                 .isExpanded(false)
                 .tags(new HashSet<>())
                 .children(new ArrayList<>())
                 .build();
         try {
-            node.setNodeType(dto.type() != null ?
-                    NodeType.valueOf(dto.type().toUpperCase()) :
-                    NodeType.PHASE);
+            node.setNodeType(dto.type() != null ? NodeType.valueOf(dto.type().toUpperCase()) : NodeType.PHASE);
         } catch (Exception e) {
             log.warn("Invalid node type: {}, defaulting to PHASE", dto.type());
             node.setNodeType(NodeType.PHASE);
         }
         try {
-            node.setDifficulty(dto.difficulty() != null ?
-                    DifficultyLevel.valueOf(dto.difficulty().toUpperCase()) :
-                    DifficultyLevel.BEGINNER);
+            node.setDifficulty(dto.difficulty() != null ? DifficultyLevel.valueOf(dto.difficulty().toUpperCase())
+                    : DifficultyLevel.BEGINNER);
         } catch (Exception e) {
             log.warn("Invalid difficulty: {}, defaulting to BEGINNER", dto.difficulty());
             node.setDifficulty(DifficultyLevel.BEGINNER);
@@ -742,7 +799,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             List<RoadmapNode> children = new ArrayList<>();
             for (int i = 0; i < dto.children().size(); i++) {
                 RoadmapNode child = convertDtoToEntity(dto.children().get(i), node);
-                child.setOrderIndex(i + 1);
+                child.setOrderIndex(dto.children().get(i).order_index() != null ? dto.children().get(i).order_index() : i + 1);
                 children.add(child);
             }
             node.setChildren(children);
@@ -755,7 +812,8 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
      * Finds node by exact or fuzzy title match.
      */
     private RoadmapNode findNodeByTitle(RoadmapNode root, String targetTitle) {
-        if (root == null || targetTitle == null) return null;
+        if (root == null || targetTitle == null)
+            return null;
         String normalizedTarget = targetTitle.toLowerCase().trim();
         String normalizedNodeTitle = root.getTitle().toLowerCase().trim();
         if (normalizedNodeTitle.equals(normalizedTarget)) {
@@ -776,7 +834,8 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         if (root.getChildren() != null) {
             for (RoadmapNode child : root.getChildren()) {
                 RoadmapNode found = findNodeByTitle(child, targetTitle);
-                if (found != null) return found;
+                if (found != null)
+                    return found;
             }
         }
         return null;
@@ -792,7 +851,8 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         if (root.getChildren() != null) {
             for (RoadmapNode child : root.getChildren()) {
                 RoadmapNode found = findNodeByFuzzyMatch(child, targetTitle);
-                if (found != null) return found;
+                if (found != null)
+                    return found;
             }
         }
         return null;
@@ -811,9 +871,12 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
      * Extracts node type prefix (e.g., "phase" from "phase 1: title").
      */
     private String extractNodeTypePrefix(String title) {
-        if (title.startsWith("phase")) return "phase";
-        if (title.startsWith("module")) return "module";
-        if (title.startsWith("lesson")) return "lesson";
+        if (title.startsWith("phase"))
+            return "phase";
+        if (title.startsWith("module"))
+            return "module";
+        if (title.startsWith("lesson"))
+            return "lesson";
         return null;
     }
 
@@ -827,7 +890,8 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
     }
 
     private void collectNodeTitles(RoadmapNode node, List<String> titles) {
-        if (node == null) return;
+        if (node == null)
+            return;
         titles.add(node.getTitle());
         if (node.getChildren() != null) {
             for (RoadmapNode child : node.getChildren()) {
@@ -892,8 +956,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
                 "Parent: %s (%s, %.1f hours)",
                 node.getParent().getTitle(),
                 node.getParent().getNodeType(),
-                node.getParent().getEstimatedHours()
-        );
+                node.getParent().getEstimatedHours());
     }
 
     /**
@@ -906,16 +969,15 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         StringBuilder context = new StringBuilder();
         context.append("Nodes at the same level:\n");
         for (RoadmapNode sibling : node.getParent().getChildren()) {
-            if (sibling.equals(node)) continue;
+            if (sibling.equals(node))
+                continue;
             context.append(String.format(
                     "- %s (%.1f hours)%s\n",
                     sibling.getTitle(),
                     sibling.getEstimatedHours() != null ? sibling.getEstimatedHours() : 0,
-                    Boolean.TRUE.equals(sibling.getIsExpanded()) ? " [Implemented]" : ""
-            ));
+                    Boolean.TRUE.equals(sibling.getIsExpanded()) ? " [Implemented]" : ""));
         }
-        double parentHours = node.getParent().getEstimatedHours() != null ?
-                node.getParent().getEstimatedHours() : 0;
+        double parentHours = node.getParent().getEstimatedHours() != null ? node.getParent().getEstimatedHours() : 0;
         double siblingTotal = node.getParent().getChildren().stream()
                 .filter(n -> !n.equals(node))
                 .mapToDouble(n -> n.getEstimatedHours() != null ? n.getEstimatedHours() : 0)
@@ -924,8 +986,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         context.append(String.format(
                 "\nTime allocated for this node: %.1f hours (out of total %.1f hours of parent)",
                 remainingHours,
-                parentHours
-        ));
+                parentHours));
         return context.toString();
     }
 
@@ -949,8 +1010,7 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         if (Math.abs(parentHours - childrenTotal) > HOURS_TOLERANCE) {
             errors.add(String.format(
                     "%s: Hours mismatch - parent=%.1f, children=%.1f (diff=%.1f)",
-                    path, parentHours, childrenTotal, Math.abs(parentHours - childrenTotal)
-            ));
+                    path, parentHours, childrenTotal, Math.abs(parentHours - childrenTotal)));
         }
         for (int i = 0; i < node.getChildren().size(); i++) {
             RoadmapNode child = node.getChildren().get(i);
@@ -962,10 +1022,8 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
     /**
      * Saves node tree to database recursively.
      */
-    private RoadmapNode saveNodeTreeRecursively(RoadmapNode node, RoadmapNode parent,
-                                                Position position, InternshipBatch batch) {
-        node.setPosition(position);
-        node.setInternshipBatch(batch);
+
+    private RoadmapNode saveNodeTreeRecursively(RoadmapNode node, RoadmapNode parent) {
         node.setParent(parent);
         node.setCreatedAt(Instant.now());
         node.setUpdatedAt(Instant.now());
@@ -990,6 +1048,42 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
         if (!node.getChildren().isEmpty()) {
             List<RoadmapNode> savedChildren = new ArrayList<>();
             for (RoadmapNode child : node.getChildren()) {
+                child.setRoadmap(node.getRoadmap());
+                savedChildren.add(saveNodeTreeRecursively(child, savedNode));
+            }
+            savedNode.setChildren(savedChildren);
+        }
+
+        return savedNode;
+    }
+
+    private RoadmapNode saveNodeTreeRecursively(RoadmapNode node, RoadmapNode parent,
+            Position position, InternshipBatch batch) {
+        node.setParent(parent);
+        node.setCreatedAt(Instant.now());
+        node.setUpdatedAt(Instant.now());
+        if (node.getChildren() == null) {
+            node.setChildren(new ArrayList<>());
+        }
+        if (node.getTags() != null && !node.getTags().isEmpty()) {
+            Set<Tag> persistedTags = new HashSet<>();
+            for (Tag tag : node.getTags()) {
+                Tag persistedTag = tagRepository.findByName(tag.getName())
+                        .orElseGet(() -> {
+                            Tag newTag = new Tag();
+                            newTag.setName(tag.getName());
+                            newTag.setCreatedAt(LocalDateTime.now());
+                            return tagRepository.save(newTag);
+                        });
+                persistedTags.add(persistedTag);
+            }
+            node.setTags(persistedTags);
+        }
+        RoadmapNode savedNode = roadmapNodeRepository.save(node);
+        if (!node.getChildren().isEmpty()) {
+            List<RoadmapNode> savedChildren = new ArrayList<>();
+            for (RoadmapNode child : node.getChildren()) {
+                child.setRoadmap(node.getRoadmap());
                 savedChildren.add(saveNodeTreeRecursively(child, savedNode, position, batch));
             }
             savedNode.setChildren(savedChildren);
@@ -1025,5 +1119,630 @@ public class RoadmapGeneratorService implements IRoadmapGeneratorService {
             parent.setEstimatedHours(sumSiblings);
             current = parent;
         }
+    }
+
+    /**
+     * Mô phỏng gọi AI: đọc JSON dump và trả về danh sách node theo loại NodeType
+     * cần sinh.
+     * TODO: Khi tích hợp AI thật, thay toàn bộ phần đọc file bằng HTTP call tới
+     * OpenAI/Gemini API.
+     * Contract giữ nguyên: nhận NodeType, trả về List<AiNodeResponseDto>.
+     */
+    private List<AiNodeResponseDto> simulateAiCall(NodeType targetType) {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            ClassPathResource resource = new ClassPathResource(DUMP_FILE_PATH);
+            AiRoadmapDumpDto dump = objectMapper.readValue(resource.getInputStream(), AiRoadmapDumpDto.class);
+            return switch (targetType) {
+                case PHASE -> dump.getPHASE_RESPONSE() != null ? dump.getPHASE_RESPONSE() : Collections.emptyList();
+                case MODULE -> dump.getMODULE_RESPONSE() != null ? dump.getMODULE_RESPONSE() : Collections.emptyList();
+                case LESSON -> dump.getLESSON_RESPONSE() != null ? dump.getLESSON_RESPONSE() : Collections.emptyList();
+                case TOPIC -> dump.getTOPIC_RESPONSE() != null ? dump.getTOPIC_RESPONSE() : Collections.emptyList();
+                case TASK -> dump.getTASK_RESPONSE() != null ? dump.getTASK_RESPONSE() : Collections.emptyList();
+            };
+        } catch (Exception e) {
+            log.error("Failed to read AI dump file: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Chuyển đổi AiNodeResponseDto sang RoadmapNode entity và lưu vào DB.
+     */
+    private RoadmapNode buildAndSaveNode(AiNodeResponseDto dto, NodeType nodeType, Roadmap roadmap,
+            RoadmapNode parent, int orderIndex) {
+        DifficultyLevel difficultyLevel = null;
+        if (dto.getDifficulty() != null) {
+            try {
+                difficultyLevel = DifficultyLevel.valueOf(dto.getDifficulty());
+            } catch (Exception ignored) {
+            }
+        }
+        RoadmapNode node = RoadmapNode.builder()
+                .roadmap(roadmap)
+                .parent(parent)
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .nodeType(nodeType)
+                .estimatedHours(dto.getEstimatedHours() != null ? dto.getEstimatedHours() : 0.0)
+                .difficulty(difficultyLevel)
+                .learningOutcome(dto.getLearningOutcome())
+                .passCondition(dto.getPassCondition())
+                .assessmentMethod(dto.getAssessmentMethod())
+                .isExpanded(false)
+                .orderIndex(orderIndex)
+                .children(new ArrayList<>())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+        return roadmapNodeRepository.save(node);
+    }
+
+    @Override
+    @Transactional
+    public List<RoadmapNodeResponse> generateMockPhases(GeneratePhasesRequest request) {
+        log.info("Generating phases using AI for Position: {}, Batch: {}", request.getPositionId(),
+                request.getBatchId());
+
+        Position position = positionRepository.findById(request.getPositionId())
+                .orElseThrow(() -> new RuntimeException("Position not found: " + request.getPositionId()));
+        InternshipBatch batch = internshipBatchRepository.findById(request.getBatchId())
+                .orElseThrow(() -> new RuntimeException("Batch not found: " + request.getBatchId()));
+
+        Roadmap roadmap = new Roadmap();
+        roadmap.setTitle(request.getPrompt() != null && !request.getPrompt().isBlank()
+                ? request.getPrompt()
+                : "AI Roadmap for " + position.getTitle());
+        roadmap.setDescription("AI generated roadmap for position: " + position.getTitle());
+        roadmap.setDurationMonth(request.getDuration());
+        roadmap.setPosition(position);
+        roadmap.setInternshipBatch(batch);
+        roadmap.setStatus(RoadmapStatus.DRAFT);
+        roadmap.setCreatedAt(Instant.now());
+        roadmap.setUpdatedAt(Instant.now());
+        Roadmap savedRoadmap = roadmapRepository.save(roadmap);
+
+        double totalHours = request.getDuration() * 80.0; // 80 hours per month
+        String notes = (request.getPrompt() != null && !request.getPrompt().isBlank()) ? request.getPrompt()
+                : "Không có yêu cầu đặc biệt";
+
+        String systemPrompt = """
+                Bạn là một chuyên gia thiết kế lộ trình học tập và đào tạo lập trình IT cho thực tập sinh.
+                Hãy tạo ra khung chương trình (các giai đoạn - PHASE) cho vị trí thực tập sinh: %s với chương trình %s.
+                Tổng số giờ đào tạo cho toàn bộ lộ trình phải ĐÚNG BẰNG %s giờ.
+                Yêu cầu bổ sung của người dùng: %s
+
+                Yêu cầu cấu trúc:
+                - Trả về cấu trúc JSON đại diện cho ROOT node của lộ trình.
+                - Trường 'children' phải chứa danh sách các giai đoạn (PHASE) con (từ 4 đến 6 giai đoạn).
+                - Các giai đoạn con phải phân bổ số giờ (estimated_hours) sao cho tổng số giờ của tất cả các giai đoạn đúng bằng %s giờ.
+                - Mỗi giai đoạn (PHASE) con có các trường: title, description, estimated_hours, difficulty, learning_outcome, pass_condition, assessment_method.
+                - Tuyệt đối KHÔNG viết các tiền tố như "Giai đoạn X:", "Phase X:" ở đầu tiêu đề (title). Tiêu đề chỉ chứa tên thực tế của giai đoạn đó.
+                - Tuyệt đối KHÔNG tạo thêm các cấp sâu hơn (MODULE, LESSON, TOPIC, TASK) ở bước này.
+                - Trả về đúng định dạng JSON khớp với schema sau:
+                %s
+
+                Lưu ý: Chỉ trả về JSON thuần túy, không định dạng markdown hay bất kỳ ký tự nào ngoài JSON.
+                """;
+
+        String formattedPrompt = String.format(systemPrompt, position.getTitle(),batch.getName(), String.valueOf(totalHours), notes,
+                String.valueOf(totalHours), PromptManager.NODE_SCHEMA);
+
+        log.info("Sending outline generation request to Gemini/AI Client for Position: {}", position.getTitle());
+        RoadmapGenerationDto rootDto = creatorClient.prompt()
+                .user(formattedPrompt)
+                .call()
+                .entity(RoadmapGenerationDto.class);
+
+        if (rootDto == null || rootDto.children() == null) {
+            throw new RuntimeException("AI did not return a valid roadmap outline");
+        }
+
+        List<RoadmapNodeResponse> responses = new ArrayList<>();
+        for (int i = 0; i < rootDto.children().size(); i++) {
+            RoadmapGenerationDto phaseDto = rootDto.children().get(i);
+            RoadmapNode phaseNode = convertDtoToEntity(phaseDto, null);
+            phaseNode.setRoadmap(savedRoadmap);
+            phaseNode.setOrderIndex(phaseDto.order_index() != null ? phaseDto.order_index() : i + 1);
+
+            RoadmapNode saved = roadmapNodeRepository.save(phaseNode);
+            responses.add(RoadmapNodeResponse.toRoadmapResponse(saved));
+        }
+
+        log.info("Generated {} PHASE nodes from AI", responses.size());
+        return responses;
+    }
+    @Override
+    @Transactional
+    public NodeExpansionResponse expandMockNode(Long nodeId, String prompt) {
+        log.info("Expanding node ID: {} using AI. Prompt: {}", nodeId, prompt);
+
+        RoadmapNode parentNode = roadmapNodeRepository.findById(nodeId)
+                .orElseThrow(() -> new RuntimeException("Parent node not found: " + nodeId));
+
+        NodeType parentType = parentNode.getNodeType();
+
+        // Xác định loại con cần sinh dựa vào loại cha (Lazy Loading: mỗi lần expand chỉ sinh 1 tầng)
+        NodeType childType = switch (parentType) {
+            case PHASE -> NodeType.MODULE;
+            case MODULE -> NodeType.LESSON;
+            case LESSON -> NodeType.TOPIC;
+            case TOPIC -> NodeType.TASK;
+            case TASK -> null; // TASK là node lá, không thể expand
+        };
+
+        if (childType == null) {
+            log.warn("Node ID {} is of type TASK - cannot expand further", nodeId);
+            return NodeExpansionResponse.builder()
+                    .parentId(nodeId)
+                    .children(Collections.emptyList())
+                    .build();
+        }
+
+        List<RoadmapNode> existingChildren = parentNode.getChildren() != null 
+                ? new ArrayList<>(parentNode.getChildren()) 
+                : new ArrayList<>();
+
+        // Caching: Nếu không có prompt điều chỉnh và đã có sẵn node con trong DB, trả về luôn
+        if ((prompt == null || prompt.isBlank()) && !existingChildren.isEmpty()) {
+            log.info("Loading {} existing children for node ID: {} from DB", existingChildren.size(), nodeId);
+            List<RoadmapNodeResponse> childrenResponse = existingChildren.stream()
+                    .map(RoadmapNodeResponse::toRoadmapResponse)
+                    .toList();
+            return NodeExpansionResponse.builder()
+                    .parentId(nodeId)
+                    .children(childrenResponse)
+                    .build();
+        }
+
+        String notes = (prompt != null && !prompt.isBlank()) ? prompt : "Không có yêu cầu đặc biệt";
+        double parentHours = parentNode.getEstimatedHours() != null ? parentNode.getEstimatedHours() : 1.0;
+
+        // Xây dựng danh sách các node con hiện có để gửi vào Prompt cho AI
+        StringBuilder existingChildrenText = new StringBuilder();
+        if (!existingChildren.isEmpty()) {
+            existingChildrenText.append("Danh sách các node con hiện tại:\n");
+            for (RoadmapNode child : existingChildren) {
+                existingChildrenText.append(String.format("- ID: %d, Tiêu đề: \"%s\", Mô tả: \"%s\", Số giờ dự kiến: %s giờ\n",
+                        child.getId(),
+                        child.getTitle(),
+                        child.getDescription() != null ? child.getDescription() : "",
+                        child.getEstimatedHours() != null ? child.getEstimatedHours() : "1.0"));
+            }
+        } else {
+            existingChildrenText.append("Không có node con hiện tại.");
+        }
+
+        String systemPrompt = """
+                Bạn là một chuyên gia thiết kế chương trình đào tạo IT.
+                Nhiệm vụ của bạn là triển khai chi tiết (sinh các node con) cho node cha sau:
+                - Tiêu đề node cha: "%s" (loại node: %s)
+                - Mô tả node cha: "%s"
+                - Số giờ dự kiến cho node cha: %s giờ
+                - Loại node con cần sinh: %s
+
+                Ngữ cảnh hiện tại:
+                %s
+
+                Yêu cầu bổ sung/điều chỉnh của người dùng:
+                %s
+
+                Yêu cầu cấu trúc và xử lý:
+                - Trả về cấu trúc JSON đại diện cho node cha.
+                - Trường 'children' phải chứa danh sách các node con (loại node: %s), thông thường từ 2 đến 5 node con.
+                - Đọc kỹ yêu cầu bổ sung/điều chỉnh của người dùng:
+                  + Nếu người dùng muốn giữ lại hoặc sửa đổi một node con cũ, bạn BẮT BUỘC phải điền chính xác 'id' của node con đó từ "Danh sách các node con hiện tại" vào trường 'id' trong JSON kết quả.
+                  + Nếu người dùng muốn thêm node con mới, đặt 'id' là null.
+                  + Nếu người dùng muốn xóa hoặc thay thế một node con cũ, đơn giản là KHÔNG đưa node đó (với ID của nó) vào danh sách 'children' trả về.
+                - Tổng số giờ (estimated_hours) của tất cả các node con được trả về (cả giữ lại, sửa đổi và thêm mới) phải ĐÚNG BẰNG số giờ của node cha là %s giờ.
+                - Mỗi node con phải phân bổ số giờ hợp lý (ước tính theo độ khó và thời gian thực hiện, tối thiểu 1 giờ).
+                - Mỗi node con có các trường: id, title, description, estimated_hours, difficulty, tags, learning_outcome, pass_condition, assessment_method.
+                - Tuyệt đối KHÔNG viết các tiền tố như "Module X:", "Lesson X:", "Topic X:", "Task X:" ở đầu tiêu đề (title). Tiêu đề chỉ chứa tên thực tế của node con đó.
+                - Tuyệt đối KHÔNG sinh thêm các cấp con sâu hơn ở bước này.
+                - Trả về đúng định dạng JSON khớp với schema sau:
+                %s
+
+                Lưu ý: Chỉ trả về JSON thuần túy, không định dạng markdown hay bất kỳ ký tự nào ngoài JSON.
+                """;
+
+        String formattedPrompt = String.format(systemPrompt,
+                parentNode.getTitle(),
+                parentNode.getNodeType().name(),
+                parentNode.getDescription() != null ? parentNode.getDescription() : "",
+                parentHours,
+                childType.name(),
+                existingChildrenText.toString(),
+                notes,
+                childType.name(),
+                parentHours,
+                PromptManager.NODE_SCHEMA);
+
+        log.info("Sending node expansion request to Gemini/AI Client for Node ID: {} ({})", nodeId,
+                parentNode.getTitle());
+        RoadmapGenerationDto expandedDto = creatorClient.prompt()
+                .user(formattedPrompt)
+                .call()
+                .entity(RoadmapGenerationDto.class);
+
+        if (expandedDto == null || expandedDto.children() == null) {
+            throw new RuntimeException("AI did not return a valid node expansion");
+        }
+
+        // Xác định các ID được AI giữ lại
+        Set<Long> keptIds = new HashSet<>();
+        for (RoadmapGenerationDto childDto : expandedDto.children()) {
+            if (childDto.id() != null) {
+                keptIds.add(childDto.id());
+            }
+        }
+
+        // Tìm các node cũ cần xóa
+        List<RoadmapNode> toDelete = new ArrayList<>();
+        for (RoadmapNode child : existingChildren) {
+            if (!keptIds.contains(child.getId())) {
+                toDelete.add(child);
+            }
+        }
+
+        // Thực hiện xóa các node không được giữ lại
+        if (!toDelete.isEmpty()) {
+            log.info("Deleting {} nodes that AI decided to remove: {}", toDelete.size(),
+                    toDelete.stream().map(RoadmapNode::getId).toList());
+            roadmapNodeRepository.deleteAll(toDelete);
+            parentNode.getChildren().removeAll(toDelete);
+            roadmapNodeRepository.flush();
+        }
+
+        List<RoadmapNodeResponse> childrenResponse = new ArrayList<>();
+        List<RoadmapNode> updatedChildrenList = new ArrayList<>();
+
+        for (int i = 0; i < expandedDto.children().size(); i++) {
+            RoadmapGenerationDto childDto = expandedDto.children().get(i);
+            RoadmapNode childNode = null;
+
+            if (childDto.id() != null) {
+                final Long targetId = childDto.id();
+                RoadmapNode existingNode = existingChildren.stream()
+                        .filter(n -> n.getId().equals(targetId))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existingNode != null) {
+                    // Cập nhật thông tin node cũ
+                    existingNode.setTitle(cleanTitle(childDto.title()));
+                    existingNode.setDescription(childDto.description());
+                    existingNode.setEstimatedHours(childDto.estimated_hours());
+                    if (childDto.difficulty() != null) {
+                        try {
+                            existingNode.setDifficulty(DifficultyLevel.valueOf(childDto.difficulty().toUpperCase()));
+                        } catch (Exception e) {
+                            log.warn("Invalid difficulty: {}, defaulting to BEGINNER", childDto.difficulty());
+                            existingNode.setDifficulty(DifficultyLevel.BEGINNER);
+                        }
+                    }
+                    existingNode.setPassCondition(childDto.pass_condition());
+                    existingNode.setLearningOutcome(childDto.learning_outcome());
+                    existingNode.setAssessmentMethod(childDto.assessment_method());
+                    existingNode.setOrderIndex(childDto.order_index() != null ? childDto.order_index() : i + 1);
+                    childNode = existingNode;
+                }
+            }
+
+            if (childNode == null) {
+                // Thêm node mới
+                childNode = convertDtoToEntity(childDto, parentNode);
+                childNode.setRoadmap(parentNode.getRoadmap());
+                childNode.setOrderIndex(childDto.order_index() != null ? childDto.order_index() : i + 1);
+            }
+
+            RoadmapNode saved = roadmapNodeRepository.save(childNode);
+            updatedChildrenList.add(saved);
+            childrenResponse.add(RoadmapNodeResponse.toRoadmapResponse(saved));
+        }
+
+        parentNode.setChildren(updatedChildrenList);
+        roadmapNodeRepository.save(parentNode);
+
+        log.info("Generated {} {} nodes using AI under parent ID {}", childrenResponse.size(), childType, nodeId);
+        return NodeExpansionResponse.builder()
+                .parentId(nodeId)
+                .children(childrenResponse)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public RoadmapNodeResponse addNode(AddNodeRequest request) {
+        log.info("Add node under parent: {}", request.getParentId());
+
+        RoadmapNode parent = null;
+        Roadmap roadmap = null;
+
+        if (request.getParentId() != null) {
+            parent = roadmapNodeRepository.findById(request.getParentId()).orElse(null);
+        }
+
+        if (request.getRoadmapId() != null) {
+            roadmap = roadmapRepository.findById(request.getRoadmapId()).orElse(null);
+        } else if (parent != null) {
+            roadmap = parent.getRoadmap();
+        }
+
+        NodeType type = NodeType.PHASE;
+        if (parent != null) {
+            switch (parent.getNodeType()) {
+                case PHASE:
+                    type = NodeType.MODULE;
+                    break;
+                case MODULE:
+                    type = NodeType.LESSON;
+                    break;
+                case LESSON:
+                    type = NodeType.TOPIC;
+                    break;
+                case TOPIC:
+                    type = NodeType.TASK;
+                    break;
+                default:
+                    type = NodeType.TASK;
+                    break;
+            }
+        }
+
+        RoadmapNode newNode = RoadmapNode.builder()
+                .title(request.getTitle() != null && !request.getTitle().isEmpty() ? request.getTitle() : "New Node")
+                .description(request.getDescription() != null ? request.getDescription() : "Description here")
+                .nodeType(type)
+                .estimatedHours(request.getEstimatedHours() != null ? request.getEstimatedHours() : 1.0)
+                .isExpanded(false)
+                .children(new ArrayList<>())
+                .parent(parent)
+                .roadmap(roadmap)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        if (roadmap != null) {
+            newNode = roadmapNodeRepository.save(newNode);
+        }
+
+        return RoadmapNodeResponse.toRoadmapResponse(newNode);
+    }
+
+    @Override
+    @Transactional
+    public RoadmapNodeResponse editMockNode(Long id, EditNodeRequest request) {
+        log.info("Editing node ID: {}", id);
+
+        RoadmapNode node = roadmapNodeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Node not found: " + id));
+
+        node.setTitle(request.getTitle());
+        node.setDescription(request.getDescription());
+        if (request.getEstimatedHours() != null) {
+            node.setEstimatedHours(request.getEstimatedHours());
+        }
+        if (request.getNodeType() != null) {
+            try {
+                NodeType newType = NodeType.valueOf(request.getNodeType().toUpperCase());
+                if (newType == NodeType.TASK && node.getChildren() != null && !node.getChildren().isEmpty()) {
+                    roadmapNodeRepository.deleteAll(node.getChildren());
+                    node.getChildren().clear();
+                }
+                node.setNodeType(newType);
+            } catch (Exception e) {
+                log.warn("Invalid nodeType: {}", request.getNodeType());
+            }
+        }
+        node.setUpdatedAt(Instant.now());
+
+        RoadmapNode saved = roadmapNodeRepository.save(node);
+        return RoadmapNodeResponse.toRoadmapResponse(saved);
+    }
+
+    private void updateNodeTypeRecursively(RoadmapNode node, RoadmapNode parent) {
+        NodeType newType = NodeType.PHASE;
+        if (parent != null) {
+            newType = switch (parent.getNodeType()) {
+                case PHASE -> NodeType.MODULE;
+                case MODULE -> NodeType.LESSON;
+                case LESSON -> NodeType.TOPIC;
+                case TOPIC -> NodeType.TASK;
+                case TASK -> NodeType.TASK;
+            };
+        }
+        node.setNodeType(newType);
+        roadmapNodeRepository.save(node);
+
+        List<RoadmapNode> children = node.getChildren();
+        if (children != null) {
+            for (RoadmapNode child : children) {
+                updateNodeTypeRecursively(child, node);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public RoadmapNodeResponse moveMockNode(Long id, MoveNodeRequest request) {
+        log.info("Moving node ID: {} relative to target node ID: {} with dropType: {}", id,
+                request.getTargetNodeId(), request.getDropType());
+
+        RoadmapNode movingNode = roadmapNodeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Node to move not found: " + id));
+        RoadmapNode targetNode = roadmapNodeRepository.findById(request.getTargetNodeId())
+                .orElseThrow(() -> new RuntimeException("Target node not found: " + request.getTargetNodeId()));
+
+        RoadmapNode oldParent = movingNode.getParent();
+        String dropType = request.getDropType();
+
+        if ("inner".equals(dropType)) {
+            movingNode.setParent(targetNode);
+            int size = targetNode.getChildren() != null ? targetNode.getChildren().size() : 0;
+            movingNode.setOrderIndex(size + 1);
+            updateNodeTypeRecursively(movingNode, targetNode);
+        } else if ("before".equals(dropType) || "after".equals(dropType)) {
+            RoadmapNode targetParent = targetNode.getParent();
+            movingNode.setParent(targetParent);
+
+            // Fetch siblings
+            List<RoadmapNode> siblings;
+            if (targetParent == null) {
+                siblings = new ArrayList<>(roadmapNodeRepository
+                        .findByRoadmapIdAndParentIsNullOrderByOrderIndexAsc(movingNode.getRoadmap().getId()));
+            } else {
+                siblings = new ArrayList<>(targetParent.getChildren());
+            }
+
+            // Remove movingNode from siblings if present to recalculate correctly
+            siblings.removeIf(n -> n.getId().equals(movingNode.getId()));
+
+            // Find targetNode index in siblings list
+            int targetPos = -1;
+            for (int i = 0; i < siblings.size(); i++) {
+                if (siblings.get(i).getId().equals(targetNode.getId())) {
+                    targetPos = i;
+                    break;
+                }
+            }
+
+            if (targetPos != -1) {
+                int insertPos = "before".equals(dropType) ? targetPos : targetPos + 1;
+                insertPos = Math.max(0, Math.min(insertPos, siblings.size()));
+                siblings.add(insertPos, movingNode);
+            } else {
+                siblings.add(movingNode);
+            }
+
+            // Save all siblings with recomputed orderIndex starting from 1
+            for (int i = 0; i < siblings.size(); i++) {
+                RoadmapNode nodeToUpdate = siblings.get(i);
+                nodeToUpdate.setOrderIndex(i + 1);
+                roadmapNodeRepository.save(nodeToUpdate);
+            }
+
+            updateNodeTypeRecursively(movingNode, targetParent);
+        }
+
+        // Recalculate hours for old parent hierarchy and new parent hierarchy
+        if (oldParent != null) {
+            recalculateHierarchyHours(oldParent);
+        }
+        if (movingNode.getParent() != null) {
+            recalculateHierarchyHours(movingNode.getParent());
+        }
+
+        return RoadmapNodeResponse.toRoadmapResponse(movingNode);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMockNode(Long id) {
+        log.info("Deleting node ID: {}", id);
+        RoadmapNode node = roadmapNodeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Node not found: " + id));
+        roadmapNodeRepository.delete(node);
+    }
+
+    @Override
+    @Transactional
+    public RoadmapDto saveDraftTree(SaveDraftTreeRequest request) {
+        Position position = positionRepository.findById(request.getPositionId())
+                .orElseThrow(() -> new RuntimeException("Position not found: " + request.getPositionId()));
+        InternshipBatch batch = internshipBatchRepository.findById(request.getBatchId())
+                .orElseThrow(() -> new RuntimeException("Batch not found: " + request.getBatchId()));
+
+        Roadmap roadmap;
+        if (request.getId() != null) {
+            roadmap = roadmapRepository.findById(request.getId())
+                    .orElseThrow(() -> new RuntimeException("Roadmap not found: " + request.getId()));
+
+            List<RoadmapNode> rootNodes = roadmapNodeRepository
+                    .findByRoadmapIdAndParentIsNullOrderByOrderIndexAsc(roadmap.getId());
+            roadmapNodeRepository.deleteAll(rootNodes);
+        } else {
+            roadmap = new Roadmap();
+            roadmap.setCreatedAt(Instant.now());
+        }
+
+        roadmap.setTitle(request.getTitle() != null ? request.getTitle() : "Draft Roadmap");
+        roadmap.setDescription(request.getDescription());
+        roadmap.setDurationMonth(request.getDurationMonth());
+        roadmap.setPosition(position);
+        roadmap.setInternshipBatch(batch);
+        
+        boolean isPublish = request.getPublish() != null && request.getPublish();
+        roadmap.setStatus(isPublish ? RoadmapStatus.PUBLISHED : RoadmapStatus.DRAFT);
+        roadmap.setUpdatedAt(Instant.now());
+
+        Roadmap savedRoadmap = roadmapRepository.save(roadmap);
+
+        List<RoadmapNode> savedNodes = new ArrayList<>();
+
+        if (request.getNodes() != null) {
+            for (RoadmapNodeDto rootDto : request.getNodes()) {
+                RoadmapNode rootNode = mapToEntity(rootDto);
+
+                // Set roadmap
+                rootNode.setRoadmap(savedRoadmap);
+
+                savedNodes.add(saveNodeTreeRecursively(rootNode, null));
+            }
+        }
+
+        if (isPublish) {
+            eventPublisher.publishEvent(new RoadmapPublishedEvent(this, savedRoadmap));
+        }
+
+        log.info("Saved roadmap (published={}) with ID {} and {} root nodes", isPublish, savedRoadmap.getId(), savedNodes.size());
+        return RoadmapDto.builder()
+                .id(savedRoadmap.getId())
+                .roadmapId(savedRoadmap.getId())
+                .title(savedRoadmap.getTitle())
+                .description(savedRoadmap.getDescription())
+                .durationMonth(savedRoadmap.getDurationMonth())
+                .build();
+    }
+
+    private RoadmapNode mapToEntity(RoadmapNodeDto dto) {
+        RoadmapNode node = new RoadmapNode();
+        node.setId(dto.getId());
+        node.setTitle(dto.getTitle());
+        node.setDescription(dto.getDescription());
+        node.setNodeType(dto.getNodeType() != null ? NodeType.valueOf(dto.getNodeType()) : NodeType.PHASE);
+        node.setEstimatedHours(dto.getEstimatedHours() != null ? dto.getEstimatedHours() : 0.0);
+        node.setOrderIndex(dto.getOrderIndex());
+        if (dto.getDifficulty() != null) {
+            try {
+                node.setDifficulty(DifficultyLevel.valueOf(dto.getDifficulty().toUpperCase()));
+            } catch (Exception e) {
+                node.setDifficulty(DifficultyLevel.BEGINNER);
+            }
+        }
+        node.setPassCondition(dto.getPassCondition());
+        node.setLearningOutcome(dto.getLearningOutcome());
+        node.setAssessmentMethod(dto.getAssessmentMethod());
+        node.setTags(new HashSet<>());
+        if (dto.getTags() != null) {
+            for (String tagName : dto.getTags()) {
+                Tag tag = new Tag();
+                tag.setName(tagName);
+                node.getTags().add(tag);
+            }
+        }
+        node.setChildren(new ArrayList<>());
+
+        if (dto.getChildren() != null) {
+            for (RoadmapNodeDto childDto : dto.getChildren()) {
+                RoadmapNode child = mapToEntity(childDto);
+                node.getChildren().add(child);
+            }
+        }
+        return node;
     }
 }
