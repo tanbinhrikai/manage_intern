@@ -102,36 +102,6 @@ public class DashboardService implements IDashboardService {
                                 }
                         }
                         type = "status_change";
-                }
-
-                return ActivityResponse.builder()
-                                .type(type)
-                                .text(details)
-                                .timestamp(log.getCreatedAt())
-                                .build();
-        }
-
-        private ActivityResponse mapToActivityResponse(AuditLog log) {
-                String type = "system";
-                String action = log.getAction();
-                String entityType = log.getEntityType();
-                String details = log.getDetails();
-
-                if ("CREATE".equals(action) && "INTERN".equals(entityType)) {
-                        type = "new";
-                } else if ("DELETE".equals(action) && "INTERN".equals(entityType)) {
-                        type = "warning";
-                } else if ("WEEKLY_REPORT".equals(entityType) || "EVALUATION_SESSION".equals(entityType)) {
-                        type = "evaluation";
-                } else if ("STATUS_CHANGE".equals(action)) {
-                        if (details != null) {
-                                if (details.contains("WARNING")) {
-                                        type = "warning";
-                                } else if (details.contains("COMPLETE")) {
-                                        type = "completed";
-                                }
-                        }
-                        type = "status_change";
                 } else if ("PUBLISH".equals(action)) {
                         type = "completed";
                 }
