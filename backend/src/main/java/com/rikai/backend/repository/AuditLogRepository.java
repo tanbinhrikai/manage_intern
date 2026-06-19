@@ -1,4 +1,9 @@
 package com.rikai.backend.repository;
 
-public interface AuditLogRepository {
+import com.rikai.backend.model.AuditLog;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 }
