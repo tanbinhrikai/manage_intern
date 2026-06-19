@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SaveDraftTreeRequest {
+public class RoadmapRequest {
     private Long id;
     private String title;
     private String description;
@@ -18,5 +18,5 @@ public class SaveDraftTreeRequest {
     private Long positionId;
     private Long batchId;
     private Boolean publish;
-    private List<RoadmapNodeDto> nodes;
+    private List<RoadmapNodeRequest> nodes;
 }

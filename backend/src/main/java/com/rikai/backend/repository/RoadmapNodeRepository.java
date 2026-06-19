@@ -11,4 +11,7 @@ public interface RoadmapNodeRepository extends JpaRepository<RoadmapNode, Long> 
     List<RoadmapNode> findByRoadmapIdAndParentIsNullOrderByOrderIndexAsc(Long roadmapId);
 
     Page<RoadmapNode> findByParentIdIsNull(Pageable pageable);
+
+    long countByParentId(Long parentId);
+    long countByRoadmapIdAndParentIsNull(Long roadmapId);
 }

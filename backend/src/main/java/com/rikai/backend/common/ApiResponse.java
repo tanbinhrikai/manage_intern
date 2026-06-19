@@ -20,7 +20,7 @@ public class ApiResponse<T> {
     String timestamp;
     int statusCode ;
 
-    static public  <T> ApiResponse<T> buildSuccessResponse(T data, SuccessCode successCode) {
+    static public <T> ApiResponse<T> buildSuccessResponse(T data, SuccessCode successCode) {
         return ApiResponse.<T>builder()
                 .success(true)
                 .statusCode(successCode.getStatusCode().value())

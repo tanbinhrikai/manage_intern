@@ -4,7 +4,7 @@
       <el-row :gutter="20" class="main-layout-row">
 
         <!-- Section 1: Roadmap Configuration -->
-        <el-col :span="10" class="layout-col">
+        <el-col :span="8" class="layout-col">
 
           <el-card class="box-card full-height-card">
             <template #header>
@@ -107,7 +107,7 @@
         </el-col>
 
         <!-- Section 2: Roadmap Tree Editor -->
-        <el-col :span="14" class="layout-col">
+        <el-col :span="16" class="layout-col">
           <el-card class="box-card flex-1 full-height-card" v-if="isTreeVisible">
             <template #header>
               <div class="card-header">
@@ -119,9 +119,10 @@
                 </div>
                 <div class="header-actions">
                   <el-button type="danger" plain @click="cancelRoadmap">Cancel Roadmap</el-button>
-                  <el-button type="info" plain @click="saveDraft">Save Draft</el-button>
-                  <el-button type="success" plain @click="saveAndConfirm">Save & Confirm</el-button>
-                  <el-button type="primary" @click="addRootNode">+ Add Root Node</el-button>
+                  <el-button type="info" plain @click="handleSaveDraft">Draft</el-button>
+                  <el-button type="success" plain @click="handleSavePublished">Published</el-button>
+                  <el-button type="success" :icon="MagicStick" @click="generateRootAI">Magic with AI</el-button>
+                  <el-button type="primary" @click="handleAddNode">+ Add Root Node</el-button>
                 </div>
               </div>
             </template>
@@ -179,66 +180,85 @@
                         <div class="node-desc" v-if="data.description">{{ data.description }}</div>
                       </div>
                       <div class="node-actions">
-                        <el-button 
+                        <el-tooltip content="Thêm node con" placement="top" :show-after="100" v-if="data.nodeType !== 'TASK'">
+                          <el-button 
                           v-if="data.nodeType !== 'TASK'" 
-                          size="small" 
-                          type="primary" 
-                          circle
-                          :icon="Plus"
-                          title="Thêm node con"
-                          @click.stop="addChild(data)"
-                        />
-                        <el-button 
+                            size="small" 
+                            type="primary" 
+                            circle
+                            :icon="Plus"
+                            @click.stop="handleAddNode(data)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Sinh AI gợi ý" placement="top" :show-after="100" v-if="data.nodeType !== 'TASK'">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
                           v-if="data.nodeType !== 'TASK'" 
-                          size="small" 
-                          type="success" 
-                          circle
-                          :icon="MagicStick"
-                          title="Sinh AI gợi ý"
-                          @click.stop="generateAI(node, data)"
-                        />
-                        <el-button 
-                          size="small" 
-                          type="info" 
-                          circle
-                          :icon="View"
-                          title="Xem chi tiết"
-                          @click.stop="viewNodeDetail(data)"
-                        />
-                        <el-button 
-                          v-if="data.nodeType !== 'TASK'" 
-                          size="small" 
-                          type="default" 
-                          circle
-                          :icon="Lock"
-                          title="Đánh dấu không thể mở rộng"
-                          @click.stop="toggleExpandable(node, data, true)"
-                        />
-                        <el-button 
+                            size="small" 
+                            type="success" 
+                            circle
+                            :icon="MagicStick"
+                            @click.stop="generateAI(node, data)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Xem chi tiết" placement="top" :show-after="100">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
+                            size="small" 
+                            type="info" 
+                            circle
+                            :icon="View"
+                            @click.stop="viewNodeDetail(data)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Đánh dấu không thể mở rộng" placement="top" :show-after="100" v-if="data.nodeType !== 'TASK'">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
+                            v-if="data.nodeType !== 'TASK'" 
+                            size="small" 
+                            type="default" 
+                            circle
+                            :icon="Lock"
+                            @click.stop="toggleExpandable(node, data, true)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Cho phép mở rộng" placement="top" :show-after="100" v-if="data.nodeType === 'TASK' && node.level < 5">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
                           v-if="data.nodeType === 'TASK' && node.level < 5" 
-                          size="small" 
-                          type="warning" 
-                          circle
-                          :icon="Unlock"
-                          title="Cho phép mở rộng"
-                          @click.stop="toggleExpandable(node, data, false)"
-                        />
-                        <el-button 
-                          size="small" 
-                          type="warning" 
-                          circle
-                          :icon="Edit"
-                          title="Sửa"
-                          @click.stop="editNode(data)"
-                        />
-                        <el-button 
-                          size="small" 
-                          type="danger" 
-                          circle
-                          :icon="Delete"
-                          title="Xóa"
-                          @click.stop="deleteNode(node, data)"
-                        />
+                            size="small" 
+                            type="warning" 
+                            circle
+                            :icon="Unlock"
+                            @click.stop="toggleExpandable(node, data, false)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Sửa" placement="top" :show-after="100">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
+                            size="small" 
+                            type="warning" 
+                            circle
+                            :icon="Edit"
+                            @click.stop="editNode(data)"
+                          />
+                        </el-tooltip>
+                        
+                        <el-tooltip content="Xóa" placement="top" :show-after="100">
+                          <el-button 
+                            :style="{ marginLeft: '6px' }"
+                            size="small" 
+                            type="danger" 
+                            circle
+                            :icon="Delete"
+                            @click.stop="deleteNode(node, data)"
+                          />
+                        </el-tooltip>
                       </div>
                     </div>
                   </template>
@@ -344,29 +364,31 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { Plus, Edit, Delete, MagicStick, View, Lock, Unlock } from "@element-plus/icons-vue";
+import { Plus, Edit, Delete, MagicStick, View, Lock, Unlock } from "@element-plus/icons-vue"
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
-import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
-import { getPositions } from "@/api/position";
-import { getBatches } from "@/api/internship-batch";
-import { generatePhases, expandNode, addNode, editNodeDetail, removeNode, moveNode, saveDraftRoadmap, fetchRoadmaps, fetchRoadmapById, deleteRoadmap } from "@/api/roadmap";
-import { nextTick } from "vue";
+import { ElMessageBox, ElMessage, ElLoading } from "element-plus"
+import { getPositions } from "@/api/position"
+import { getBatches } from "@/api/internship-batch"
+import { generatePhases, expandNode, addNode, editNodeDetail, removeNode, moveNode, saveRoadmap, fetchRoadmaps, fetchRoadmapById, deleteRoadmap } from "@/api/roadmap";
+import { nextTick } from "vue"
 
-const positions = ref([]);
-const batches = ref([]);
-const isTreeVisible = ref(false);
-const isGenerating = ref(false);
+const positions = ref([])
+const batches = ref([])
+const isTreeVisible = ref(false)
+const isGenerating = ref(false)
 const treeRef = ref(null);
-const dialogVisible = ref(false);
+const dialogVisible = ref(false)
 
-const addDialogVisible = ref(false);
+const addDialogVisible = ref(false)
+
 const addFormRef = ref(null);
 const addForm = ref({
   title: "",
   description: "",
   estimatedHours: 1.0
 });
-const currentAddParentId = ref(null);
+const parentNodeId = ref(null);
+
 const addRules = {
   title: [
     { required: true, message: "Vui lòng nhập tiêu đề node", trigger: "blur" }
@@ -487,11 +509,12 @@ const getDisplayTitle = (node, data) => {
   if (node && node.parent && node.parent.childNodes) {
     index = node.parent.childNodes.indexOf(node);
   } else if (data.orderIndex !== undefined && data.orderIndex !== null) {
-    index = data.orderIndex;
+    index = data.orderIndex - 1;
   }
   const localIndex = index + 1;
   const cleanedTitle = cleanNodeTitle(data.title);
-  return `${typeStr} ${localIndex} - ${cleanedTitle}`;
+  // return `${typeStr} ${localIndex} - ${cleanedTitle}`;
+  return cleanedTitle;
 };
 
 const handleNodeExpand = (data) => {
@@ -691,32 +714,57 @@ const resetForm = () => {
   ElMessage.success("Đã quay lại trạng thái ban đầu");
 }
 
+const mapRawChildren = (rawChildren) => {
+  if (!rawChildren) return [];
+  return rawChildren.map((c, index) => {
+    return {
+      title: c.title,
+      description: c.description,
+      nodeType: c.nodeType,
+      estimatedHours: c.estimatedHours || 0.0,
+      orderIndex: c.orderIndex || (index + 1),
+      children: mapRawChildren(c.children)
+    };
+  });
+};
+
+
 const extractTreeData = (nodes) => {
   return nodes.map((node, index) => {
+    let childrenPayload = [];
+    if (node.loaded) {
+      // Nếu đã mở rộng, lấy từ tree nodes
+      childrenPayload = extractTreeData(node.childNodes || []);
+    } else if (node.data && node.data.children && node.data.children.length > 0) {
+      // Nếu chưa mở rộng, lấy dữ liệu gốc
+      childrenPayload = mapRawChildren(node.data.children);
+    }
+    
     return {
       title: node.data.title,
       description: node.data.description,
       nodeType: node.data.nodeType,
       estimatedHours: node.data.estimatedHours || 0.0,
-      orderIndex: index,
-      children: extractTreeData(node.childNodes || [])
+      orderIndex: index + 1,
+      children: childrenPayload
     };
   });
 };
-
-const saveDraft = async (isConfirm = false) => {
+const submitRoadmap = async (isConfirm = false) => {
   if (!treeRef.value) return;
+  const isPublish = isConfirm === true;
   try {
     const rootNodes = treeRef.value.root.childNodes;
     const treePayload = extractTreeData(rootNodes);
     
-    const response = await saveDraftRoadmap({
+    // dựa vào trường publish để xác định trạng thái của roadmap là bản nháp hay publish
+    const response = await saveRoadmap({
       id: configForm.value.id,
       title: configForm.value.prompt,
       durationMonth: configForm.value.duration,
       positionId: configForm.value.positionId,
       batchId: configForm.value.batchId,
-      publish: isConfirm,
+      publish: isPublish,
       nodes: treePayload
     });
     
@@ -724,21 +772,26 @@ const saveDraft = async (isConfirm = false) => {
       configForm.value.id = response.data.data.roadmapId;
     }
     
-    if (isConfirm) {
+    if (isPublish) {
       ElMessage.success("Roadmap đã được lưu và xác nhận thành công!");
-      resetForm();
     } else {
       ElMessage.success("Bản nháp đã được lưu thành công!");
     }
+    resetForm();
+
   } catch (error) {
     console.error("Save roadmap error:", error);
-    ElMessage.error(isConfirm ? "Lỗi khi lưu và xác nhận roadmap" : "Lỗi khi lưu bản nháp");
+    ElMessage.error(isPublish ? "Lỗi khi lưu và xác nhận roadmap" : "Lỗi khi lưu bản nháp");
   }
 };
 
-const saveAndConfirm = () => {
-  saveDraft(true);
+const handleSavePublished = () => {
+  submitRoadmap(true); // gửi publish = true để xác nhận roadmap đã hoàn thành
 };
+
+const handleSaveDraft = () => {
+  submitRoadmap(false); // gửi publish = false để xác nhận roadmap là bản nháp
+}
 
 const editForm = ref({
   title: "",
@@ -795,23 +848,70 @@ const generateAI = async (node, data) => {
   }
 };
 
-const addRootNode = () => {
-  currentAddParentId.value = null;
-  addForm.value = {
-    title: "",
-    description: "",
-    estimatedHours: 1.0
-  };
-  addDialogVisible.value = true;
-  nextTick(() => {
-    if (addFormRef.value) {
-      addFormRef.value.clearValidate();
+const generateRootAI = async () => {
+  if (!configForm.value.positionId || !configForm.value.batchId) {
+    ElMessage.warning("Vui lòng chọn Position và Internship Batch");
+    return;
+  }
+
+  const hasNodes = loadedRoadmapRootNodes.value.length > 0 || (treeRef.value && treeRef.value.root && treeRef.value.root.childNodes.length > 0);
+  const message = hasNodes
+    ? '<div style="color: #f56c6c; font-weight: 600; margin-bottom: 8px;">⚠️ Cảnh báo: Hành động này sẽ xóa tất cả các node hiện tại và sinh lại toàn bộ lộ trình mới.</div><div>Nhập yêu cầu điều chỉnh cho AI (tùy chọn):</div>'
+    : 'Nhập yêu cầu điều chỉnh cho AI (tùy chọn):';
+
+  try {
+    const { value: promptText } = await ElMessageBox.prompt(message, 'Sinh AI gợi ý lộ trình', {
+      confirmButtonText: 'Đồng ý',
+      cancelButtonText: 'Hủy',
+      dangerouslyUseHTMLString: true,
+      inputType: 'textarea',
+      inputAttributes: {
+        rows: 7
+      },
+      inputPlaceholder: 'Ví dụ: Tập trung vào Java Spring Boot và RESTful API...',
+    });
+
+    isGenerating.value = true;
+    try {
+      const payload = {
+        id: configForm.value.id,
+        positionId: configForm.value.positionId,
+        batchId: configForm.value.batchId,
+        duration: configForm.value.duration,
+        prompt: promptText || ""
+      };
+
+      const res = await generatePhases(payload);
+      let phases = res.data?.data || res.data || [];
+      if (phases.length > 0 && phases[0].roadmapId) {
+        configForm.value.id = phases[0].roadmapId;
+      }
+      phases = phases.map((p, idx) => ({ 
+        ...p, 
+        title: cleanNodeTitle(p.title),
+        estimatedHours: p.estimatedHours || 0.0,
+        isLeaf: p.nodeType === "TASK"  
+      }));
+      loadedRoadmapRootNodes.value = phases;
+
+      expandedKeys.value = [];
+      defaultExpandedKeys.value = [];
+      ElMessage.success("Sinh AI gợi ý lộ trình thành công!");
+    } catch (err) {
+      console.error("Generate roadmap phases error:", err);
+      ElMessage.error("Lỗi khi sinh AI gợi ý lộ trình");
+    } finally {
+      isGenerating.value = false;
     }
-  });
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("AI generation error:", error);
+    }
+  }
 };
 
-const addChild = (data) => {
-  currentAddParentId.value = data.id;
+const handleAddNode = (node) => {
+  parentNodeId.value = node?.id || null;
   addForm.value = {
     title: "",
     description: "",
@@ -832,14 +932,14 @@ const submitAddNode = async () => {
     
     await addNode({
       roadmapId: configForm.value.id,
-      parentId: currentAddParentId.value,
+      parentId: parentNodeId.value,
       title: addForm.value.title,
       description: addForm.value.description,
       estimatedHours: addForm.value.estimatedHours
     });
     
-    if (currentAddParentId.value && !expandedKeys.value.includes(currentAddParentId.value)) {
-      expandedKeys.value.push(currentAddParentId.value);
+    if (parentNodeId.value && !expandedKeys.value.includes(parentNodeId.value)) {
+      expandedKeys.value.push(parentNodeId.value);
     }
     
     ElMessage.success("Thêm Node thành công");
@@ -1080,7 +1180,6 @@ const handleDrop = async (draggingNode, dropNode, dropType, ev) => {
 
 .node-actions {
   display: flex;
-  gap: 8px;
   align-items: center;
   flex-shrink: 0;
 }

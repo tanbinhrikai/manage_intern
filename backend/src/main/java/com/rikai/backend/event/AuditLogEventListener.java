@@ -68,6 +68,8 @@ public class AuditLogEventListener {
                 }
             }
             return "status_change";
+        } else if ("PUBLISH".equals(action)) {
+            return "completed";
         }
         return "system";
     }
@@ -93,7 +95,7 @@ public class AuditLogEventListener {
         }
         return formatted.toString();
     }
-    
+
     @EventListener
     @Transactional
     public void handleCuDUserEvent(UserCudEvent event) {
@@ -179,13 +181,13 @@ public class AuditLogEventListener {
         saveAndBroadcast(logEntry);
     }
 
-     @EventListener
+    @EventListener
     public void handleCudInternshipBatchCud(InternShipBatchCudEvent event) {
         log.info("Handling InternShipBatchCudEvent for internship batch: {}", event.getInternshipBatch().getName());
         InternshipBatch internshipBatch = event.getInternshipBatch();
         String eventType = event.getEventType();
         Users actor = getActor(null);
-        
+
         if (actor == null) {
             log.error("Cannot log InternShipBatchCudEvent because no authenticated user is present in context.");
             return;
@@ -210,7 +212,7 @@ public class AuditLogEventListener {
         Intern intern = event.getIntern();
         String eventType = event.getEventType();
         Users actor = getActor(null);
-        
+
         if (actor == null) {
             log.error("Cannot log InternCRUDEvent because no authenticated user is present in context.");
             return;
@@ -417,6 +419,31 @@ public class AuditLogEventListener {
                 .action("DELETE")
                 .entityType("EVALUATION_SESSION")
                 .entityId(String.valueOf(event.getSessionId().longValue()))
+                .details(details)
+                .build();
+
+        saveAndBroadcast(logEntry);
+    }
+
+    @EventListener
+    @Transactional
+    public void handleRoadmapPublished(RoadmapPublishedEvent event) {
+        log.info("Handling RoadmapPublishedEvent for roadmap: {}", event.getRoadmap().getTitle());
+        Roadmap roadmap = event.getRoadmap();
+        Users actor = getActor(null);
+        if (actor == null) {
+            log.error("Cannot log RoadmapPublishedEvent because no authenticated user is present in context.");
+            return;
+        }
+
+        String details = String.format("%s published roadmap: %s",
+                actor.getFullName(), roadmap.getTitle());
+
+        AuditLog logEntry = AuditLog.builder()
+                .user(actor)
+                .action("PUBLISH")
+                .entityType("ROADMAP")
+                .entityId(String.valueOf(roadmap.getId()))
                 .details(details)
                 .build();
 

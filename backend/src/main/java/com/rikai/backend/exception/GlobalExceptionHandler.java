@@ -9,12 +9,15 @@ import com.rikai.backend.common.ApiResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -75,6 +78,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ApiResponse<?> handleMethodNotSupportedException(HttpRequestMethodNotSupportedException exception, HttpServletResponse response) {
         return buildResponse(ErrorCode.METHOD_NOT_ALLOWED, exception.getMessage(), response);
+    }
+
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public ResponseEntity<Void> handleAsyncRequestTimeoutException(AsyncRequestTimeoutException exception) {
+        log.debug("Async request timed out: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
     }
 
     @ExceptionHandler(value = Exception.class)

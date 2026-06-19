@@ -27,6 +27,7 @@ public class SseNotificationService {
         emitter.onTimeout(() -> {
             log.info("SSE emitter timed out");
             this.emitters.remove(emitter);
+            emitter.complete();
         });
 
         emitter.onError((ex) -> {

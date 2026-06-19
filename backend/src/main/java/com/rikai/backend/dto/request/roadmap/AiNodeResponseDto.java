@@ -1,6 +1,5 @@
 package com.rikai.backend.dto.request.roadmap;
 
-import com.rikai.backend.model.Enum.DifficultyLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

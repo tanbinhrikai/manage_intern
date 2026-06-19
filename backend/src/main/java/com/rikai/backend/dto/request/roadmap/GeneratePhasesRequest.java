@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GeneratePhasesRequest {
+    private Long id; // ID of the existing roadmap to regenerate/update
     private Long positionId;
     private Long batchId;
     private Integer duration;

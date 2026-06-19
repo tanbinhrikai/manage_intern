@@ -42,7 +42,7 @@ export function moveNode(id, payload) {
   return http.patch(`/roadmaps/nodes/${id}/move`, payload);
 }
 
-export function saveDraftRoadmap(payload) {
-  return http.post("/roadmaps/drafts", payload);
+export function saveRoadmap(payload) {
+  return http.post("/roadmaps", payload);
 }
 export function fetchRoadmaps() { return http.get("/roadmaps/list"); }
