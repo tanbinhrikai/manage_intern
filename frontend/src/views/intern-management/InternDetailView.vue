@@ -89,7 +89,7 @@ async function confirmUpdateStatus() {
     const res = await updateInternStatus(internId, {
       internStatus: selectedStatus.value,
     });
-    console.log(res);
+
     const updatedIntern = res?.data?.data;
 
     if (!updatedIntern) {
