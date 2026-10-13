@@ -95,7 +95,20 @@ frontend/src/
 ```
 ---
 ## 6. Getting Started
-
+   * Thứ tự chạy
+     + Cài đặt phiên bản JDK, Node.js, MySQL và IntelliJ.
+     + Tạo database, cấu hình .env ở FrontEnd và BackEnd và kiểm tra kết nối.
+   * Cách tạo tài khoản admin đầu tiên
+     + Ở file .env trong /BackEnd cập nhật 2 giá trị ADMIN_EMAIL & ADMIN_PASSWORD
+     + ADMIN_EMAIL & ADMIN_PASSWORD dùng để khởi tạo tài khoản với role là ADMIN ( tài khoản này được tạo trong file ApplicationInitConfig.java)
+   * ## 8. Troubleshooting
+     + Error: DotenvException: Malformed entry (fix: Sửa dòng chú thích bắt đầu bằng // trong .env thành #)
+     + Error: No configured target data sources (fix: Cấu hình data source và schema trong IntelliJ trước khi chạy SQL bằng IDE.)
+   * Environment Information
+     + OS: Ubuntu 24.04.5 LTS
+     + Java: JDK 21
+     + Node: 24
+     + MySql: Ver 8.0.46
 ### 6.1 Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -148,6 +161,5 @@ This provides:
 - Try-it-out functionality to test endpoints directly
 
 ---
-
 
 
