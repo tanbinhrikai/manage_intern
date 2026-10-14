@@ -11,7 +11,8 @@ import {
   ArrowDown,
   ArrowUp,
   Filter,
-  Refresh
+  Refresh,
+  Download
 } from "@element-plus/icons-vue";
 import { useLocaleStore } from "@/locales/locale";
 import AdminLayout from "@/layouts/dashboard/AdminLayout.vue";
@@ -20,9 +21,10 @@ import {
   getInterns,
   createIntern,
   updateIntern,
-  deleteIntern,
+  deleteIntern, exportInterns,
 } from "@/api/intern";
 import { usePagination, useLoading, useApi, useDropdownData, useDialog, useStatus, useDateFormat, useConfirm } from "@/composables";
+import {useToastStore} from "@/stores/toast.js";
 
 const localeStore = useLocaleStore();
 const router = useRouter();
@@ -34,7 +36,7 @@ const pagination = usePagination({
   initialPageSize: 20,
 });
 
-const { loading, withLoading } = useLoading();
+const { loading, withLoading, startLoading,stopLoading } = useLoading();
 const { execute: executeApi } = useApi({
   showErrorMessage: true,
   showSuccessMessage: true
@@ -47,6 +49,7 @@ const internDetailDialog = useDialog()
 const { getStatusType, statusOptions } = useStatus()
 const { formatDate } = useDateFormat()
 const { confirmDelete } = useConfirm()
+const toast =useToastStore();
 
 // Data
 const interns = ref([]);
@@ -57,7 +60,30 @@ const filterMentor = ref("");
 const filterStartDate = ref(null);
 const filterEndDate = ref(null);
 const showAdvancedFilters = ref(false);
+function getFilterParams() {
+  const params = {};
 
+  if (searchName.value && searchName.value.trim() !== '') {
+    params.keyword = searchName.value.trim();
+  }
+  if (filterStatus.value) {
+    params.status = filterStatus.value;
+  }
+  if (filterPosition.value) {
+    params.position_id = filterPosition.value;
+  }
+  if (filterMentor.value) {
+    params.mentor_id = filterMentor.value;
+  }
+  if (filterStartDate.value) {
+    params.start_date = filterStartDate.value;
+  }
+  if (filterEndDate.value) {
+    params.end_date = filterEndDate.value;
+  }
+
+  return params;
+}
 /**
  * Fetch interns from backend with current filters and pagination
  */
@@ -65,14 +91,9 @@ async function fetchInterns() {
   await withLoading(async () => {
     const params = {
       ...pagination.apiParams.value,
-      keyword: searchName.value || undefined,
-      status: filterStatus.value || undefined,
-      position_id: filterPosition.value || undefined,
-      mentor_id: filterMentor.value || undefined,
-      start_date: filterStartDate.value || undefined,
-      end_date: filterEndDate.value || undefined,
+      ...getFilterParams()
     };
-    
+
     const res = await executeApi(
       () => getInterns(params),
       null,
@@ -89,6 +110,80 @@ async function fetchInterns() {
  */
 function openAddIntern() {
   internFormDialog.open();
+}
+
+/**
+ * Handle export intern list to CSV
+ */
+async function handleExport() {
+  if (pagination.totalItems.value === 0) {
+    // ElMessage.warning(t.value("internManagement.noDataToExport"));
+    toast.error(t.value("internManagement.noDataToExport"))
+    return;
+  }
+  startLoading()
+
+  try {
+    // KHÔNG lấy page và limit
+    const params = {...getFilterParams()};
+
+    const response = await executeApi(
+        () => exportInterns(params),
+        null,
+        "internManagement.messages.loadError"
+    );
+
+    console.log("watch: ", params)
+
+    const blobData = response.data ? response.data : response;
+    const blob = new Blob([blobData], { type: "text/csv;charset=utf-8" });
+
+    let fileName = "interns.csv";
+    const disposition = response.headers ? response.headers["content-disposition"] : "";
+    if (disposition && disposition.indexOf("filename=") !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        fileName = matches[1].replace(/['"]/g, "");
+      }
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.success(t.value("internManagement.exportSuccess"));
+  } catch (error) {
+    console.error("Lỗi khi export CSV:", error);
+
+    if (error.response && error.response.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorJson = JSON.parse(reader.result);
+          toast.error(errorJson.message || t.value("internManagement.exportFailed"));
+
+        } catch (e) {
+          toast.error(t.value("internManagement.exportFailed"));
+
+        }
+      };
+      reader.readAsText(error.response.data);
+    } else {
+      toast.error( t.value("internManagement.exportFailed"));
+
+      toast.error("error")
+    }
+
+  } finally {
+    stopLoading();
+  }
 }
 
 /**
@@ -302,9 +397,22 @@ onBeforeRouteLeave(() => {
             </div>
           </div>
 
-          <el-button type="primary" :icon="Plus" @click="openAddIntern">
-            {{ t("internManagement.addNew") }}
-          </el-button>
+
+          <div>
+
+            <el-button type="primary" :icon="Download" @click="handleExport">
+                          {{ t("internManagement.exportToCsv") }}
+
+            </el-button>
+
+            <el-button type="primary" :icon="Plus" @click="openAddIntern">
+              {{ t("internManagement.addNew") }}
+            </el-button>
+
+
+          </div>
+
+
         </div>
 
         <el-collapse-transition>
