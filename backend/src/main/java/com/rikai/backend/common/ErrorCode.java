@@ -86,7 +86,7 @@ public enum ErrorCode {
     CRITERIA_GROUP_REQUIRED("Criteria group is required", HttpStatus.BAD_REQUEST),
     GROUP_NAME_REQUIRED("Group name is required", HttpStatus.BAD_REQUEST),
     INVALID_CRITERIA_GROUP("Criteria group does not match parent group", HttpStatus.BAD_REQUEST);
-
+    
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;
         this.statusCode = statusCode;

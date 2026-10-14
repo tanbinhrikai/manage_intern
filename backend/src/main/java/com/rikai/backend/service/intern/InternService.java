@@ -1,5 +1,6 @@
 package com.rikai.backend.service.intern;
 
+import com.rikai.backend.common.CsvExportUtil;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.common.PageResponse;
@@ -29,13 +30,20 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -52,6 +60,18 @@ public class InternService implements IInternService {
     AuthenticationService authenticationService;
     ApplicationEventPublisher eventPublisher;
 
+    private InternStatus parseInternStatus(String status){
+        InternStatus internStatus = null;
+        if(status!=null && !status.trim().isEmpty()){
+            try {
+                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
+            }
+        }
+        return  internStatus;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<InternResponse> getAllInterns(
@@ -63,14 +83,7 @@ public class InternService implements IInternService {
             Long positionId,
             UUID mentorId) {
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
-        InternStatus internStatus = null;
-        if (status != null && !status.trim().isEmpty()) {
-            try {
-                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
-            }
-        }
+        InternStatus internStatus =parseInternStatus(status);
         Page<Intern> internPage = internRepository
                 .getAllInternByKeyword(pageRequest, keywordValue, internStatus, startDate, endDate, positionId,
                         mentorId);
@@ -175,15 +188,7 @@ public class InternService implements IInternService {
             throw new AppException(ErrorCode.MENTOR_NOT_EXISTED);
         }
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
-        InternStatus internStatus = null;
-        if (status != null && !status.trim().isEmpty()) {
-            try {
-                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
-            }
-        }
-
+        InternStatus internStatus = parseInternStatus(status);
         Page<Intern> internPage = internRepository
                 .getAllInternByKeyword(pageable, keywordValue, internStatus, startDate, endDate, positionId, mentorId);
 
@@ -265,14 +270,7 @@ public class InternService implements IInternService {
         }
 
         String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
-        InternStatus internStatus = null;
-        if (status != null && !status.trim().isEmpty()) {
-            try {
-                internStatus = InternStatus.valueOf(status.trim().toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new AppException(ErrorCode.INVALID_INTERN_STATUS);
-            }
-        }
+        InternStatus internStatus = parseInternStatus(status);
 
         Page<Intern> internPage = internRepository.findByInternshipBatchWithFilters(
                 batchId,
@@ -354,5 +352,64 @@ public class InternService implements IInternService {
 
         eventPublisher.publishEvent(new InternUpdatedEvent(this, saved));
         return internMapper.toInternResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public StreamingResponseBody exportInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId, UUID mentorId) {
+        DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        return outputStream -> {
+            InternStatus internStatus = parseInternStatus(status);
+            int a=1;
+            try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+                // Ghi BOM cho Excel
+                writer.write(CsvExportUtil.BYTE_ORDER_MARK);
+
+                // Ghi Header theo đúng thứ tự màn hình Admin
+                List<String> headers = Arrays.asList(
+                        "Full name", "Position", "Mentor", "Start date",
+                        "End date", "Status", "ID", "Email", "Phone", "Batch"
+                );
+                CsvExportUtil.writeLine(writer, headers);
+
+                int page = 0;
+                int size = 500;
+                Page<Intern> internPage;
+
+                do {
+
+                    Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+
+                    internPage = internRepository.getAllInternByKeyword(
+                            pageable, keyword, internStatus, startDate, endDate, positionId, mentorId
+                    );
+
+                    for (Intern intern : internPage.getContent()) {
+                        String formattedStartDate = intern.getStartDate() != null ? "'"+intern.getStartDate().format(DATE_FORMATTER) : "";
+                        String formattedEndDate = intern.getEndDate() != null ? "'"+intern.getEndDate().format(DATE_FORMATTER) : "";
+                        List<String> row = Arrays.asList(
+                                intern.getFullName(),
+                                intern.getPosition() != null ? intern.getPosition().getTitle(): "",
+                                intern.getMentor() != null ? intern.getMentor().getFullName() : "",
+                                formattedStartDate,
+                                formattedEndDate,
+                                intern.getInternStatus() != null ? intern.getInternStatus().name() : "",
+                                intern.getId() != null ? intern.getId().toString() : "",
+                                intern.getEmail(),
+                                intern.getPhone(),
+                                intern.getInternshipBatch() != null ? intern.getInternshipBatch().getName() : ""
+                        );
+                        CsvExportUtil.writeLine(writer, row);
+                    }
+
+                    writer.flush();
+                    page++;
+
+                } while (internPage.hasNext());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        };
     }
 }
