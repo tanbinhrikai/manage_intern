@@ -1,42 +1,58 @@
 <script setup>
-import { ref, computed, onMounted } from "vue"
-import { Search, View, Edit, ArrowDown, ArrowUp, Refresh } from '@element-plus/icons-vue'
-import { useLocaleStore } from '@/locales/locale'
-import MentorLayout from "@/layouts/dashboard/MentorLayout.vue"
-import { useRouter } from 'vue-router'
-import { getMyIntern } from '@/api/intern'
-import { getPositions } from '@/api/position'
-import { usePagination, useLoading, useApi, useStatus, useDateFormat } from '@/composables'
+import { ref, computed, onMounted } from 'vue';
+import {
+  Search,
+  View,
+  Edit,
+  ArrowDown,
+  ArrowUp,
+  Refresh,
+  Download,
+} from '@element-plus/icons-vue';
+import { useLocaleStore } from '@/locales/locale';
+import MentorLayout from '@/layouts/dashboard/MentorLayout.vue';
+import { useRouter } from 'vue-router';
+import { exportInterns, exportMyInterns, getMyIntern } from '@/api/intern';
+import { getPositions } from '@/api/position';
+import {
+  usePagination,
+  useLoading,
+  useApi,
+  useStatus,
+  useDateFormat,
+} from '@/composables';
+import { useToastStore } from '@/stores/toast.js';
 
-const router = useRouter()
-const localeStore = useLocaleStore()
-const t = computed(() => localeStore.t)
-const pageSizes = [20, 40, 60, 80, 100]
+const router = useRouter();
+const localeStore = useLocaleStore();
+const t = computed(() => localeStore.t);
+const pageSizes = [20, 40, 60, 80, 100];
 // Composables
 const pagination = usePagination({
   initialPage: 1,
   initialPageSize: 20,
-})
+});
+const toast = useToastStore();
 
-const { loading, withLoading } = useLoading()
+const { loading, withLoading, startLoading, stopLoading } = useLoading();
 const { execute: executeApi } = useApi({
   showErrorMessage: true,
-  showSuccessMessage: false
-})
-const { getStatusType } = useStatus()
-const { formatDate } = useDateFormat()
+  showSuccessMessage: false,
+});
+const { getStatusType } = useStatus();
+const { formatDate } = useDateFormat();
 
 // Data
-const interns = ref([])
-const positions = ref([])
+const interns = ref([]);
+const positions = ref([]);
 
 // Filters
-const showFilters = ref(false)
-const searchName = ref("")
-const selectedStatus = ref("")
-const selectedPosition = ref(null)
-const startDate = ref(null)
-const endDate = ref(null)
+const showFilters = ref(false);
+const searchName = ref('');
+const selectedStatus = ref('');
+const selectedPosition = ref(null);
+const startDate = ref(null);
+const endDate = ref(null);
 
 // Intern status options
 const statusOptions = computed(() => [
@@ -44,15 +60,36 @@ const statusOptions = computed(() => [
   { value: 'ACTIVE', label: t.value('internManagement.status.ACTIVE') },
   { value: 'WARNING', label: t.value('internManagement.status.WARNING') },
   { value: 'COMPLETED', label: t.value('internManagement.status.COMPLETED') },
-  { value: 'DROPPED', label: t.value('internManagement.status.DROPPED') }
-])
+  { value: 'DROPPED', label: t.value('internManagement.status.DROPPED') },
+]);
 
+function getFilterParams() {
+  const params = {};
+
+  if (searchName.value && searchName.value !== '') {
+    params.keyword = searchName.value;
+  }
+  if (selectedStatus.value) {
+    params.status = selectedStatus.value;
+  }
+  if (selectedPosition.value) {
+    params.position_id = selectedPosition.value;
+  }
+  if (startDate.value) {
+    params.start_date = startDate.value;
+  }
+  if (endDate.value) {
+    params.end_date = endDate.value;
+  }
+
+  return params;
+}
 /**
  * Fetch positions for filter dropdown
  */
 async function fetchPositions() {
-  const res = await executeApi(() => getPositions({ limit: 100 }))
-  positions.value = res.data?.data?.items || []
+  const res = await executeApi(() => getPositions({ limit: 100 }));
+  positions.value = res.data?.data?.items || [];
 }
 
 /**
@@ -66,47 +103,47 @@ async function fetchMyInterns() {
       status: selectedStatus.value || undefined,
       position_id: selectedPosition.value || undefined,
       start_date: startDate.value || undefined,
-      end_date: endDate.value || undefined
-    }
-    
+      end_date: endDate.value || undefined,
+    };
+
     const res = await executeApi(
       () => getMyIntern(params),
       null,
-      'internManagement.messages.loadError'
-    )
-    
-    interns.value = res.data?.data?.items || []
-    pagination.setTotalItems(res.data?.data?.totalItems || 0)
-  })
+      'internManagement.messages.loadError',
+    );
+
+    interns.value = res.data?.data?.items || [];
+    pagination.setTotalItems(res.data?.data?.totalItems || 0);
+  });
 }
 
 /**
  * Handle search - reset to first page and fetch
  */
 function handleSearch() {
-  pagination.firstPage()
-  fetchMyInterns()
+  pagination.firstPage();
+  fetchMyInterns();
 }
 
 /**
  * Clear all filters
  */
 function clearFilters() {
-  searchName.value = ""
-  selectedStatus.value = ""
-  selectedPosition.value = null
-  startDate.value = null
-  endDate.value = null
-  handleSearch()
+  searchName.value = '';
+  selectedStatus.value = '';
+  selectedPosition.value = null;
+  startDate.value = null;
+  endDate.value = null;
+  handleSearch();
 }
 /**
  * Handle page size change
  * @param {number} size - New page size
  */
 function handleSizeChange(size) {
-  pagination.setPageSize(size)
-  pagination.firstPage()
-  fetchMyInterns()
+  pagination.setPageSize(size);
+  pagination.firstPage();
+  fetchMyInterns();
 }
 
 /**
@@ -114,7 +151,7 @@ function handleSizeChange(size) {
  * @param {Intern} intern - Intern to view
  */
 function openDetailIntern(intern) {
-  router.push(`/mentor/my-interns/${intern.id}`)
+  router.push(`/mentor/my-interns/${intern.id}`);
 }
 
 /**
@@ -122,7 +159,7 @@ function openDetailIntern(intern) {
  * @param {Intern} intern - Intern to edit
  */
 function openEditIntern(intern) {
-  router.push(`/mentor/my-interns/${intern.id}/edit`)
+  router.push(`/mentor/my-interns/${intern.id}/edit`);
 }
 
 /**
@@ -130,26 +167,89 @@ function openEditIntern(intern) {
  * @param {number} page - New page number
  */
 function handlePageChange(page) {
-  pagination.setPage(page)
-  fetchMyInterns()
+  pagination.setPage(page);
+  fetchMyInterns();
 }
 
 // Fetch data on mount
 onMounted(() => {
-  fetchPositions()
-  fetchMyInterns()
-})
+  fetchPositions();
+  fetchMyInterns();
+});
+
+async function handleExport() {
+  if (pagination.totalItems.value === 0) {
+    toast.error(t.value('internManagement.noDataToExport'));
+    return;
+  }
+  startLoading();
+
+  try {
+    const params = { ...getFilterParams() };
+    const response = await executeApi(
+      () => exportMyInterns(params),
+      null,
+      'internManagement.messages.loadError',
+    );
+    const blobData = response.data ? response.data : response;
+    const blob = new Blob([blobData], { type: 'text/csv;charset=utf-8' });
+    let fileName = 'interns.csv';
+    const disposition = response.headers
+      ? response.headers['content-disposition']
+      : '';
+    if (disposition && disposition.indexOf('filename=') !== -1) {
+      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+      const matches = filenameRegex.exec(disposition);
+      if (matches != null && matches[1]) {
+        fileName = matches[1].replace(/['"]/g, '');
+      }
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.success(t.value('internManagement.exportSuccess'));
+  } catch (error) {
+    console.error('Lỗi khi export CSV:', error);
+
+    if (error.response && error.response.data instanceof Blob) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const errorJson = JSON.parse(reader.result);
+          toast.error(
+            errorJson.message || t.value('internManagement.exportFailed'),
+          );
+        } catch (e) {
+          toast.error(t.value('internManagement.exportFailed'));
+        }
+      };
+      debugger;
+      reader.readAsText(error.response.data);
+    } else {
+      toast.error(t.value('internManagement.exportFailed'));
+    }
+  } finally {
+    stopLoading();
+  }
+}
 </script>
 
 <template>
   <MentorLayout :page-title="t('sidebar.myInterns')">
     <div class="my-intern-list-view">
       <el-card class="main-card" shadow="never">
-
         <div class="toolbar">
           <div class="filter-group">
-            <el-input 
-              v-model="searchName" 
+            <el-input
+              v-model="searchName"
               :placeholder="t('internManagement.searchByName')"
               :prefix-icon="Search"
               clearable
@@ -185,13 +285,17 @@ onMounted(() => {
               />
             </el-select>
             <div class="filter-buttons">
-              <el-button 
-                type="info" 
+              <el-button
+                type="info"
                 plain
                 :icon="showFilters ? ArrowUp : ArrowDown"
                 @click="showFilters = !showFilters"
               >
-                {{ showFilters ? t('internManagement.hideFilters') : t('internManagement.moreFilters') }}
+                {{
+                  showFilters
+                    ? t('internManagement.hideFilters')
+                    : t('internManagement.moreFilters')
+                }}
               </el-button>
 
               <el-button
@@ -201,6 +305,16 @@ onMounted(() => {
                 @click="clearFilters"
               >
                 {{ t('internManagement.clearFilters') }}
+              </el-button>
+            </div>
+            <div>
+              <el-button
+                type="success"
+                plain
+                :icon="Download"
+                @click="handleExport"
+              >
+                {{ t('internManagement.exportToCsv') }}
               </el-button>
             </div>
           </div>
@@ -248,13 +362,13 @@ onMounted(() => {
             height="100%"
             v-loading="loading"
           >
-            <el-table-column 
-              prop="fullName" 
-              :label="t('internManagement.table.fullName')" 
-              min-width="150" 
+            <el-table-column
+              prop="fullName"
+              :label="t('internManagement.table.fullName')"
+              min-width="150"
             />
-            <el-table-column 
-              :label="t('internManagement.table.position')" 
+            <el-table-column
+              :label="t('internManagement.table.position')"
               min-width="140"
             >
               <template #default="scope">
@@ -264,25 +378,25 @@ onMounted(() => {
                 <span v-else class="text-muted">-</span>
               </template>
             </el-table-column>
-            <el-table-column 
-              :label="t('internManagement.table.startDate')" 
+            <el-table-column
+              :label="t('internManagement.table.startDate')"
               min-width="120"
             >
               <template #default="scope">
                 {{ formatDate(scope.row.startDate) }}
               </template>
             </el-table-column>
-            <el-table-column 
-              :label="t('internManagement.table.endDate')" 
+            <el-table-column
+              :label="t('internManagement.table.endDate')"
               min-width="120"
             >
               <template #default="scope">
                 {{ formatDate(scope.row.endDate) }}
               </template>
             </el-table-column>
-            <el-table-column 
-              :label="t('internManagement.table.status')" 
-              min-width="120" 
+            <el-table-column
+              :label="t('internManagement.table.status')"
+              min-width="120"
               align="center"
             >
               <template #default="scope">
@@ -291,24 +405,24 @@ onMounted(() => {
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column 
-              :label="t('internManagement.table.actions')" 
-              min-width="100" 
-              fixed="right" 
+            <el-table-column
+              :label="t('internManagement.table.actions')"
+              min-width="100"
+              fixed="right"
               align="center"
             >
               <template #default="scope">
-                <el-button 
-                  type="primary" 
-                  :icon="View" 
-                  size="small" 
+                <el-button
+                  type="primary"
+                  :icon="View"
+                  size="small"
                   circle
                   @click="openDetailIntern(scope.row)"
                 />
-                <el-button 
-                  type="warning" 
-                  :icon="Edit" 
-                  size="small" 
+                <el-button
+                  type="warning"
+                  :icon="Edit"
+                  size="small"
                   circle
                   @click="openEditIntern(scope.row)"
                 />
@@ -335,7 +449,6 @@ onMounted(() => {
           />
         </div>
       </el-card>
-
     </div>
   </MentorLayout>
 </template>
@@ -491,7 +604,7 @@ onMounted(() => {
   .filter-select {
     width: 100%;
   }
-  
+
   .filter-group {
     flex-direction: column;
   }

@@ -63,4 +63,5 @@ public interface IInternService {
     InternResponse updateInternStatus(Long id, InternStatus internStatus);
 
     StreamingResponseBody exportInterns(String keyword, String internStatus, LocalDate startDate, LocalDate endDate, Long positionId, UUID mentorId) ;
+    StreamingResponseBody exportMyInterns(String keyword, String internStatus, LocalDate startDate, LocalDate endDate, Long positionId) ;
 }

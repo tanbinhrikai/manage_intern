@@ -69,3 +69,9 @@ export function exportInterns(params) {
         responseType: 'blob' // Rất quan trọng: Báo cho axios biết dữ liệu trả về là file
     });
 }
+export function exportMyInterns(params) {
+    return http.get('/interns/my-interns/export', {
+        params: params,
+        responseType: 'blob'
+    });
+}

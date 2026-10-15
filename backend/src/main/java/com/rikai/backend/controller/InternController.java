@@ -216,4 +216,28 @@ public class InternController {
                 .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
                 .body(stream);
     }
+
+    @GetMapping("/my-interns/export")
+    @PreAuthorize("hasRole('MENTOR')")
+    @Operation (summary = "Export interns to CSV")
+    public ResponseEntity<StreamingResponseBody> exportMyInterns(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) LocalDate start_date,
+            @RequestParam(required = false) LocalDate end_date,
+            @RequestParam(required = false) Long position_id)
+             {
+
+        StreamingResponseBody stream = internService.exportMyInterns(
+                keyword, status, start_date, end_date, position_id
+        );
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = "interns_" + timestamp + ".csv";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(stream);
+    }
 }

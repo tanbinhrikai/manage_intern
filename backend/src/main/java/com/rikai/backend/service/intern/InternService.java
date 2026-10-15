@@ -26,6 +26,7 @@ import com.rikai.backend.validation.AutoGenerateEmail;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -51,6 +53,7 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class InternService implements IInternService {
     InternRepository internRepository;
     PositionRepository positionRepository;
@@ -59,6 +62,7 @@ public class InternService implements IInternService {
     InternMapper internMapper;
     AuthenticationService authenticationService;
     ApplicationEventPublisher eventPublisher;
+    DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private InternStatus parseInternStatus(String status){
         InternStatus internStatus = null;
@@ -355,12 +359,10 @@ public class InternService implements IInternService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public StreamingResponseBody exportInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId, UUID mentorId) {
-        DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        InternStatus internStatus = parseInternStatus(status);
         return outputStream -> {
-            InternStatus internStatus = parseInternStatus(status);
-            int a=1;
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 // Ghi BOM cho Excel
                 writer.write(CsvExportUtil.BYTE_ORDER_MARK);
@@ -385,8 +387,8 @@ public class InternService implements IInternService {
                     );
 
                     for (Intern intern : internPage.getContent()) {
-                        String formattedStartDate = intern.getStartDate() != null ? "'"+intern.getStartDate().format(DATE_FORMATTER) : "";
-                        String formattedEndDate = intern.getEndDate() != null ? "'"+intern.getEndDate().format(DATE_FORMATTER) : "";
+                        String formattedStartDate = intern.getStartDate() != null ? intern.getStartDate().format(DATE_FORMATTER) : "";
+                        String formattedEndDate = intern.getEndDate() != null ? intern.getEndDate().format(DATE_FORMATTER) : "";
                         List<String> row = Arrays.asList(
                                 intern.getFullName(),
                                 intern.getPosition() != null ? intern.getPosition().getTitle(): "",
@@ -408,7 +410,65 @@ public class InternService implements IInternService {
                 } while (internPage.hasNext());
 
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error occurred while streaming intern data for export CSV", e);
+                throw new IOException("Failed to export interns data", e);
+            }
+        };
+    }
+
+    @Override
+    public StreamingResponseBody exportMyInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId) {
+        Users mentor=authenticationService.getCurrentUser();
+        return outputStream -> {
+            InternStatus internStatus = parseInternStatus(status);
+            try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+                // Ghi BOM cho Excel
+                writer.write(CsvExportUtil.BYTE_ORDER_MARK);
+
+                // Ghi Header theo đúng thứ tự màn hình Admin
+                List<String> headers = Arrays.asList(
+                        "Full name", "Position", "Start date",
+                        "End date", "Status", "ID", "Email", "Phone", "Batch"
+                );
+                CsvExportUtil.writeLine(writer, headers);
+
+                int page = 0;
+                int size = 500;
+                Page<Intern> internPage;
+
+                do {
+
+                    Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+
+                    internPage = internRepository.getAllInternByKeyword(
+                            pageable, keyword, internStatus, startDate, endDate, positionId, mentor.getId()
+                    );
+
+                    for (Intern intern : internPage.getContent()) {
+                        String formattedStartDate = intern.getStartDate() != null ? intern.getStartDate().format(DATE_FORMATTER)  : "";
+                        String formattedEndDate = intern.getEndDate() != null ? intern.getEndDate().format(DATE_FORMATTER)  : "";
+                        List<String> row = Arrays.asList(
+                                intern.getFullName(),
+                                intern.getPosition() != null ? intern.getPosition().getTitle(): "",
+                                formattedStartDate,
+                                formattedEndDate,
+                                intern.getInternStatus() != null ? intern.getInternStatus().name() : "",
+                                intern.getId() != null ? intern.getId().toString() : "",
+                                intern.getEmail(),
+                                intern.getPhone(),
+                                intern.getInternshipBatch() != null ? intern.getInternshipBatch().getName() : ""
+                        );
+                        CsvExportUtil.writeLine(writer, row);
+                    }
+
+                    writer.flush();
+                    page++;
+
+                } while (internPage.hasNext());
+
+            } catch (Exception e) {
+                log.error("Error occurred while streaming intern data for export CSV", e);
+                throw new IOException("Failed to export interns data", e);
             }
         };
     }
