@@ -2,13 +2,6 @@ import { useAuthStore } from "@/stores/auth";
 import { createRouter, createWebHistory } from "vue-router";
 const routes = [
   {
-    path:"/learn-vueJS",
-    nam:"Learn",
-    component:() => import("@/views/learn-vueJS/LearnVueJs.vue"),
-    meta: { requiresAuth: false },
-
-  },
-  {
     path: "/login",
     name: "Login",
     component: () => import("@/views/auth/LoginView.vue"),
