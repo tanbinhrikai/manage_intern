@@ -89,14 +89,11 @@ async function confirmUpdateStatus() {
     const res = await updateInternStatus(internId, {
       internStatus: selectedStatus.value,
     });
-
     const updatedIntern = res?.data?.data;
-
     if (!updatedIntern) {
       throw new Error("No data returned from updateInternStatus");
       return;
     }
-
     intern.value.internStatus = updatedIntern.internStatus;
     ElMessage.success("Status updated successfully");
     closeUpdateStatusDialog();

@@ -110,13 +110,15 @@ frontend/src/
      + Node: 24
      + MySql: Ver 8.0.46
 ### 6.1 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Java 21**
-- **Node.js 18** or higher (with npm)
-- **MySQL 8.0**
-- **Git**
+ -  **Install the required versions of JDK, Node.js, MySQL, and IntelliJ IDEA.**
+ -  **Create the database and run scripts `backend/ddl` and configure the .env files for both the frontend and backend.**
+ -  **Verify the database connection before starting the application.**
+ -  **Set the `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables in `backend/.env`**
+ - Before you begin, ensure you have the following installed:
+   - **Java 21**
+   - **Node.js 24** or higher (with npm)
+   - **MySQL 8.0**
+   - **Git**
 
 ### 6.2 Environment Variables
 
@@ -162,4 +164,13 @@ This provides:
 
 ---
 
+---
+## 8. Troubleshooting
+- **Error: `DotenvException: Malformed entry`**  
+Fix: Remove or replace comment lines starting with `//` in the `.env` file with `#`.
+
+- **Error: `No configured target data sources`**  
+  Fix: Configure the data source and schema c ..
+- in IntelliJ IDEA before executing SQL queries through the IDE.
+---
 

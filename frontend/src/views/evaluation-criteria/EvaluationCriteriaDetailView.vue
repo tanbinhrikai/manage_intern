@@ -115,7 +115,6 @@ async function handleSaveCriteria() {
       displayOrder: formData.displayOrder,
       isActive: formData.isActive
     }
-    
     if (isEdit.value) {
       await updateEvaluationCriteria(criteriaId, payload)
       ElMessage.success(t.value('evaluationCriteria.messages.updateSuccess'))

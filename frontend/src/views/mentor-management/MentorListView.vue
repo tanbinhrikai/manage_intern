@@ -53,7 +53,6 @@ async function fetchMentors() {
       null,
       'mentorManagement.messages.loadError'
     )
-
     mentors.value = res.data?.data?.items || []
     pagination.setTotalItems(res.data?.data?.totalItems || 0)
   })

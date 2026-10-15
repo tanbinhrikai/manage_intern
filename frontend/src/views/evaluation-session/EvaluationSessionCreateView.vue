@@ -194,9 +194,6 @@ const isUpdatingInterns = ref(false)
 // Watch selectedInternId and sync all related data
 watch(selectedInternId, async (newId, oldId) => {
   if (newId === oldId || isUpdatingInterns.value) return
-  
-
-  
   if (newId) {
     // Ensure interns are loaded
     if (interns.value.length === 0) {
@@ -210,8 +207,6 @@ watch(selectedInternId, async (newId, oldId) => {
       const optionId = typeof i.id === 'string' ? Number(i.id) : i.id
       return optionId === searchId
     })
-
-
     if (intern) {
       isUpdatingInterns.value = true
       selectedIntern.value = intern
@@ -389,10 +384,7 @@ function selectMilestone(sessionType) {
 onMounted(async () => {
   await fetchInterns()
   await fetchCriteria()
-  
-
   if (interns.value.length > 0) {
-    
     // If there's a selectedInternId, ensure it's properly set
     if (selectedInternId.value) {
       const intern = interns.value.find(i => i.id === selectedInternId.value)
