@@ -12,7 +12,7 @@ import {
 import { useLocaleStore } from '@/locales/locale';
 import MentorLayout from '@/layouts/dashboard/MentorLayout.vue';
 import { useRouter } from 'vue-router';
-import { exportInterns, exportMyInterns, getMyIntern } from '@/api/intern';
+import { exportMyInterns, getMyIntern } from '@/api/intern';
 import { getPositions } from '@/api/position';
 import {
   usePagination,
@@ -231,7 +231,6 @@ async function handleExport() {
           toast.error(t.value('internManagement.exportFailed'));
         }
       };
-      debugger;
       reader.readAsText(error.response.data);
     } else {
       toast.error(t.value('internManagement.exportFailed'));
