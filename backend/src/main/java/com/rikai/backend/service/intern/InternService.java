@@ -62,7 +62,7 @@ public class InternService implements IInternService {
     InternMapper internMapper;
     AuthenticationService authenticationService;
     ApplicationEventPublisher eventPublisher;
-    DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private InternStatus parseInternStatus(String status){
         InternStatus internStatus = null;
@@ -362,6 +362,7 @@ public class InternService implements IInternService {
     public StreamingResponseBody exportInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId, UUID mentorId) {
 
         InternStatus internStatus = parseInternStatus(status);
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         return outputStream -> {
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 // Ghi BOM cho Excel
@@ -383,7 +384,7 @@ public class InternService implements IInternService {
                     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
                     internPage = internRepository.getAllInternByKeyword(
-                            pageable, keyword, internStatus, startDate, endDate, positionId, mentorId
+                            pageable, keywordValue, internStatus, startDate, endDate, positionId, mentorId
                     );
 
                     for (Intern intern : internPage.getContent()) {
@@ -420,6 +421,7 @@ public class InternService implements IInternService {
     public StreamingResponseBody exportMyInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId) {
         Users mentor=authenticationService.getCurrentUser();
         InternStatus internStatus = parseInternStatus(status);
+        String keywordValue = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         return outputStream -> {
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 // Ghi BOM cho Excel
@@ -441,7 +443,7 @@ public class InternService implements IInternService {
                     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
 
                     internPage = internRepository.getAllInternByKeyword(
-                            pageable, keyword, internStatus, startDate, endDate, positionId, mentor.getId()
+                            pageable, keywordValue, internStatus, startDate, endDate, positionId, mentor.getId()
                     );
 
                     for (Intern intern : internPage.getContent()) {
