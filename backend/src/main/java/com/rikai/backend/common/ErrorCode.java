@@ -19,6 +19,12 @@ public enum ErrorCode {
     INVALID_FIRSTNAME("First name cannot be empty", HttpStatus.BAD_REQUEST),
     INVALID_LASTNAME("Last name cannot be empty", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_CORRECT("Old password is not correct", HttpStatus.BAD_REQUEST),
+    OLD_PASSWORD_REQUIRED("Old password is required", HttpStatus.BAD_REQUEST),
+    NEW_PASSWORD_REQUIRED("New password is required", HttpStatus.BAD_REQUEST),
+    PASSWORD_TOO_LONG("Password must not exceed 72 characters", HttpStatus.BAD_REQUEST),
+    CONFIRM_PASSWORD_REQUIRED("Confirm password is required", HttpStatus.BAD_REQUEST),
+    PASSWORD_CONFIRM_NOT_MATCH("Password confirmation does not match", HttpStatus.BAD_REQUEST),
+    PASSWORD_SAME_AS_OLD("New password must be different from old password", HttpStatus.BAD_REQUEST),
 
     URL_NOT_FOUND("URL not found", HttpStatus.NOT_FOUND),
     METHOD_NOT_ALLOWED("HTTP Method not allowed", HttpStatus.METHOD_NOT_ALLOWED),
