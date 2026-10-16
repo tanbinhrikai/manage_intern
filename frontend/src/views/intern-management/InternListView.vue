@@ -133,8 +133,6 @@ async function handleExport() {
         "internManagement.messages.loadError"
     );
 
-    console.log("watch: ", params)
-
     const blobData = response.data ? response.data : response;
     const blob = new Blob([blobData], { type: "text/csv;charset=utf-8" });
 
@@ -176,9 +174,7 @@ async function handleExport() {
       };
       reader.readAsText(error.response.data);
     } else {
-      toast.error( t.value("internManagement.exportFailed"));
-
-      toast.error("error")
+      toast.error(t.value("internManagement.exportFailed"));
     }
 
   } finally {

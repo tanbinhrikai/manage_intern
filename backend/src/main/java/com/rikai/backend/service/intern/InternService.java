@@ -419,8 +419,8 @@ public class InternService implements IInternService {
     @Override
     public StreamingResponseBody exportMyInterns(String keyword, String status, LocalDate startDate, LocalDate endDate, Long positionId) {
         Users mentor=authenticationService.getCurrentUser();
+        InternStatus internStatus = parseInternStatus(status);
         return outputStream -> {
-            InternStatus internStatus = parseInternStatus(status);
             try (Writer writer = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
                 // Ghi BOM cho Excel
                 writer.write(CsvExportUtil.BYTE_ORDER_MARK);

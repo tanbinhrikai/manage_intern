@@ -231,7 +231,6 @@ async function handleExport() {
           toast.error(t.value('internManagement.exportFailed'));
         }
       };
-      debugger;
       reader.readAsText(error.response.data);
     } else {
       toast.error(t.value('internManagement.exportFailed'));

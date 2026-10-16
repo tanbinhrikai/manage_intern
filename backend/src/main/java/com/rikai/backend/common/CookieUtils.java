@@ -14,7 +14,7 @@ public class CookieUtils {
                 .secure(false)
                 .path("/")
                 .maxAge(15 * 60)
-                .sameSite("Laxbui")
+                .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
