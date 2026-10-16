@@ -3,11 +3,14 @@ package com.rikai.backend.service;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.InternStatus;
 import com.rikai.backend.exception.AppException;
+import com.rikai.backend.mapper.InternMapper;
 import com.rikai.backend.model.Intern;
 import com.rikai.backend.model.InternshipBatch;
 import com.rikai.backend.model.Position;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.InternRepository;
+import com.rikai.backend.repository.InternshipBatchRepository;
+import com.rikai.backend.repository.PositionRepository;
 import com.rikai.backend.service.auth.AuthenticationService;
 import com.rikai.backend.service.intern.InternService;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,7 +32,6 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,6 +54,17 @@ class InternServiceTest {
     @Mock
     private AuthenticationService authenticationService;
 
+    @Mock
+    private PositionRepository positionRepository;
+
+    @Mock
+    private InternshipBatchRepository internshipBatchRepository;
+    @Mock
+    private InternMapper internMapper;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @Test
     @DisplayName("Admin Export CSV: includes BOM, correct column order for Admin, and null values are converted to empty cells")
     void testExportCsv_Admin_ShouldHaveBom_CorrectHeaders_AndHandleNullValues() throws Exception {
@@ -61,7 +75,7 @@ class InternServiceTest {
         intern.setPhone(null);
 
         Page<Intern> internPage = new PageImpl<>(List.of(intern), PageRequest.of(0, 500), 1);
-        when(internRepository.getAllInternByKeyword(any(), any(), any(), any(), any(), any(), any()))
+        when(internRepository.getAllInternByKeyword(any(Pageable.class), isNull(), isNull(), isNull(), isNull(), isNull(), isNull()))
                 .thenReturn(internPage);
 
         StreamingResponseBody responseBody = internService.exportInterns(
@@ -72,22 +86,18 @@ class InternServiceTest {
         responseBody.writeTo(outputStream);
 
         byte[] csvBytes = outputStream.toByteArray();
-        String csvContent = new String(csvBytes, StandardCharsets.UTF_8);
-        String[] lines = csvContent.split("\n");
+        String csvContent = new String(csvBytes, 3, csvBytes.length - 3, StandardCharsets.UTF_8)
+                .replace("\r\n", "\n");
 
+        String expectedCsv="Full name,Position,Mentor,Start date,End date,Status,ID,Email,Phone,Batch\n" +
+                "thanh,,,,,,1,,,\n";
         // 1. Check BOM (EF BB BF)
         assertTrue(csvBytes.length >= 3, "CSV file has no content");
         assertEquals((byte) 0xEF, csvBytes[0], "Missing BOM byte 1");
         assertEquals((byte) 0xBB, csvBytes[1], "Missing BOM byte 2");
         assertEquals((byte) 0xBF, csvBytes[2], "Missing BOM byte 3");
+        assertEquals(expectedCsv,csvContent );
 
-
-        String expectedHeader = "Full name,Position,Mentor,Start date,End date,Status,ID,Email,Phone,Batch";
-        assertEquals(expectedHeader, lines[0].replace("\uFEFF", "").replace("\r", ""));
-
-
-        String expectedDataLine = "thanh,,,,,,1,,,";
-        assertEquals(expectedDataLine, lines[1].replace("\r", ""));
     }
 
     @Test
@@ -118,9 +128,8 @@ class InternServiceTest {
         responseBody.writeTo(outputStream);
 
         byte[] csvBytes = outputStream.toByteArray();
-        String csvContent = new String(csvBytes, StandardCharsets.UTF_8);
-        String[] lines = csvContent.split("\n");
-
+        String csvContent = new String(csvBytes, 3, csvBytes.length - 3, StandardCharsets.UTF_8)
+                .replace("\r\n", "\n");
 
         assertTrue(csvBytes.length >= 3);
         assertEquals((byte) 0xEF, csvBytes[0]);
@@ -128,12 +137,9 @@ class InternServiceTest {
         assertEquals((byte) 0xBF, csvBytes[2]);
 
 
-        String expectedHeader = "Full name,Position,Start date,End date,Status,ID,Email,Phone,Batch";
-        assertEquals(expectedHeader, lines[0].replace("\uFEFF", "").replace("\r", ""));
 
-
-        String expectedDataLine = "Intern Of Mentor A,,,,,2,,,";
-        assertEquals(expectedDataLine, lines[1].replace("\r", ""));
+        String expectedCsv =  "Full name,Position,Start date,End date,Status,ID,Email,Phone,Batch\n" + "Intern Of Mentor A,,,,,2,,,\n";
+        assertEquals(expectedCsv, csvContent);
     }
 
     @Test
@@ -194,11 +200,15 @@ class InternServiceTest {
         responseBody.writeTo(outputStream);
 
         byte[] csvBytes = outputStream.toByteArray();
-        String csvContent = new String(csvBytes, 3, csvBytes.length - 3, StandardCharsets.UTF_8);
-        String[] lines = csvContent.split("\n");
 
-        String expectedDataLine = "'=cmd|' /C calc'!A0,,,,,,100,,,";
-        assertEquals(expectedDataLine, lines[1].replace("\r", ""));
+        String csvContent = new String(csvBytes, 3, csvBytes.length - 3, StandardCharsets.UTF_8)
+                .replace("\r\n", "\n");
+
+        String expectedCsv =
+                "Full name,Position,Mentor,Start date,End date,Status,ID,Email,Phone,Batch\n" +
+                        "'=cmd|' /C calc'!A0,,,,,,100,,,\n";
+
+        assertEquals(expectedCsv, csvContent);
     }
 
     @Test
@@ -254,11 +264,15 @@ class InternServiceTest {
                 mentorIdCaptor.capture()
         );
         assertEquals(loggedInMentorId, mentorIdCaptor.getValue());
+        byte[] csvBytes = outputStream.toByteArray();
+        String csvContent = new String(csvBytes, 3, csvBytes.length - 3, StandardCharsets.UTF_8)
+                .replace("\r\n", "\n");
 
-        String csvContent = new String(outputStream.toByteArray(), 3, outputStream.size() - 3, StandardCharsets.UTF_8);
-        String[] lines = csvContent.split("\n");
-        assertEquals(2, lines.length);
-        assertTrue(lines[1].startsWith("Intern Belonging To LoggedInMentor,"));
+        String expectedCsv =
+                "Full name,Position,Start date,End date,Status,ID,Email,Phone,Batch\n" +
+                        "Intern Belonging To LoggedInMentor,,,,,10,,,\n";
+
+        assertEquals(expectedCsv, csvContent);
     }
 
     @Test
@@ -319,4 +333,82 @@ class InternServiceTest {
 
         assertEquals(totalInterns, exportedIds.size());
     }
+
+    @Test
+    @DisplayName("Admin Export: normalizes keyword (trims whitespace and converts empty strings to null)")
+    void testExportInterns_ShouldNormalizeKeywordProperly() throws Exception {
+        Page<Intern> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 500, Sort.by("id").ascending()), 0);
+        when(internRepository.getAllInternByKeyword(any(Pageable.class), any(), any(), any(), any(), any(), any()))
+                .thenReturn(emptyPage);
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        StreamingResponseBody stream1 = internService.exportInterns("  an  ", null, null, null, null, null);
+        stream1.writeTo(outputStream);
+        verify(internRepository).getAllInternByKeyword(
+                any(Pageable.class),
+                eq("an"),
+                isNull(), isNull(), isNull(), isNull(), isNull()
+        );
+
+        StreamingResponseBody stream2 = internService.exportInterns("   ", null, null, null, null, null);
+        stream2.writeTo(outputStream);
+        verify(internRepository).getAllInternByKeyword(
+                any(Pageable.class),
+                isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull()
+        );
+
+
+        StreamingResponseBody stream3 = internService.exportInterns("", null, null, null, null, null);
+        stream3.writeTo(outputStream);
+        verify(internRepository, times(2)).getAllInternByKeyword(
+                any(Pageable.class),
+                isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull()
+        );
+    }
+
+    @Test
+    @DisplayName("Admin Export: passes all parameters to the repository correctly and completely (no missing or swapped parameters)")
+    void testExportInterns_ShouldPassAllFilterParametersCorrectlyToRepository() throws Exception {
+        // Arrange
+        String keyword = "thanh";
+        String status = "ACTIVE";
+        LocalDate startDate = LocalDate.of(2026, 1, 1);
+        LocalDate endDate = LocalDate.of(2026, 12, 31);
+        Long positionId = 5L;
+        UUID mentorId = UUID.randomUUID();
+
+        Page<Intern> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 500, Sort.by("id").ascending()), 0);
+        when(internRepository.getAllInternByKeyword(
+                any(Pageable.class),
+                eq(keyword),
+                eq(InternStatus.ACTIVE),
+                eq(startDate),
+                eq(endDate),
+                eq(positionId),
+                eq(mentorId)
+        )).thenReturn(emptyPage);
+
+        // Act
+        StreamingResponseBody responseBody = internService.exportInterns(
+                keyword, status, startDate, endDate, positionId, mentorId
+        );
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        responseBody.writeTo(outputStream);
+
+
+        verify(internRepository, times(1)).getAllInternByKeyword(
+                eq(PageRequest.of(0, 500, Sort.by("id").ascending())),
+                eq("thanh"),
+                eq(InternStatus.ACTIVE),
+                eq(LocalDate.of(2026, 1, 1)),
+                eq(LocalDate.of(2026, 12, 31)),
+                eq(5L),
+                eq(mentorId)
+        );
+    }
+
+
 }
