@@ -1,8 +1,8 @@
 <script setup>
-import {ref, computed, watch, reactive, onMounted} from "vue";
-import {useLocaleStore} from "@/locales/locale";
-import {createInternCreationRequest, createInternUpdateRequest} from "@/types/intern";
-import {useStatus} from "@/composables";
+import { ref, computed, watch, reactive, onMounted } from "vue";
+import { useLocaleStore } from "@/locales/locale";
+import { createInternCreationRequest, createInternUpdateRequest } from "@/types/intern";
+import { useStatus } from "@/composables";
 
 const props = defineProps({
   visible: {
@@ -42,7 +42,7 @@ const mentors = ref([]);
 
 const isEdit = computed(() => !!props.intern);
 
-const {statusOptions} = useStatus();
+const { statusOptions } = useStatus();
 
 const formData = reactive({
   ...createInternCreationRequest(),
@@ -72,8 +72,8 @@ const formRules = computed(() => ({
     },
   ],
   mentorId: props.hideMentor
-      ? []
-      : [
+    ? []
+    : [
         {
           required: true,
           message: t.value("internManagement.messages.validationError"),
@@ -95,14 +95,14 @@ const formRules = computed(() => ({
     },
   ],
   internStatus: isEdit.value
-      ? [
+    ? [
         {
           required: true,
           message: t.value("internManagement.messages.validationError"),
           trigger: "change",
         },
       ]
-      : [],
+    : [],
 }));
 
 function resetForm() {
@@ -123,29 +123,29 @@ function fillForm(intern) {
 }
 
 watch(
-    () => props.visible,
-    (newVal) => {
-      if (newVal) {
-        if (props.intern) {
-          fillForm(props.intern);
-        } else {
-          resetForm();
-        }
+  () => props.visible,
+  (newVal) => {
+    if (newVal) {
+      if (props.intern) {
+        fillForm(props.intern);
       } else {
-        // Reset form when dialog closes
         resetForm();
-        formRef.value?.resetFields();
       }
+    } else {
+      // Reset form when dialog closes
+      resetForm();
+      formRef.value?.resetFields();
     }
+  }
 );
 
 watch(
-    () => props.intern,
-    (newVal) => {
-      if (newVal && props.visible) {
-        fillForm(newVal);
-      }
+  () => props.intern,
+  (newVal) => {
+    if (newVal && props.visible) {
+      fillForm(newVal);
     }
+  }
 );
 
 function handleClose() {
@@ -155,6 +155,7 @@ function handleClose() {
 
 async function handleSubmit() {
   if (!formRef.value) return;
+
   try {
     await formRef.value.validate();
   } catch {
@@ -183,86 +184,86 @@ async function handleSubmit() {
 
 <template>
   <el-dialog
-      :model-value="visible"
-      :title="
+    :model-value="visible"
+    :title="
       isEdit
         ? t('internManagement.form.editTitle')
         : t('internManagement.form.addTitle')
     "
-      width="550px"
-      :close-on-click-modal="false"
-      @close="handleClose"
+    width="550px"
+    :close-on-click-modal="false"
+    @close="handleClose"
   >
     <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-position="top"
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-position="top"
     >
       <el-form-item
-          :label="t('internManagement.form.fullName')"
-          prop="fullName"
+        :label="t('internManagement.form.fullName')"
+        prop="fullName"
       >
         <el-input
-            v-model="formData.fullName"
-            :placeholder="t('internManagement.form.fullNamePlaceholder')"
+          v-model="formData.fullName"
+          :placeholder="t('internManagement.form.fullNamePlaceholder')"
         />
       </el-form-item>
 
       <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item
-              :label="t('internManagement.form.position')"
-              prop="positionId"
+            :label="t('internManagement.form.position')"
+            prop="positionId"
           >
             <el-select
-                v-model="formData.positionId"
-                :placeholder="t('internManagement.form.selectPosition')"
-                style="width: 100%"
+              v-model="formData.positionId"
+              :placeholder="t('internManagement.form.selectPosition')"
+              style="width: 100%"
             >
               <el-option
-                  v-for="pos in props.positions"
-                  :key="pos.id"
-                  :label="pos.title"
-                  :value="pos.id"
+                v-for="pos in props.positions"
+                :key="pos.id"
+                :label="pos.title"
+                :value="pos.id"
               />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item
-              :label="t('internManagement.form.internshipBatch')"
-              prop="positionId"
+            :label="t('internManagement.form.internshipBatch')"
+            prop="positionId"
           >
             <el-select
-                v-model="formData.internshipBatchId"
-                :placeholder="t('internManagement.form.selectInternshipBatch')"
-                style="width: 100%"
+              v-model="formData.internshipBatchId"
+              :placeholder="t('internManagement.form.selectInternshipBatch')"
+              style="width: 100%"
             >
               <el-option
-                  v-for="internshipBatch in props.internshipBatches"
-                  :key="internshipBatch.id"
-                  :label="internshipBatch.name"
-                  :value="internshipBatch.id"
+                v-for="internshipBatch in props.internshipBatches"
+                :key="internshipBatch.id"
+                :label="internshipBatch.name"
+                :value="internshipBatch.id"
               />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12" v-if="!hideMentor">
           <el-form-item
-              :label="t('internManagement.form.mentor')"
-              prop="mentorId"
+            :label="t('internManagement.form.mentor')"
+            prop="mentorId"
           >
             <el-select
-                v-model="formData.mentorId"
-                :placeholder="t('internManagement.form.selectMentor')"
-                style="width: 100%"
+              v-model="formData.mentorId"
+              :placeholder="t('internManagement.form.selectMentor')"
+              style="width: 100%"
             >
               <el-option
-                  v-for="mentor in props.mentors"
-                  :key="mentor.id"
-                  :label="mentor.fullName"
-                  :value="mentor.id"
+                v-for="mentor in props.mentors"
+                :key="mentor.id"
+                :label="mentor.fullName"
+                :value="mentor.id"
               />
             </el-select>
           </el-form-item>
@@ -272,51 +273,51 @@ async function handleSubmit() {
       <el-row :gutter="16">
         <el-col :span="12">
           <el-form-item
-              :label="t('internManagement.form.startDate')"
-              prop="startDate"
+            :label="t('internManagement.form.startDate')"
+            prop="startDate"
           >
             <el-date-picker
-                v-model="formData.startDate"
-                type="date"
-                :placeholder="t('internManagement.form.startDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
+              v-model="formData.startDate"
+              type="date"
+              :placeholder="t('internManagement.form.startDate')"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              style="width: 100%"
             />
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item
-              :label="t('internManagement.form.endDate')"
-              prop="endDate"
+            :label="t('internManagement.form.endDate')"
+            prop="endDate"
           >
             <el-date-picker
-                v-model="formData.endDate"
-                type="date"
-                :placeholder="t('internManagement.form.endDate')"
-                format="YYYY-MM-DD"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
+              v-model="formData.endDate"
+              type="date"
+              :placeholder="t('internManagement.form.endDate')"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              style="width: 100%"
             />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-form-item
-          v-if="isEdit"
-          :label="t('internManagement.form.status')"
-          prop="internStatus"
+        v-if="isEdit"
+        :label="t('internManagement.form.status')"
+        prop="internStatus"
       >
         <el-select
-            v-model="formData.internStatus"
-            :placeholder="t('internManagement.form.selectStatus')"
-            style="width: 100%"
+          v-model="formData.internStatus"
+          :placeholder="t('internManagement.form.selectStatus')"
+          style="width: 100%"
         >
           <el-option
-              v-for="status in statusOptions"
-              :key="status"
-              :label="t('internManagement.status.' + status)"
-              :value="status"
+            v-for="status in statusOptions"
+            :key="status"
+            :label="t('internManagement.status.' + status)"
+            :value="status"
           />
         </el-select>
       </el-form-item>
@@ -329,8 +330,8 @@ async function handleSubmit() {
       <el-button type="primary" @click="handleSubmit" :loading="loading">
         {{
           isEdit
-              ? t("internManagement.form.save")
-              : t("internManagement.form.create")
+            ? t("internManagement.form.save")
+            : t("internManagement.form.create")
         }}
       </el-button>
     </template>

@@ -348,10 +348,6 @@
         "startDateFrom": "開始日から",
         "endDateTo": "終了日まで",
         "addNew": "新規インターン追加",
-        "exportToCsv" : "CSVエクスポート —",
-        "noDataToExport": "エクスポートするデータがありません",
-        "exportSuccess": "エクスポートに成功しました",
-        "exportFailed": "エクスポートに失敗しました",
         "moreFilters": "詳細フィルター",
         "hideFilters": "フィルターを隠す",
         "clearFilters": "フィルタークリア",
@@ -762,19 +758,19 @@
             }
         },
         "create": {
-            "title": "評価セッションを作成",
             "confirmCreate": "この評価セッションを作成してもよろしいですか？",
             "confirmGenerate": "この評価セッションを生成してもよろしいですか？",
-            "backToList": "リストに戻る",
-            "selectIntern": "インターンを選択",
+            "title": "評価セッションを作成",
+            "backToList": "一覧に戻る",
+            "selectIntern": "インターンを選択する",
             "selectInternPlaceholder": "インターンを選択してください",
             "mode": {
                 "autoGenerate": "自動生成",
-                "manual": "手動作成"
+                "manual": "手動で作成"
             },
             "sections": {
                 "internshipInfo": "インターンシップ情報",
-                "timeline": "評価タイムライン"
+                "timeline": "評価スケジュール"
             },
             "internInfo": {
                 "startDate": "開始日",
@@ -784,27 +780,28 @@
             "milestone": {
                 "completed": "完了",
                 "due": "期限",
-                "upcoming": "予定"
+                "upcoming": "今後の予定"
             },
             "form": {
                 "intern": "インターン",
                 "sessionType": "セッションタイプ",
                 "evaluationDate": "評価日",
                 "overallComment": "総合コメント",
-                "overallCommentPlaceholder": "総合コメントを入力...",
-                "scores": "スコア",
+                "overallCommentPlaceholder": "総合コメントを入力してください...",
+                "scores": "評価スコア",
                 "scorePlaceholder": "スコア",
-                "commentPlaceholder": "コメント..."
+                "commentPlaceholder": "コメントを入力してください..."
             },
+
             "generate": "セッションを生成",
             "create": "セッションを作成",
             "cancel": "キャンセル",
             "validation": {
                 "selectInternAndType": "インターンとセッションタイプを選択してください",
-                "fillRequired": "必須項目を入力してください"
+                "fillRequired": "必須項目をすべて入力してください"
             },
             "messages": {
-                "sessionExists": "このインターンには既にこのセッションタイプが存在します",
+                "sessionExists": "このインターンには、同じセッションタイプのセッションが既に存在します",
                 "selectInternFirst": "先に「インターンシップ情報」セクションからインターンを選択してください"
             }
         },

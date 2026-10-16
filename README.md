@@ -95,30 +95,17 @@ frontend/src/
 ```
 ---
 ## 6. Getting Started
-   * Thứ tự chạy
-     + Cài đặt phiên bản JDK, Node.js, MySQL và IntelliJ.
-     + Tạo database, cấu hình .env ở FrontEnd và BackEnd và kiểm tra kết nối.
-   * Cách tạo tài khoản admin đầu tiên
-     + Ở file .env trong /BackEnd cập nhật 2 giá trị ADMIN_EMAIL & ADMIN_PASSWORD
-     + ADMIN_EMAIL & ADMIN_PASSWORD dùng để khởi tạo tài khoản với role là ADMIN ( tài khoản này được tạo trong file ApplicationInitConfig.java)
-   * ## 8. Troubleshooting
-     + Error: DotenvException: Malformed entry (fix: Sửa dòng chú thích bắt đầu bằng // trong .env thành #)
-     + Error: No configured target data sources (fix: Cấu hình data source và schema trong IntelliJ trước khi chạy SQL bằng IDE.)
-   * Environment Information
-     + OS: Ubuntu 24.04.5 LTS
-     + Java: JDK 21
-     + Node: 24
-     + MySql: Ver 8.0.46
+
 ### 6.1 Prerequisites
- -  **Install the required versions of JDK, Node.js, MySQL, and IntelliJ IDEA.**
- -  **Create the database and run scripts `backend/ddl` and configure the .env files for both the frontend and backend.**
- -  **Verify the database connection before starting the application.**
- -  **Set the `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables in `backend/.env`**
- - Before you begin, ensure you have the following installed:
-   - **Java 21**
-   - **Node.js 24** or higher (with npm)
-   - **MySQL 8.0**
-   - **Git**
+
+Before you begin, ensure you have the following installed:
+
+- **Java 21**
+- **Node.js 18** or higher (with npm)
+- **MySQL 8.0**
+- **Git**
+
+Tested environment: Ubuntu 24.04 LTS, JDK 21, Node.js 24, MySQL 8.0.46.
 
 ### 6.2 Environment Variables
 
@@ -149,6 +136,17 @@ npm run dev
 
 The frontend will start on `http://localhost:5173`
 
+### 6.5 Running Order
+
+1. Install JDK, Node.js, MySQL and IntelliJ IDEA.
+2. Create the database and run the SQL scripts in `backend/ddl`.
+3. Configure the `.env` files for both `backend` and `frontend`, and verify the database connection.
+4. Start the backend, then the frontend.
+
+### 6.6 First Admin Account
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `backend/.env`. On startup, `ApplicationInitConfig.java` uses them to create the initial account with the `ADMIN` role.
+
 ---
 
 ## 7. API Documentation
@@ -164,13 +162,9 @@ This provides:
 
 ---
 
----
 ## 8. Troubleshooting
-- **Error: `DotenvException: Malformed entry`**  
-Fix: Remove or replace comment lines starting with `//` in the `.env` file with `#`.
 
-- **Error: `No configured target data sources`**  
-  Fix: Configure the data source and schema c ..
-- in IntelliJ IDEA before executing SQL queries through the IDE.
----
-
+- **`DotenvException: Malformed entry`**
+  Replace comment lines starting with `//` in the `.env` file with `#`.
+- **`No configured target data sources`**
+  Configure the data source and schema in IntelliJ IDEA before running SQL through the IDE.

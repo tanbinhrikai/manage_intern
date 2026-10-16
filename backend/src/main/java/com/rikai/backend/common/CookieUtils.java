@@ -24,7 +24,7 @@ public class CookieUtils {
             return;
         ResponseCookie refreshCookie = ResponseCookie.from("REFRESH_TOKEN", refreshToken)
                 .httpOnly(true)
-                 .secure(false)
+                .secure(false)
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60)
                 .sameSite("Lax")
