@@ -99,7 +99,6 @@ async function fetchCriteria() {
 }
 
 async function handleSaveCriteria() {
-  console.log("parent", formData.parentId)
   if (!formData.groupId || !formData.name.trim()) {
     ElMessage.warning(t.value('evaluationCriteria.messages.validationError') || 'Please fill required fields')
     return
@@ -116,8 +115,6 @@ async function handleSaveCriteria() {
       displayOrder: formData.displayOrder,
       isActive: formData.isActive
     }
-    console.log("payload", payload)
-    
     if (isEdit.value) {
       await updateEvaluationCriteria(criteriaId, payload)
       ElMessage.success(t.value('evaluationCriteria.messages.updateSuccess'))

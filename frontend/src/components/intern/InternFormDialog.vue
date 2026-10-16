@@ -155,7 +155,7 @@ function handleClose() {
 
 async function handleSubmit() {
   if (!formRef.value) return;
-  console.log(formData);
+
   try {
     await formRef.value.validate();
   } catch {

@@ -194,16 +194,6 @@ const isUpdatingInterns = ref(false)
 // Watch selectedInternId and sync all related data
 watch(selectedInternId, async (newId, oldId) => {
   if (newId === oldId || isUpdatingInterns.value) return
-  
-  console.log('selectedInternId watch:', { 
-    newId, 
-    oldId, 
-    newIdType: typeof newId,
-    internsAvailable: interns.value.length,
-    sampleInternId: interns.value[0]?.id,
-    sampleInternIdType: typeof interns.value[0]?.id
-  })
-  
   if (newId) {
     // Ensure interns are loaded
     if (interns.value.length === 0) {
@@ -217,13 +207,6 @@ watch(selectedInternId, async (newId, oldId) => {
       const optionId = typeof i.id === 'string' ? Number(i.id) : i.id
       return optionId === searchId
     })
-    
-    console.log('Found intern:', intern ? intern.fullName : 'NOT FOUND', {
-      searchId,
-      searchIdType: typeof searchId,
-      availableIds: interns.value.slice(0, 5).map(i => ({ id: i.id, idType: typeof i.id, fullName: i.fullName }))
-    })
-    
     if (intern) {
       isUpdatingInterns.value = true
       selectedIntern.value = intern
@@ -401,13 +384,7 @@ function selectMilestone(sessionType) {
 onMounted(async () => {
   await fetchInterns()
   await fetchCriteria()
-  
-  // Debug: Log interns to check if data is loaded
-  console.log('Interns loaded:', interns.value.length)
   if (interns.value.length > 0) {
-    console.log('Sample intern:', interns.value[0])
-    console.log('Intern ID type:', typeof interns.value[0]?.id)
-    
     // If there's a selectedInternId, ensure it's properly set
     if (selectedInternId.value) {
       const intern = interns.value.find(i => i.id === selectedInternId.value)

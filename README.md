@@ -105,6 +105,8 @@ Before you begin, ensure you have the following installed:
 - **MySQL 8.0**
 - **Git**
 
+Tested environment: Ubuntu 24.04 LTS, JDK 21, Node.js 24, MySQL 8.0.46.
+
 ### 6.2 Environment Variables
 
 1. Navigate to the `frontend` or `backend` directory
@@ -134,6 +136,17 @@ npm run dev
 
 The frontend will start on `http://localhost:5173`
 
+### 6.5 Running Order
+
+1. Install JDK, Node.js, MySQL and IntelliJ IDEA.
+2. Create the database and run the SQL scripts in `backend/ddl`.
+3. Configure the `.env` files for both `backend` and `frontend`, and verify the database connection.
+4. Start the backend, then the frontend.
+
+### 6.6 First Admin Account
+
+Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `backend/.env`. On startup, `ApplicationInitConfig.java` uses them to create the initial account with the `ADMIN` role.
+
 ---
 
 ## 7. API Documentation
@@ -149,5 +162,9 @@ This provides:
 
 ---
 
+## 8. Troubleshooting
 
-
+- **`DotenvException: Malformed entry`**
+  Replace comment lines starting with `//` in the `.env` file with `#`.
+- **`No configured target data sources`**
+  Configure the data source and schema in IntelliJ IDEA before running SQL through the IDE.
