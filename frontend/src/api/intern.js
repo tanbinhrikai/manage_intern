@@ -63,3 +63,15 @@ export function permanentDeleteIntern(id) {
 export function updateInternStatus(id, payload) {
     return http.patch(`/interns/${id}/status`, payload);
 }
+export function exportInterns(params) {
+    return http.get('/interns/export', {
+        params: params,
+        responseType: 'blob' // Rất quan trọng: Báo cho axios biết dữ liệu trả về là file
+    });
+}
+export function exportMyInterns(params) {
+    return http.get('/interns/my-interns/export', {
+        params: params,
+        responseType: 'blob'
+    });
+}

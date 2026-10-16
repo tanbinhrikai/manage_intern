@@ -1,25 +1,29 @@
 package com.rikai.backend.controller;
 
-import com.rikai.backend.common.ApiResponse;
-import com.rikai.backend.common.InternStatus;
-import com.rikai.backend.common.PageResponse;
-import com.rikai.backend.common.SuccessCode;
+import com.rikai.backend.common.*;
 import com.rikai.backend.dto.request.intern.InternCreationRequest;
 import com.rikai.backend.dto.request.intern.InternUpdateRequest;
 import com.rikai.backend.dto.request.intern.InternStatusUpdateRequest;
 import com.rikai.backend.dto.response.intern.InternAnalysisResponse;
 import com.rikai.backend.dto.response.intern.InternResponse;
+import com.rikai.backend.exception.AppException;
 import com.rikai.backend.service.intern.IInternService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,7 +87,7 @@ public class InternController {
     @GetMapping("/mentor/{mentorId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByMentor(@PathVariable UUID mentorId,
-            Pageable pageable) {
+                                                                        Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByMentor(mentorId, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -91,7 +95,7 @@ public class InternController {
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByStatus(@PathVariable InternStatus status,
-            Pageable pageable) {
+                                                                        Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByStatus(status, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -99,7 +103,7 @@ public class InternController {
     @GetMapping("/position/{positionId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<PageResponse<InternResponse>> getInternsByPositionId(@PathVariable Long positionId,
-            Pageable pageable) {
+                                                                            Pageable pageable) {
         return ApiResponse.buildSuccessResponse(internService.getInternsByPositionId(positionId, pageable),
                 SuccessCode.GET_ALL_INTERNS_SUCCESSFUL);
     }
@@ -131,7 +135,7 @@ public class InternController {
     @PutMapping("/{id:\\d+}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MENTOR')")
     public ApiResponse<InternResponse> updateIntern(@PathVariable Long id,
-            @Valid @RequestBody InternUpdateRequest request) {
+                                                    @Valid @RequestBody InternUpdateRequest request) {
         return ApiResponse.buildSuccessResponse(internService.updateIntern(id, request),
                 SuccessCode.UPDATE_INTERN_SUCCESSFUL);
     }
@@ -187,5 +191,53 @@ public class InternController {
             @Valid @RequestBody InternStatusUpdateRequest request) {
         return ApiResponse.buildSuccessResponse(internService.updateInternStatus(id, request.getInternStatus()),
                 SuccessCode.UPDATE_INTERN_SUCCESSFUL);
+    }
+
+    @GetMapping("/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation (summary = "Export interns to CSV")
+    public ResponseEntity<StreamingResponseBody> exportInterns(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) LocalDate start_date,
+            @RequestParam(required = false) LocalDate end_date,
+            @RequestParam(required = false) Long position_id,
+            @RequestParam(required = false) UUID mentor_id) {
+
+        StreamingResponseBody stream = internService.exportInterns(
+                keyword, status, start_date, end_date, position_id, mentor_id
+        );
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = "interns_" + timestamp + ".csv";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(stream);
+    }
+
+    @GetMapping("/my-interns/export")
+    @PreAuthorize("hasRole('MENTOR')")
+    @Operation (summary = "Export interns to CSV")
+    public ResponseEntity<StreamingResponseBody> exportMyInterns(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) LocalDate start_date,
+            @RequestParam(required = false) LocalDate end_date,
+            @RequestParam(required = false) Long position_id)
+             {
+
+        StreamingResponseBody stream = internService.exportMyInterns(
+                keyword, status, start_date, end_date, position_id
+        );
+
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String filename = "interns_" + timestamp + ".csv";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(stream);
     }
 }
