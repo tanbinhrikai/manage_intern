@@ -42,3 +42,7 @@ export function getMentorsByDepartment(departmentId) {
 export function permanentDeleteUser(id) {
   return http.delete(`/users/${id}/permanent`);
 }
+
+export function changePassword(data) {
+  return http.post('/users/change-password', data);
+}
