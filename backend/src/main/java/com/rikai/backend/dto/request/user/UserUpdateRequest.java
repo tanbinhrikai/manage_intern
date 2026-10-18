@@ -19,7 +19,7 @@ import com.rikai.backend.validation.PasswordConstraint;
 public class UserUpdateRequest {
     @Email(message = "INVALID_EMAIL")
     String email;
-    @Size(min = 8, message = "INVALID_PASSWORD")
+    @Size(max = 72, message = "PASSWORD_TOO_LONG")
     @PasswordConstraint
     String password;
     @NotBlank(message = "INVALID_FULLNAME")

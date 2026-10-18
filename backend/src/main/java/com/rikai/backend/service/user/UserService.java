@@ -175,12 +175,16 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Transactional
     public UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO) {
         Users currentUser = authenticationService.getCurrentUser();
-        currentUser.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
-        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
-        currentUser.setDepartment(department);
+        userMapper.updateUser(currentUser, userUpdateDTO);
+        if (userUpdateDTO.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
+                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            currentUser.setDepartment(department);
+        }
+
         Users savedUser = usersRepository.save(currentUser);
         return userMapper.toUserResponse(savedUser);
     }
