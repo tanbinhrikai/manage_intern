@@ -155,6 +155,7 @@ public class UserService implements IUserService {
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
         Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        userMapper.updateUser(user, userUpdateDTO);
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
         }

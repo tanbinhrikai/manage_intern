@@ -159,7 +159,7 @@ async function handleSubmit() {
         oldPassword: form.value.oldPassword,
         newPassword: form.value.newPassword,
         confirmPassword: form.value.confirmPassword
-      }, { skipErrorToast: true })
+      }, { skipErrorToast: (err) => err.response?.data?.code === 'PASSWORD_NOT_CORRECT'})
 
       toastStore.success(t('profile.changePasswordSuccess'), 4000)
 
@@ -173,8 +173,6 @@ async function handleSubmit() {
 
       if (errorCode === 'PASSWORD_NOT_CORRECT' ) {
         oldPasswordError.value = t('profile.rules.oldPasswordIncorrect')
-      } else {
-        toastStore.error(t('profile.error'))
       }
     }
   })
@@ -188,8 +186,6 @@ async function fetchProfile() {
     profile.value = res.data?.data || null
   } catch (err) {
     console.error('Failed to load profile:', err)
-    error.value = t('profile.error')
-    toastStore.error(t('profile.error'))
   } finally {
     loading.value = false
   }
