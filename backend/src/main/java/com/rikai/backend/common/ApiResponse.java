@@ -15,6 +15,7 @@ import java.time.Instant;
 public class ApiResponse<T> {
 
     boolean success;
+    String code;
     String message;
     T data;
     String timestamp;
@@ -23,6 +24,7 @@ public class ApiResponse<T> {
     static public  <T> ApiResponse<T> buildSuccessResponse(T data, SuccessCode successCode) {
         return ApiResponse.<T>builder()
                 .success(true)
+                .code(successCode.name())
                 .statusCode(successCode.getStatusCode().value())
                 .message(successCode.getMessage())
                 .data(data)

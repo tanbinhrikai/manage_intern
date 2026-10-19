@@ -159,7 +159,7 @@ async function handleSubmit() {
         oldPassword: form.value.oldPassword,
         newPassword: form.value.newPassword,
         confirmPassword: form.value.confirmPassword
-      })
+      }, { skipErrorToast: true })
 
       toastStore.success(t('profile.changePasswordSuccess'), 4000)
 
@@ -169,9 +169,12 @@ async function handleSubmit() {
       authStore.clearAuth()
       router.push('/login')
     } catch (err) {
-      const errorMsg = err.response?.data?.message
-      if (errorMsg === 'Old password is not correct' || errorMsg?.toLowerCase().includes('old password')) {
+      const errorCode = err.response?.data?.code
+
+      if (errorCode === 'PASSWORD_NOT_CORRECT' ) {
         oldPasswordError.value = t('profile.rules.oldPasswordIncorrect')
+      } else {
+        toastStore.error(t('profile.error'))
       }
     }
   })

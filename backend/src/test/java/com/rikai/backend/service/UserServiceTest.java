@@ -68,7 +68,9 @@ class UserServiceTest {
         currentUser = new Users();
         currentUser.setId(UUID.randomUUID());
         currentUser.setEmail("thanh@gmail.com");
+        currentUser.setFullName("Thanh Nguyen");
         currentUser.setPasswordHash("hashed_old_password");
+        currentUser.setIsActive(true);
     }
 
     @Test
@@ -177,17 +179,20 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Update self user successfully: does not alter passwordHash and handles null password")
-    void updateSelfUser_Success_DoesNotChangePasswordAndHandlesNullPassword() {
+    @DisplayName("Update self user successfully: does not alter isActive, passwordHash, email, fullName, and does not invoke userMapper.updateUser")
+    void updateSelfUser_Success_DoesNotChangePasswordOrIsActive() {
         UserUpdateRequest request = new UserUpdateRequest();
-        request.setFullName("John Doe");
-        request.setPassword(null);
+        request.setFullName("Changed Doe");
+        request.setEmail("changed@gmail.com");
+        request.setPassword("NewPassword123");
+        request.setActive(false);
         request.setDepartmentId(null);
 
         UserResponse mockResponse = UserResponse.builder()
                 .id(currentUser.getId().toString())
                 .email(currentUser.getEmail())
-                .fullName("John Doe")
+                .fullName(currentUser.getFullName())
+                .isActive(currentUser.getIsActive())
                 .build();
 
         when(authenticationService.getCurrentUser()).thenReturn(currentUser);
@@ -197,9 +202,11 @@ class UserServiceTest {
         UserResponse result = userService.updateSelfUser(request);
 
         assertNotNull(result);
-        assertEquals("John Doe", result.getFullName());
+        assertTrue(currentUser.getIsActive());
         assertEquals("hashed_old_password", currentUser.getPasswordHash());
-        verify(userMapper).updateUser(currentUser, request);
+        assertEquals("thanh@gmail.com", currentUser.getEmail());
+        assertEquals("Thanh Nguyen", currentUser.getFullName());
+        verify(userMapper, never()).updateUser(any(), any());
         verify(usersRepository).save(currentUser);
         verifyNoInteractions(refreshTokenRepository);
     }

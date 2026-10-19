@@ -111,8 +111,7 @@ public class UserService implements IUserService {
     public UserResponse createUser(UserCreationRequest request) {
         // 1. Define Role and Email Suffix
         // Note: request.getRoleName() returns Enum RoleType
-        Roles role = rolesRepository.findByRoleName(request.getRoleName().name())
-                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        Roles role = rolesRepository.findByRoleName(request.getRoleName().name()).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
 
         String emailSuffix = "";
         if (request.getRoleName() == RoleType.MENTOR) {
@@ -123,8 +122,7 @@ public class UserService implements IUserService {
 
         // 2. Automatically generate emails (Ignore emails from requests if any)
         // Call a new Utils function with 3 parameters
-        String generatedEmail = AutoGenerateEmail.generateUniqueEmail(request.getFullName(), emailSuffix,
-                usersRepository::existsByEmail);
+        String generatedEmail = AutoGenerateEmail.generateUniqueEmail(request.getFullName(), emailSuffix,usersRepository::existsByEmail);
 
         // 3. Map request to entity
         Users user = userMapper.toUser(request);
@@ -145,8 +143,7 @@ public class UserService implements IUserService {
 
         // 5. Handle Department
         if (request.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            Department department = departmentRepository.findById(request.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
             user.setDepartment(department);
         }
 
@@ -158,18 +155,12 @@ public class UserService implements IUserService {
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
         Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        userMapper.updateUser(user, userUpdateDTO);
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
         }
-
-        if (userUpdateDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
-            user.setDepartment(department);
-        }
-
+        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+        user.setDepartment(department);
+        
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
@@ -178,10 +169,8 @@ public class UserService implements IUserService {
     @Transactional
     public UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO) {
         Users currentUser = authenticationService.getCurrentUser();
-        userMapper.updateUser(currentUser, userUpdateDTO);
         if (userUpdateDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId())
-                    .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
             currentUser.setDepartment(department);
         }
 

@@ -12,33 +12,33 @@ import java.util.List;
 import java.util.UUID;
 
 public interface IUserService {
-        PageResponse<UserResponse> getAllMentorUsers(
-                        PageRequest pageRequest,
-                        String keyword,
-                        LocalDate startDate,
-                        LocalDate endDate,
-                        Boolean isActive,
-                        Long departmentId);
+    PageResponse<UserResponse> getAllMentorUsers(
+            PageRequest pageRequest,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId);
 
-        PageResponse<UserResponse> getAllHrUsers(
-                        PageRequest pageRequest,
-                        String keyword,
-                        LocalDate startDate,
-                        LocalDate endDate,
-                        Boolean isActive,
-                        Long departmentId);
+    PageResponse<UserResponse> getAllHrUsers(
+            PageRequest pageRequest,
+            String keyword,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isActive,
+            Long departmentId);
 
-        UserResponse createUser(UserCreationRequest userCreateDTO);
+    UserResponse createUser(UserCreationRequest userCreateDTO);
 
-        UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO);
+    UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO);
 
-        UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO);
+    UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO);
 
-        UserResponse toggleStatus(UUID id);
+    UserResponse toggleStatus(UUID id);
 
-        List<UserResponse> getMentorsByDepartment(Long departmentId);
+    List<UserResponse> getMentorsByDepartment(Long departmentId);
 
-        void permanentDeleteUser(UUID id);
+    void permanentDeleteUser(UUID id);
 
-        void changePassword(ChangePasswordRequest request);
+    void changePassword(ChangePasswordRequest request);
 }
