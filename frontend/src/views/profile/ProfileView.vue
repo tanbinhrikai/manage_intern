@@ -186,6 +186,7 @@ async function fetchProfile() {
     profile.value = res.data?.data || null
   } catch (err) {
     console.error('Failed to load profile:', err)
+    error.value = t('profile.error')
   } finally {
     loading.value = false
   }
