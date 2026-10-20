@@ -2,6 +2,7 @@ package com.rikai.backend.dto.request.user;
 
 
 import com.rikai.backend.model.Enum.RoleType;
+import com.rikai.backend.validation.PasswordConstraint;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -16,7 +17,9 @@ import java.time.LocalDate;
 public class UserCreationRequest {
     @Email(message = "INVALID_EMAIL")
     String email;
-    @Size(min = 8 , message = "INVALID_PASSWORD")
+    @NotBlank(message = "PASSWORD_REQUIRED")
+    @Size(max = 72, message = "PASSWORD_TOO_LONG")
+    @PasswordConstraint
     String password;
     @NotBlank(message = "INVALID_FULLNAME")
     String fullName;

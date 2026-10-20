@@ -1,6 +1,7 @@
 package com.rikai.backend.service;
 
 import com.rikai.backend.dto.request.user.ChangePasswordRequest;
+import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.model.RefreshToken;
 import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
@@ -179,6 +180,36 @@ class UserServiceIntegrationTest {
         assertTrue(refreshTokenRepository.findByRefreshToken(token1.getRefreshToken()).isPresent());
         // Refresh token of user2 should also still exist
         assertTrue(refreshTokenRepository.findByRefreshToken(token2.getRefreshToken()).isPresent());
+    }
+
+    @Test
+    @DisplayName("Update user with password in real DB: sets mustChangePassword to true, deletes target user's refresh token, and keeps other user's refresh token intact")
+    void updateUser_WithPassword_SetsFlagAndRevokesOnlyTargetUserTokens_OtherUserTokensIntact() {
+        // user1 acts as the admin performing the update on user2
+        when(authenticationService.getCurrentUser()).thenReturn(user1);
+
+        UserUpdateRequest request = UserUpdateRequest.builder()
+            .email(user2.getEmail())
+            .fullName(user2.getFullName())
+            .departmentId(1L)
+            .password("ResetPass123")
+            .isActive(true)
+            .build();
+
+        userService.updateUser(user2.getId(), request);
+
+        entityManager.clear();
+
+        // Verify user2 password updated and mustChangePassword set to true in DB
+        Users updatedUser2 = usersRepository.findById(user2.getId()).orElseThrow();
+        assertTrue(updatedUser2.getMustChangePassword());
+        assertTrue(passwordEncoder.matches("ResetPass123", updatedUser2.getPasswordHash()));
+
+        // Verify user2's refresh token is deleted from DB
+        assertTrue(refreshTokenRepository.findByRefreshToken(token2.getRefreshToken()).isEmpty());
+
+        // Verify user1's refresh token remains intact in DB
+        assertTrue(refreshTokenRepository.findByRefreshToken(token1.getRefreshToken()).isPresent());
     }
 }
 

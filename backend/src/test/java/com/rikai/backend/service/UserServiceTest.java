@@ -2,11 +2,14 @@ package com.rikai.backend.service;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.dto.request.user.ChangePasswordRequest;
+import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.mapper.UserMapper;
 import com.rikai.backend.model.Department;
+import com.rikai.backend.model.Enum.RoleType;
+import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.InternRepository;
@@ -19,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -249,5 +253,143 @@ class UserServiceTest {
         assertEquals(ErrorCode.DEPARTMENT_NOT_EXISTED, exception.getErrorCode());
 
         verify(usersRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("User change password successfully: resets mustChangePassword flag to false")
+    void changePassword_Success_ClearsMustChangePasswordFlag() {
+        currentUser.setMustChangePassword(true);
+        ChangePasswordRequest request = ChangePasswordRequest.builder()
+                .oldPassword("OldPass123")
+                .newPassword("NewPass123")
+                .confirmPassword("NewPass123")
+                .build();
+
+        when(authenticationService.getCurrentUser()).thenReturn(currentUser);
+        when(passwordEncoder.matches("OldPass123", "hashed_old_password")).thenReturn(true);
+        when(passwordEncoder.matches("NewPass123", "hashed_old_password")).thenReturn(false);
+        when(passwordEncoder.encode("NewPass123")).thenReturn("hashed_new_password");
+
+        userService.changePassword(request);
+
+        assertFalse(currentUser.getMustChangePassword());
+    }
+
+    @Test
+    @DisplayName("Create user: sets mustChangePassword to true and encodes the provided password")
+    void createUser_Success_SetsMustChangePasswordTrue() {
+        UserCreationRequest request = UserCreationRequest.builder()
+                .password("Abc12345")
+                .fullName("Nguyen Van A")
+                .roleName(RoleType.MENTOR)
+                .departmentId(1L)
+                .build();
+        Roles role = Roles.builder().roleName("MENTOR").build();
+        Department department = Department.builder().id(1L).title("RTE").build();
+
+        when(rolesRepository.findByRoleName("MENTOR")).thenReturn(Optional.of(role));
+        when(userMapper.toUser(request)).thenReturn(new Users());
+        when(passwordEncoder.encode("Abc12345")).thenReturn("hashed_password");
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(usersRepository.save(any(Users.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toUserResponse(any(Users.class))).thenReturn(new UserResponse());
+
+        userService.createUser(request);
+
+        ArgumentCaptor<Users> captor = ArgumentCaptor.forClass(Users.class);
+        verify(usersRepository).save(captor.capture());
+        assertTrue(captor.getValue().getMustChangePassword());
+        assertEquals("hashed_password", captor.getValue().getPasswordHash());
+        verify(passwordEncoder).encode("Abc12345");
+    }
+
+    @Test
+    @DisplayName("Update user with password: sets mustChangePassword and revokes only that user's refresh tokens")
+    void updateUser_WithPassword_SetsFlagAndRevokesTokens() {
+        UUID targetId = UUID.randomUUID();
+        Users target = new Users();
+        target.setId(targetId);
+        target.setPasswordHash("hashed_old_password");
+        Users otherUser = new Users();
+        otherUser.setId(UUID.randomUUID());
+        Department department = Department.builder().id(1L).title("RTE").build();
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setPassword("NewPass123");
+        request.setDepartmentId(1L);
+
+        when(authenticationService.getCurrentUser()).thenReturn(currentUser);
+        when(usersRepository.findById(targetId)).thenReturn(Optional.of(target));
+        when(passwordEncoder.encode("NewPass123")).thenReturn("hashed_new_password");
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(usersRepository.save(target)).thenReturn(target);
+        when(userMapper.toUserResponse(target)).thenReturn(new UserResponse());
+
+        userService.updateUser(targetId, request);
+
+        assertTrue(target.getMustChangePassword());
+        assertEquals("hashed_new_password", target.getPasswordHash());
+        verify(refreshTokenRepository).deleteByUser(target);
+        verify(refreshTokenRepository, never()).deleteByUser(otherUser);
+    }
+
+    @Test
+    @DisplayName("Update user without password: keeps mustChangePassword unchanged and does not revoke tokens")
+    void updateUser_WithoutPassword_KeepsFlagAndTokens() {
+        UUID targetId = UUID.randomUUID();
+        Users target = new Users();
+        target.setId(targetId);
+        target.setPasswordHash("hashed_old_password");
+        target.setMustChangePassword(false);
+        Department department = Department.builder().id(1L).title("RTE").build();
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setDepartmentId(1L);
+
+        when(usersRepository.findById(targetId)).thenReturn(Optional.of(target));
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(usersRepository.save(target)).thenReturn(target);
+        when(userMapper.toUserResponse(target)).thenReturn(new UserResponse());
+
+        userService.updateUser(targetId, request);
+
+        assertFalse(target.getMustChangePassword());
+        assertEquals("hashed_old_password", target.getPasswordHash());
+        verify(passwordEncoder, never()).encode(any());
+        verify(refreshTokenRepository, never()).deleteByUser(any());
+    }
+
+    @Test
+    @DisplayName("Update own account with password: throws USE_CHANGE_PASSWORD_INSTEAD and changes nothing")
+    void updateUser_SelfWithPassword_ThrowsUseChangePasswordInstead() {
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setPassword("NewPass123");
+        request.setDepartmentId(1L);
+
+        when(authenticationService.getCurrentUser()).thenReturn(currentUser);
+
+        AppException exception = assertThrows(AppException.class,
+                () -> userService.updateUser(currentUser.getId(), request));
+        assertEquals(ErrorCode.USE_CHANGE_PASSWORD_INSTEAD, exception.getErrorCode());
+
+        assertEquals("hashed_old_password", currentUser.getPasswordHash());
+        verify(usersRepository, never()).save(any());
+        verify(refreshTokenRepository, never()).deleteByUser(any());
+    }
+
+    @Test
+    @DisplayName("Update own account without password: still succeeds")
+    void updateUser_SelfWithoutPassword_Success() {
+        Department department = Department.builder().id(1L).title("RTE").build();
+        UserUpdateRequest request = new UserUpdateRequest();
+        request.setDepartmentId(1L);
+
+        when(usersRepository.findById(currentUser.getId())).thenReturn(Optional.of(currentUser));
+        when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        when(usersRepository.save(currentUser)).thenReturn(currentUser);
+        when(userMapper.toUserResponse(currentUser)).thenReturn(new UserResponse());
+
+        userService.updateUser(currentUser.getId(), request);
+
+        verify(usersRepository).save(currentUser);
+        verify(refreshTokenRepository, never()).deleteByUser(any());
     }
 }

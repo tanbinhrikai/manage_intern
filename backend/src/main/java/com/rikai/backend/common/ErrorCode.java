@@ -25,6 +25,8 @@ public enum ErrorCode {
     CONFIRM_PASSWORD_REQUIRED("Confirm password is required", HttpStatus.BAD_REQUEST),
     PASSWORD_CONFIRM_NOT_MATCH("Password confirmation does not match", HttpStatus.BAD_REQUEST),
     PASSWORD_SAME_AS_OLD("New password must be different from old password", HttpStatus.BAD_REQUEST),
+    PASSWORD_REQUIRED("Password is required", HttpStatus.BAD_REQUEST),
+    USE_CHANGE_PASSWORD_INSTEAD("Please use the change password function to change your own password", HttpStatus.BAD_REQUEST),
 
     URL_NOT_FOUND("URL not found", HttpStatus.NOT_FOUND),
     METHOD_NOT_ALLOWED("HTTP Method not allowed", HttpStatus.METHOD_NOT_ALLOWED),
