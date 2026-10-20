@@ -433,7 +433,35 @@
         "createdAt": "アカウント作成日",
         "updatedAt": "最終更新日",
         "loading": "プロフィールを読み込み中...",
-        "error": "プロフィールの読み込みに失敗しました"
+        "error": "プロフィールの読み込みに失敗しました",
+        "security": "セキュリティ",
+        "securityDesc": "パスワードとアカウントのセキュリティ設定を管理します",
+        "changePassword": "パスワード変更",
+        "changePasswordDesc": "アカウントの安全を維持するために、長く安全なパスワードを使用してください",
+        "oldPassword": "現在のパスワード",
+        "newPassword": "新しいパスワード",
+        "confirmPassword": "新しいパスワード（確認）",
+        "oldPasswordPlaceholder": "現在のパスワードを入力",
+        "newPasswordPlaceholder": "新しいパスワードを入力",
+        "confirmPasswordPlaceholder": "新しいパスワードを再入力",
+        "changePasswordSuccess": "パスワードが正常に変更されました。新しいパスワードで再度ログインしてください。",
+        "submit": "パスワードを変更",
+        "cancel": "キャンセル",
+        "passwordRequirements": "パスワードの要件：",
+        "reqMinLength": "8文字以上（最大72文字）",
+        "reqUppercase": "英大文字を1文字以上（A-Z）",
+        "reqLowercase": "英小文字を1文字以上（a-z）",
+        "reqNumber": "数字を1文字以上（0-9）",
+        "rules": {
+            "oldPasswordRequired": "現在のパスワードを入力してください",
+            "newPasswordRequired": "新しいパスワードを入力してください",
+            "newPasswordLength": "パスワードは8文字以上72文字以内で入力してください",
+            "newPasswordPattern": "パスワードには英大文字、小文字、数字を含める必要があります",
+            "newPasswordSameAsOld": "新しいパスワードは現在のパスワードと異なる必要があります",
+            "confirmPasswordRequired": "確認用パスワードを入力してください",
+            "confirmPasswordMismatch": "確認用パスワードが一致しません",
+            "oldPasswordIncorrect": "現在のパスワードが正しくありません"
+        }
     },
     "departmentManagement": {
         "title": "部署管理",
@@ -796,7 +824,6 @@
                 "scorePlaceholder": "スコア",
                 "commentPlaceholder": "コメントを入力してください..."
             },
-
             "generate": "セッションを生成",
             "create": "セッションを作成",
             "cancel": "キャンセル",

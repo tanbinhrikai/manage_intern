@@ -1,14 +1,18 @@
 package com.rikai.backend.controller;
 
 import com.rikai.backend.common.ApiResponse;
+import com.rikai.backend.common.CookieUtils;
 import com.rikai.backend.common.PageResponse;
 import com.rikai.backend.common.SuccessCode;
+import com.rikai.backend.dto.request.user.ChangePasswordRequest;
 import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
+import io.swagger.v3.oas.annotations.Operation;
 import com.rikai.backend.dto.response.user.UserResponse;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.service.auth.IAuthenticationService;
 import com.rikai.backend.service.user.IUserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +32,7 @@ import java.util.UUID;
 public class UserController {
     IAuthenticationService authenticationService;
     IUserService userService;
+    CookieUtils cookieUtils;
 
     @GetMapping("/mentors")
     @PreAuthorize("hasRole('ADMIN')")
@@ -103,6 +108,16 @@ public class UserController {
         return ApiResponse.buildSuccessResponse(
                 updatedUser,
                 SuccessCode.UPDATE_USER_SUCCESSFUL);
+    }
+
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password for the current logged-in user")
+    public ApiResponse<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            HttpServletResponse response) {
+        userService.changePassword(request);
+        cookieUtils.clearCookies(response);
+        return ApiResponse.buildSuccessResponse(null, SuccessCode.CHANGE_PASSWORD_SUCCESSFUL);
     }
 
     @GetMapping("/departments/{departmentId}/mentors")

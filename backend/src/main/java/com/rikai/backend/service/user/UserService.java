@@ -2,6 +2,7 @@ package com.rikai.backend.service.user;
 
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.PageResponse;
+import com.rikai.backend.dto.request.user.ChangePasswordRequest;
 import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
@@ -13,6 +14,7 @@ import com.rikai.backend.model.Roles;
 import com.rikai.backend.model.Users;
 import com.rikai.backend.repository.DepartmentRepository;
 import com.rikai.backend.repository.InternRepository;
+import com.rikai.backend.repository.RefreshTokenRepository;
 import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
@@ -42,6 +44,7 @@ public class UserService implements IUserService {
     DepartmentRepository departmentRepository;
     InternRepository internRepository;
     IAuthenticationService authenticationService;
+    RefreshTokenRepository refreshTokenRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -119,7 +122,7 @@ public class UserService implements IUserService {
 
         // 2. Automatically generate emails (Ignore emails from requests if any)
         // Call a new Utils function with 3 parameters
-        String generatedEmail = AutoGenerateEmail.generateUniqueEmail(request.getFullName(), emailSuffix, usersRepository::existsByEmail);
+        String generatedEmail = AutoGenerateEmail.generateUniqueEmail(request.getFullName(), emailSuffix,usersRepository::existsByEmail);
 
         // 3. Map request to entity
         Users user = userMapper.toUser(request);
@@ -152,27 +155,26 @@ public class UserService implements IUserService {
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
         Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
         userMapper.updateUser(user, userUpdateDTO);
         if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
             user.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
         }
-
-        if (userUpdateDTO.getDepartmentId() != null) {
-            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
-            user.setDepartment(department);
-        }
-
+        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+        user.setDepartment(department);
+        
         Users savedUser = usersRepository.save(user);
         return userMapper.toUserResponse(savedUser);
     }
 
     @Override
+    @Transactional
     public UserResponse updateSelfUser(UserUpdateRequest userUpdateDTO) {
         Users currentUser = authenticationService.getCurrentUser();
-        currentUser.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
-        Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
-        currentUser.setDepartment(department);
+        if (userUpdateDTO.getDepartmentId() != null) {
+            Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
+            currentUser.setDepartment(department);
+        }
+
         Users savedUser = usersRepository.save(currentUser);
         return userMapper.toUserResponse(savedUser);
     }
@@ -208,5 +210,28 @@ public class UserService implements IUserService {
         Users user = usersRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         usersRepository.delete(user);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        Users currentUser = authenticationService.getCurrentUser();
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_CONFIRM_NOT_MATCH);
+        }
+
+        if (!passwordEncoder.matches(request.getOldPassword(), currentUser.getPasswordHash())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_CORRECT);
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), currentUser.getPasswordHash())) {
+            throw new AppException(ErrorCode.PASSWORD_SAME_AS_OLD);
+        }
+        String passwordHash = passwordEncoder.encode(request.getNewPassword());
+        currentUser.setPasswordHash(passwordHash);
+        usersRepository.save(currentUser);
+
+        refreshTokenRepository.deleteByUser(currentUser);
     }
 }

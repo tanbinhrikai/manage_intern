@@ -89,6 +89,7 @@ public class GlobalExceptionHandler {
                 : errorCode.getMessage();
         return ApiResponse.builder()
                 .success(false)
+                .code(errorCode.name())
                 .statusCode(errorCode.getStatusCode().value())
                 .message(message)
                 .timestamp(Instant.now().toString())

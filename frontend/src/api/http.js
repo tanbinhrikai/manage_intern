@@ -84,20 +84,26 @@ http.interceptors.response.use(
             }
         }
 
-        const backendMessage = error.response?.data?.message
-        if (backendMessage) {
-            ElMessage.error(backendMessage)
-        } else if (error.response?.status) {
-            const statusMessages = {
-                400: 'Bad Request',
-                403: 'Access Denied',
-                404: 'Not Found',
-                500: 'Server Error'
+        const shouldSkipErrorToast =
+            originalRequest?.skipErrorToast === true ||
+            (typeof originalRequest?.skipErrorToast === 'function' && originalRequest.skipErrorToast(error))
+
+        if (!shouldSkipErrorToast) {
+            const backendMessage = error.response?.data?.message
+            if (backendMessage) {
+                ElMessage.error(backendMessage)
+            } else if (error.response?.status) {
+                const statusMessages = {
+                    400: 'Bad Request',
+                    403: 'Access Denied',
+                    404: 'Not Found',
+                    500: 'Server Error'
+                }
+                const message = statusMessages[error.response.status] || `Error: ${error.response.status}`
+                ElMessage.error(message)
+            } else if (error.message) {
+                ElMessage.error(error.message)
             }
-            const message = statusMessages[error.response.status] || `Error: ${error.response.status}`
-            ElMessage.error(message)
-        } else if (error.message) {
-            ElMessage.error(error.message)
         }
 
         return Promise.reject(error)

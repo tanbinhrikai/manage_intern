@@ -1,6 +1,7 @@
 package com.rikai.backend.service.user;
 
 import com.rikai.backend.common.PageResponse;
+import com.rikai.backend.dto.request.user.ChangePasswordRequest;
 import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.dto.request.user.UserUpdateRequest;
 import com.rikai.backend.dto.response.user.UserResponse;
@@ -38,4 +39,6 @@ public interface IUserService {
     List<UserResponse> getMentorsByDepartment(Long departmentId);
 
     void permanentDeleteUser(UUID id);
+
+    void changePassword(ChangePasswordRequest request);
 }
