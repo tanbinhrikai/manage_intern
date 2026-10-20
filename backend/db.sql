@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name VARCHAR(100) NOT NULL,
     date_of_birth DATE,
     is_active BOOLEAN DEFAULT TRUE,
+    must_change_password BOOLEAN NOT NULL DEFAULT FALSE,
     role_name VARCHAR(50) NOT NULL,
     department_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
