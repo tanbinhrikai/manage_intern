@@ -18,6 +18,11 @@
             "loginFailed": "Login failed. Please try again."
         }
     },
+    "forceChangePassword": {
+        "heading": "Change Your Password",
+        "description": "For security reasons, you must change your temporary password before continuing to use the system.",
+        "logout": "Log out"
+    },
     "common": {
         "weeks": "weeks",
         "confirm": {

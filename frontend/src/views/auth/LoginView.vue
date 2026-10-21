@@ -53,6 +53,11 @@ const handleSubmit = async () => {
     await authStore.login(form.value.email, form.value.password)
     toastStore.success(t.value('toast.loginSuccess'))
     
+    if (authStore.mustChangePassword) {
+      router.push('/change-password')
+      return
+    }
+
     const role = authStore.userRole
     if (role === 'ADMIN') {
       router.push('/admin/dashboard')

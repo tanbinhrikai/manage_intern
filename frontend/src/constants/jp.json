@@ -18,6 +18,11 @@
             "loginFailed": "ログインに失敗しました。もう一度お試しください。"
         }
     },
+    "forceChangePassword": {
+        "heading": "パスワードの変更が必要です",
+        "description": "セキュリティ上の理由により、システムを引き続きご利用いただく前に初期パスワードを変更する必要があります。",
+        "logout": "ログアウト"
+    },
     "common": {
         "weeks": "週間",
         "confirm": {

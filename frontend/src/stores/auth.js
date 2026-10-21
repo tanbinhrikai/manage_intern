@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => !!user.value)
     const userRole = computed(() => user.value?.role?.roleName || null)
+    const mustChangePassword = computed(() => Boolean(user.value?.mustChangePassword))
 
     const login = async (email, password) => {
         const response = await authApi.login(email, password)
@@ -52,6 +53,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         isAuthenticated,
         userRole,
+        mustChangePassword,
         login,
         logout,
         refreshToken,
