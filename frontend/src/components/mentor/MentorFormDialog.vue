@@ -2,6 +2,7 @@
 import { ref, computed, watch, reactive, onMounted } from 'vue'
 import { useLocaleStore } from '@/locales/locale'
 import { createUserCreationRequest, createUserUpdateRequest } from '@/types/user'
+import { createPasswordStrengthValidator } from '@/utils/passwordValidation'
 
 const props = defineProps({
   visible: {
@@ -48,7 +49,24 @@ const formRules = computed(() => ({
   ],
   dateOfBirth: [],
   departmentId: [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'change' }],
-  password: isEdit.value ? [] : [{ required: true, message: t.value(`${translationPrefix.value}.messages.validationError`), trigger: 'blur' }]
+  password: isEdit.value
+    ? [
+        {
+          validator: createPasswordStrengthValidator(t.value),
+          trigger: ['blur', 'change']
+        }
+      ]
+    : [
+        {
+          required: true,
+          message: t.value(`${translationPrefix.value}.messages.validationError`),
+          trigger: 'blur'
+        },
+        {
+          validator: createPasswordStrengthValidator(t.value),
+          trigger: ['blur', 'change']
+        }
+      ]
 }))
 
 const disabledDate = (time) => {
@@ -173,6 +191,9 @@ async function handleSubmit() {
           :placeholder="t(`${translationPrefix}.form.passwordPlaceholder`)"
           show-password
         />
+        <div v-if="isEdit" class="form-help-text password-reset-warning">
+          {{ t(`${translationPrefix}.form.passwordResetWarning`) }}
+        </div>
       </el-form-item>
 
       <el-form-item :label="t(`${translationPrefix}.form.dateOfBirth`)" prop="dateOfBirth">
@@ -234,5 +255,12 @@ async function handleSubmit() {
 
 :deep(.el-form-item__label) {
   font-weight: 500;
+}
+
+.password-reset-warning {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #d97706;
 }
 </style>

@@ -190,7 +190,8 @@
         },
         "status": {
             "active": "Active",
-            "locked": "Locked"
+            "locked": "Locked",
+            "mustChangePassword": "Password change required"
         },
         "allStatus": "All Status",
         "allDepartments": "All Departments",
@@ -225,6 +226,7 @@
             "isActive": "Active",
             "password": "Password",
             "passwordHint": "(Leave blank to keep current)",
+            "passwordResetWarning": "Note: If you set a new password, the user will be logged out and required to change their password on their next login.",
             "passwordPlaceholder": "********",
             "passwordValidation": "Password must be at least 8 characters with uppercase, lowercase and number.",
             "save": "Save",
@@ -255,7 +257,8 @@
         },
         "status": {
             "active": "Active",
-            "locked": "Locked"
+            "locked": "Locked",
+            "mustChangePassword": "Password change required"
         },
         "allStatus": "All Status",
         "allDepartments": "All Departments",
@@ -290,6 +293,7 @@
             "isActive": "Active",
             "password": "Password",
             "passwordHint": "(Leave blank to keep current)",
+            "passwordResetWarning": "Note: If you set a new password, the user will be logged out and required to change their password on their next login.",
             "passwordPlaceholder": "********",
             "passwordValidation": "Password must be at least 8 characters with uppercase, lowercase and number.",
             "save": "Save",

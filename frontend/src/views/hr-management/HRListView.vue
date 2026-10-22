@@ -328,9 +328,14 @@ onBeforeRouteLeave(() => {
               align="center"
             >
               <template #default="scope">
-                <el-tag :type="scope.row.active ? 'success' : 'danger'">
-                  {{ scope.row.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
-                </el-tag>
+                <div class="status-tags">
+                  <el-tag :type="scope.row.active ? 'success' : 'danger'">
+                    {{ scope.row.active ? t('hrManagement.status.active') : t('hrManagement.status.locked') }}
+                  </el-tag>
+                  <el-tag v-if="scope.row.mustChangePassword" type="warning" size="small" effect="plain">
+                    {{ t('hrManagement.status.mustChangePassword') }}
+                  </el-tag>
+                </div>
               </template>
             </el-table-column>
             <el-table-column 
@@ -565,5 +570,12 @@ onBeforeRouteLeave(() => {
 :deep(.el-dialog__footer) {
   border-top: 1px solid #ebeef5;
   padding: 16px 20px;
+}
+
+.status-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 </style>
