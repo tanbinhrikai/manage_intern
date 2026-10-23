@@ -81,6 +81,39 @@ class PasswordChangeRequiredInterceptorTest {
     }
 
     @Test
+    @DisplayName("Token with must_change_password = false calling regular API (GET /interns/export) is allowed through (status 200)")
+    void preHandle_MustChangePasswordFalse_RegularApi_Allowed() throws Exception {
+        when(internService.exportInterns(any(), any(), any(), any(), any(), any()))
+                .thenReturn(outputStream -> {});
+
+        mockMvc.perform(get("/interns/export")
+                        .with(jwt()
+                                .jwt(builder -> builder
+                                        .subject("admin@rikai.com")
+                                        .claim("must_change_password", false))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk());
+
+        verify(internService).exportInterns(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Token without must_change_password claim  calling regular API (GET /interns/export) is allowed through (status 200)")
+    void preHandle_NoMustChangePasswordClaim_RegularApi_Allowed() throws Exception {
+        when(internService.exportInterns(any(), any(), any(), any(), any(), any()))
+                .thenReturn(outputStream -> {});
+
+        mockMvc.perform(get("/interns/export")
+                        .with(jwt()
+                                .jwt(builder -> builder
+                                        .subject("admin@rikai.com"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk());
+
+        verify(internService).exportInterns(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     @DisplayName("Token with must_change_password = true calling GET /users/get-my-info is allowed through")
     void preHandle_MustChangePasswordTrue_GetMyInfo_Allowed() throws Exception {
         Users user = Users.builder()
