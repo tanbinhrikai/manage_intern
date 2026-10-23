@@ -23,6 +23,7 @@ const refreshAxios = axios.create({
 
 let isRefreshing = false
 let failedQueue = []
+let isRedirectingToForceChange = false
 
 const processQueue = (error, token = null) => {
     failedQueue.forEach(prom => {
@@ -82,6 +83,23 @@ http.interceptors.response.use(
             } finally {
                 isRefreshing = false
             }
+        }
+
+        if (
+            error.response?.status === 403 &&
+            error.response?.data?.code === 'PASSWORD_CHANGE_REQUIRED'
+        ) {
+            const authStore = useAuthStore()
+            authStore.setMustChangePassword(true)
+
+            if (!isRedirectingToForceChange && router.currentRoute.value.name !== 'ForceChangePassword') {
+                isRedirectingToForceChange = true
+                router.push({ name: 'ForceChangePassword' }).finally(() => {
+                    isRedirectingToForceChange = false
+                })
+            }
+
+            return Promise.reject(error)
         }
 
         const shouldSkipErrorToast =

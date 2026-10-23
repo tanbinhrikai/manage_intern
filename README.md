@@ -139,7 +139,7 @@ The frontend will start on `http://localhost:5173`
 ### 6.5 Running Order
 
 1. Install JDK, Node.js, MySQL and IntelliJ IDEA.
-2. Create the database and run the SQL scripts in `backend/ddl`.
+2. Create the database and run the SQL scripts in `backend/ddl` **in order** (`V1` → `V9`).
 3. Configure the `.env` files for both `backend` and `frontend`, and verify the database connection.
 4. Start the backend, then the frontend.
 
