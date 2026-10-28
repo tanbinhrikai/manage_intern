@@ -45,6 +45,10 @@ public class Users {
     @Column(name = "is_active")
     Boolean isActive = true;
 
+    @Builder.Default
+    @Column(name = "must_change_password")
+    Boolean mustChangePassword = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     Instant createdAt;

@@ -18,6 +18,11 @@
             "loginFailed": "ログインに失敗しました。もう一度お試しください。"
         }
     },
+    "forceChangePassword": {
+        "heading": "パスワードの変更が必要です",
+        "description": "セキュリティ上の理由により、システムを引き続きご利用いただく前に初期パスワードを変更する必要があります。",
+        "logout": "ログアウト"
+    },
     "common": {
         "weeks": "週間",
         "confirm": {
@@ -185,7 +190,8 @@
         },
         "status": {
             "active": "アクティブ",
-            "locked": "ロック済み"
+            "locked": "ロック済み",
+            "mustChangePassword": "パスワード変更待ち"
         },
         "allStatus": "すべてのステータス",
         "allDepartments": "すべての部署",
@@ -220,6 +226,7 @@
             "isActive": "アクティブ",
             "password": "パスワード",
             "passwordHint": "（変更しない場合は空白のまま）",
+            "passwordResetWarning": "注意：新しいパスワードを設定すると、ユーザーは強制ログアウトされ、次回ログイン時にパスワードの変更が必要になります。",
             "passwordPlaceholder": "********",
             "passwordValidation": "パスワードは8文字以上で、大文字、小文字、数字を含む必要があります。",
             "save": "保存",
@@ -250,7 +257,8 @@
         },
         "status": {
             "active": "アクティブ",
-            "locked": "ロック済み"
+            "locked": "ロック済み",
+            "mustChangePassword": "パスワード変更待ち"
         },
         "allStatus": "すべてのステータス",
         "allDepartments": "すべての部署",
@@ -285,6 +293,7 @@
             "isActive": "アクティブ",
             "password": "パスワード",
             "passwordHint": "（変更しない場合は空白のまま）",
+            "passwordResetWarning": "注意：新しいパスワードを設定すると、ユーザーは強制ログアウトされ、次回ログイン時にパスワードの変更が必要になります。",
             "passwordPlaceholder": "********",
             "passwordValidation": "パスワードは8文字以上で、大文字、小文字、数字を含む必要があります。",
             "save": "保存",

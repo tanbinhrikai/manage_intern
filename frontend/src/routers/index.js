@@ -238,6 +238,12 @@ const routes = [
     meta: { requiresAuth: false },
   },
   {
+    path: "/change-password",
+    name: "ForceChangePassword",
+    component: () => import("@/views/auth/ForceChangePasswordView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/roadmaps/builder",
     name: "RoadmapBuilder",
     component: () => import("@/views/roadmap/RoadmapBuilderView.vue"),
@@ -266,9 +272,30 @@ router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const isAuthenticated = authStore.isAuthenticated;
   const userRole = authStore.userRole;
+  const mustChangePassword = authStore.mustChangePassword;
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: "Login" });
+    return;
+  }
+
+  if (isAuthenticated && mustChangePassword) {
+    if (to.name !== "ForceChangePassword") {
+      next({ name: "ForceChangePassword" });
+      return;
+    }
+    next();
+    return;
+  }
+
+  if (isAuthenticated && !mustChangePassword && to.name === "ForceChangePassword") {
+    if (userRole === "ADMIN") {
+      next({ name: "AdminDashboard" });
+    } else if (userRole === "MENTOR") {
+      next({ name: "MentorDashboard" });
+    } else {
+      next({ name: "Login" });
+    }
     return;
   }
 

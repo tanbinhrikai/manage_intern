@@ -5,8 +5,10 @@ import com.rikai.backend.common.CookieUtils;
 import com.rikai.backend.common.ErrorCode;
 import com.rikai.backend.common.SuccessCode;
 import com.rikai.backend.dto.request.user.ChangePasswordRequest;
+import com.rikai.backend.dto.request.user.UserCreationRequest;
 import com.rikai.backend.exception.AppException;
 import com.rikai.backend.exception.GlobalExceptionHandler;
+import com.rikai.backend.model.Enum.RoleType;
 import com.rikai.backend.security.CustomJwtDecoder;
 import com.rikai.backend.security.JwtAuthenticationEntryPoint;
 import com.rikai.backend.security.SecurityConfig;
@@ -222,6 +224,63 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value(ErrorCode.PASSWORD_SAME_AS_OLD.getMessage()));
 
         verify(cookieUtils, never()).clearCookies(any());
+    }
+
+    @Test
+    @DisplayName("Create user without password: returns 400 PASSWORD_REQUIRED")
+    @WithMockUser(username = "admin@gmail.com", roles = "ADMIN")
+    void createUser_MissingPassword_ShouldReturn400() throws Exception {
+        UserCreationRequest request = validCreationRequest(null);
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.PASSWORD_REQUIRED.name()));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    @DisplayName("Create user with weak password: returns 400 PASSWORD_WEAK")
+    @WithMockUser(username = "admin@gmail.com", roles = "ADMIN")
+    void createUser_WeakPassword_ShouldReturn400() throws Exception {
+        UserCreationRequest request = validCreationRequest("weak");
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.PASSWORD_WEAK.name()));
+
+        verifyNoInteractions(userService);
+    }
+
+    @Test
+    @DisplayName("Create user with password longer than 72 characters: returns 400 PASSWORD_TOO_LONG")
+    @WithMockUser(username = "admin@gmail.com", roles = "ADMIN")
+    void createUser_PasswordTooLong_ShouldReturn400() throws Exception {
+        UserCreationRequest request = validCreationRequest("Aa1" + "x".repeat(70));
+
+        mockMvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(ErrorCode.PASSWORD_TOO_LONG.name()));
+
+        verifyNoInteractions(userService);
+    }
+
+    private UserCreationRequest validCreationRequest(String password) {
+        return UserCreationRequest.builder()
+                .password(password)
+                .fullName("Nguyen Van A")
+                .roleName(RoleType.MENTOR)
+                .departmentId(1L)
+                .build();
     }
 }
 

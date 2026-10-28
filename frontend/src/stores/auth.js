@@ -10,6 +10,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => !!user.value)
     const userRole = computed(() => user.value?.role?.roleName || null)
+    const mustChangePassword = computed(() => Boolean(user.value?.mustChangePassword))
+
+    const setMustChangePassword = (value) => {
+        if (!user.value) return
+        user.value = {
+            ...user.value,
+            mustChangePassword: Boolean(value)
+        }
+        localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+    }
 
     const login = async (email, password) => {
         const response = await authApi.login(email, password)
@@ -52,6 +62,8 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         isAuthenticated,
         userRole,
+        mustChangePassword,
+        setMustChangePassword,
         login,
         logout,
         refreshToken,

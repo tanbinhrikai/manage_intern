@@ -22,6 +22,7 @@ public class UserResponse {
     private String fullName;
     private LocalDate dateOfBirth;
     private boolean isActive;
+    private boolean mustChangePassword;
     private Instant createdAt;
     private Instant updatedAt;
     private RolesResponse role;
@@ -53,6 +54,7 @@ public class UserResponse {
                 .fullName(user.getFullName())
                 .dateOfBirth(user.getDateOfBirth())
                 .isActive(user.getIsActive())
+                .mustChangePassword(user.getMustChangePassword())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .department(deptResponse)

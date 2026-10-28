@@ -19,7 +19,6 @@ import com.rikai.backend.repository.RolesRepository;
 import com.rikai.backend.repository.UsersRepository;
 import com.rikai.backend.service.auth.IAuthenticationService;
 import com.rikai.backend.validation.AutoGenerateEmail;
-import com.rikai.backend.validation.PasswordValidator;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -130,16 +129,8 @@ public class UserService implements IUserService {
         user.setRole(role);
         user.setIsActive(true);
 
-        // 4. Handle password
-        String rawPassword = request.getPassword();
-        if (rawPassword == null || rawPassword.isEmpty()) {
-            user.setPasswordHash(passwordEncoder.encode("Abc123456@")); // Default pass
-        } else {
-            if (!PasswordValidator.isValid(rawPassword)) {
-                throw new AppException(ErrorCode.PASSWORD_WEAK);
-            }
-            user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        }
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setMustChangePassword(true);
 
         // 5. Handle Department
         if (request.getDepartmentId() != null) {
@@ -154,10 +145,17 @@ public class UserService implements IUserService {
     @Override
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest userUpdateDTO) {
+        boolean resetPassword = userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty();
+        if (resetPassword && authenticationService.getCurrentUser().getId().equals(id)) {
+            throw new AppException(ErrorCode.USE_CHANGE_PASSWORD_INSTEAD);
+        }
+
         Users user = usersRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userMapper.updateUser(user, userUpdateDTO);
-        if (userUpdateDTO.getPassword() != null && !userUpdateDTO.getPassword().isEmpty()) {
+        if (resetPassword) {
             user.setPasswordHash(passwordEncoder.encode(userUpdateDTO.getPassword()));
+            user.setMustChangePassword(true);
+            refreshTokenRepository.deleteByUser(user);
         }
         Department department = departmentRepository.findById(userUpdateDTO.getDepartmentId()).orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_EXISTED));
         user.setDepartment(department);
@@ -230,6 +228,7 @@ public class UserService implements IUserService {
         }
         String passwordHash = passwordEncoder.encode(request.getNewPassword());
         currentUser.setPasswordHash(passwordHash);
+        currentUser.setMustChangePassword(false);
         usersRepository.save(currentUser);
 
         refreshTokenRepository.deleteByUser(currentUser);
