@@ -62,6 +62,10 @@ public class SecurityConfig {
     @Bean
     public BearerTokenResolver bearerTokenResolver() {
         return request -> {
+			String path=request.getServletPath();
+			if (path != null && (path.startsWith("/auth") || path.startsWith("/api/v1/auth"))){
+				return null;
+			}
             if (request.getCookies() != null) {
                 return Arrays.stream(request.getCookies())
                         .filter(c -> "ACCESS_TOKEN".equals(c.getName()))
@@ -84,7 +88,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173"));
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:8785/"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
