@@ -105,21 +105,25 @@ class MentorCard extends StatelessWidget {
             Row(
               children: [
                 // Department Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    mentor.department?.title ?? 'No Department',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF334155),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      mentor.department?.title ?? 'No Department',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
                     ),
                   ),
                 ),
@@ -158,7 +162,7 @@ class MentorCard extends StatelessWidget {
                 const Spacer(),
 
                 // Status Badge & Switch
-                StatusBadge.fromActive(mentor.active),
+                StatusBadge(isActive: mentor.active),
                 const SizedBox(width: 6),
                 isToggling
                     ? const SizedBox(

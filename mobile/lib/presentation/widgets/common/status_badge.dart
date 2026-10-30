@@ -14,21 +14,6 @@ class StatusBadge extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
   });
 
-  const StatusBadge.active(
-    bool active, {
-    super.key,
-    this.fontSize = 12,
-    this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-  })  : isActive = active,
-        status = active ? 'Active' : 'Inactive';
-
-  factory StatusBadge.fromActive(bool active) {
-    return StatusBadge(
-      isActive: active,
-      status: active ? 'Active' : 'Inactive',
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final (label, textColor, bgColor, dotColor) = _resolveColorsAndLabel();

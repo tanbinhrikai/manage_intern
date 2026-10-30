@@ -94,7 +94,7 @@ class MentorDetailDialog extends StatelessWidget {
             _buildDetailRow(
               icon: Icons.check_circle_outline_rounded,
               label: 'Status',
-              customValue: StatusBadge.fromActive(mentor.active),
+              customValue: StatusBadge(isActive: mentor.active),
             ),
             const SizedBox(height: 12),
             _buildDetailRow(
@@ -173,18 +173,25 @@ class MentorDetailDialog extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const Spacer(),
-        if (customValue != null)
-          customValue
-        else
-          Text(
-            value ?? '',
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF0F172A),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: customValue != null
+              ? Align(
+                  alignment: Alignment.centerRight,
+                  child: customValue,
+                )
+              : Text(
+                  value ?? '',
+                  textAlign: TextAlign.end,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
       ],
     );
   }

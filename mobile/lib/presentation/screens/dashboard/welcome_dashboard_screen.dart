@@ -400,20 +400,22 @@ class _WelcomeDashboardScreenState extends State<WelcomeDashboardScreen> {
               ),
               const SizedBox(height: 10),
 
-              _buildActionTile(
-                icon: Icons.assignment_outlined,
-                iconColor: const Color(0xFF8B5CF6),
-                title: 'Evaluation Sessions',
-                subtitle: 'Review intern scorecards and periodic evaluations',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Evaluation module coming soon'),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
+              if (_currentUser?.roleDisplay == 'ADMIN') ...[
+                _buildActionTile(
+                  icon: Icons.assignment_outlined,
+                  iconColor: const Color(0xFF8B5CF6),
+                  title: 'Evaluation Sessions',
+                  subtitle: 'Review intern scorecards and periodic evaluations',
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Evaluation module coming soon'),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
 
               _buildActionTile(
                 icon: Icons.assessment_outlined,

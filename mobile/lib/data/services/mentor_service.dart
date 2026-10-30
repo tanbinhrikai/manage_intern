@@ -19,8 +19,6 @@ class MentorService {
     String? keyword,
     dynamic departmentId,
     bool? isActive,
-    String? startDate,
-    String? endDate,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -36,12 +34,6 @@ class MentorService {
       }
       if (isActive != null) {
         queryParams['is_active'] = isActive;
-      }
-      if (startDate != null && startDate.isNotEmpty) {
-        queryParams['start_date'] = startDate;
-      }
-      if (endDate != null && endDate.isNotEmpty) {
-        queryParams['end_date'] = endDate;
       }
 
       final response = await _apiClient.dio.get(
@@ -148,57 +140,16 @@ class MentorService {
         queryParameters: {'limit': 100, 'page': 0},
       );
 
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['data'] != null) {
-        final innerData = data['data'];
-        List<dynamic> itemsList = [];
-        if (innerData is Map<String, dynamic> && innerData['items'] is List) {
-          itemsList = innerData['items'] as List<dynamic>;
-        } else if (innerData is List) {
-          itemsList = innerData;
-        }
-
-        return itemsList
-            .map((item) => DepartmentModel.fromJson(item as Map<String, dynamic>))
-            .toList();
-      }
-
-      return [];
-    } catch (e) {
-      throw Exception(ApiClient.getErrorMessage(e));
-    }
-  }
-
-  /// Fetch list of interns assigned to a mentor
-  Future<List<MentorInternItemModel>> getInternsByMentor(
-    String mentorId, {
-    int page = 0,
-    int limit = 50,
-  }) async {
-    try {
-      final response = await _apiClient.dio.get(
-        ApiConstants.interns,
-        queryParameters: {
-          'mentor_id': mentorId,
-          'page': page,
-          'limit': limit,
-        },
+      final apiResponse = ApiResponse<PageResponse<DepartmentModel>>.fromJson(
+        response.data as Map<String, dynamic>,
+        (json) => PageResponse.fromJson(
+          json as Map<String, dynamic>,
+          (item) => DepartmentModel.fromJson(item as Map<String, dynamic>),
+        ),
       );
 
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['data'] != null) {
-        final innerData = data['data'];
-        List<dynamic> itemsList = [];
-        if (innerData is Map<String, dynamic> && innerData['items'] is List) {
-          itemsList = innerData['items'] as List<dynamic>;
-        } else if (innerData is List) {
-          itemsList = innerData;
-        }
-
-        return itemsList
-            .map((item) =>
-                MentorInternItemModel.fromJson(item as Map<String, dynamic>))
-            .toList();
+      if (apiResponse.success && apiResponse.data != null) {
+        return apiResponse.data!.items;
       }
 
       return [];
@@ -207,4 +158,3 @@ class MentorService {
     }
   }
 }
-

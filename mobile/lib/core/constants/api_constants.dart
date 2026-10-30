@@ -27,5 +27,4 @@ class ApiConstants {
   static const String users = '/users';
   static const String userStatus = '/users/status';
   static const String departments = '/departments';
-  static const String interns = '/interns';
 }

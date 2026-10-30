@@ -7,6 +7,7 @@ class MentorFilterBar extends StatelessWidget {
   final List<DepartmentModel> departments;
   final bool? selectedStatus;
   final dynamic selectedDepartmentId;
+  final TextEditingController? searchController;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<bool?> onStatusChanged;
   final ValueChanged<dynamic> onDepartmentChanged;
@@ -16,6 +17,7 @@ class MentorFilterBar extends StatelessWidget {
     required this.departments,
     required this.selectedStatus,
     required this.selectedDepartmentId,
+    this.searchController,
     required this.onSearchChanged,
     required this.onStatusChanged,
     required this.onDepartmentChanged,
@@ -29,6 +31,7 @@ class MentorFilterBar extends StatelessWidget {
       child: Column(
         children: [
           AppSearchBar(
+            controller: searchController,
             hintText: 'Search mentors by name or email...',
             onChanged: onSearchChanged,
           ),
@@ -153,4 +156,3 @@ class MentorFilterBar extends StatelessWidget {
     );
   }
 }
-

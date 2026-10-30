@@ -21,7 +21,7 @@ class AppValidators {
   }
 
   /// Validates password with the following rules:
-  /// - Length: between 6 and 72 characters inclusive (6 <= length <= 72)
+  /// - Length: between 8 and 72 characters inclusive (8 <= length <= 72)
   /// - Must include at least 1 uppercase letter
   /// - Must include at least 1 lowercase letter
   /// - Must include at least 1 number
@@ -31,8 +31,8 @@ class AppValidators {
     if (pass.isEmpty) {
       return isRequired ? 'Password is required' : null;
     }
-    if (pass.length < 6) {
-      return 'Password must be at least 6 characters';
+    if (pass.length < 8) {
+      return 'Password must be at least 8 characters';
     }
     if (pass.length > 72) {
       return 'Password cannot exceed 72 characters';

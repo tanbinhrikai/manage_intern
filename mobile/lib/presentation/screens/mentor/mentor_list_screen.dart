@@ -18,6 +18,7 @@ class MentorListScreen extends StatefulWidget {
 
 class _MentorListScreenState extends State<MentorListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   List<MentorModel> _mentors = [];
   List<DepartmentModel> _departments = [];
@@ -27,6 +28,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
   bool _hasMore = false;
   int _currentPage = 0;
   final int _pageSize = 10;
+  int _requestId = 0;
 
   String _searchKeyword = '';
   bool? _filterIsActive;
@@ -62,6 +64,11 @@ class _MentorListScreenState extends State<MentorListScreen> {
   }
 
   Future<void> _fetchMentors({required int page, bool reset = false}) async {
+    final int currentRequestId = ++_requestId;
+    if (reset) {
+      _isLoadingMore = false;
+    }
+
     try {
       final response = await MentorService.instance.getMentors(
         page: page,
@@ -71,7 +78,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
         isActive: _filterIsActive,
       );
 
-      if (!mounted) return;
+      if (!mounted || currentRequestId != _requestId) return;
 
       setState(() {
         if (reset) {
@@ -83,7 +90,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
         _hasMore = response.hasNext;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || currentRequestId != _requestId) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceAll('Exception: ', '')),
@@ -202,6 +209,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -242,6 +250,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
           children: [
             // Search & Filter Header
             MentorFilterBar(
+              searchController: _searchController,
               departments: _departments,
               selectedStatus: _filterIsActive,
               selectedDepartmentId: _filterDepartmentId,
@@ -274,6 +283,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
                             if (_searchKeyword.isNotEmpty ||
                                 _filterIsActive != null ||
                                 _filterDepartmentId != null) {
+                              _searchController.clear();
                               setState(() {
                                 _searchKeyword = '';
                                 _filterIsActive = null;

@@ -11,7 +11,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: StatusBadge.active(true),
+            body: StatusBadge(isActive: true),
           ),
         ),
       );
@@ -25,7 +25,7 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
-            body: StatusBadge.active(false),
+            body: StatusBadge(isActive: false),
           ),
         ),
       );

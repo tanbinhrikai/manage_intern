@@ -35,7 +35,7 @@ void main() {
   });
 
   group(
-    'AppValidators Password Tests (6 <= length <= 72, upper, lower, number)',
+    'AppValidators Password Tests (8 <= length <= 72, upper, lower, number)',
     () {
       test('Empty password when required returns error', () {
         expect(AppValidators.validatePassword(''), 'Password is required');
@@ -47,10 +47,14 @@ void main() {
         expect(AppValidators.validatePassword(null, isRequired: false), isNull);
       });
 
-      test('Password shorter than 6 characters fails', () {
+      test('Password shorter than 8 characters fails', () {
         expect(
           AppValidators.validatePassword('Ab123'),
-          'Password must be at least 6 characters',
+          'Password must be at least 8 characters',
+        );
+        expect(
+          AppValidators.validatePassword('Abc1234'), // 7 chars
+          'Password must be at least 8 characters',
         );
       });
 
@@ -83,11 +87,11 @@ void main() {
         );
       });
 
-      test('Valid 6-72 char passwords with mixed cases and number pass', () {
+      test('Valid 8-72 char passwords with mixed cases and number pass', () {
         expect(
-          AppValidators.validatePassword('Abc123'),
+          AppValidators.validatePassword('Pass1234'),
           isNull,
-        ); // exactly 6 chars
+        ); // exactly 8 chars
         expect(AppValidators.validatePassword('StrongPass123'), isNull);
       });
     },
