@@ -23,4 +23,8 @@ class ApiConstants {
   static const String authLogout = '/auth/logout';
   static const String refreshToken = '/auth/refresh';
   static const String getMyInfo = '/users/get-my-info';
+  static const String mentors = '/users/mentors';
+  static const String users = '/users';
+  static const String userStatus = '/users/status';
+  static const String departments = '/departments';
 }
