@@ -4,6 +4,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../storage/user_storage.dart';
 import '../auth/login_screen.dart';
+import '../mentor/mentor_list_screen.dart';
 
 class WelcomeDashboardScreen extends StatefulWidget {
   final UserModel? user;
@@ -368,6 +369,21 @@ class _WelcomeDashboardScreenState extends State<WelcomeDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 12),
+
+              _buildActionTile(
+                icon: Icons.supervisor_account_rounded,
+                iconColor: const Color(0xFF1E40AF),
+                title: 'Manage Mentors',
+                subtitle: 'View mentor accounts, departments and supervision',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MentorListScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
 
               _buildActionTile(
                 icon: Icons.group_outlined,
