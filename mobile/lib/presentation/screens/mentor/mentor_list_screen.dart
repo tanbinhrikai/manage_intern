@@ -25,6 +25,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
 
   bool _isLoadingInitial = true;
   bool _isLoadingMore = false;
+  bool _isRefreshing = false;
   bool _hasMore = false;
   int _currentPage = 0;
   final int _pageSize = 10;
@@ -64,9 +65,11 @@ class _MentorListScreenState extends State<MentorListScreen> {
   }
 
   Future<void> _fetchMentors({required int page, bool reset = false}) async {
-    final int currentRequestId = ++_requestId;
+    final int currentRequestId = reset ? ++_requestId : _requestId;
     if (reset) {
+      _isRefreshing = true;
       _isLoadingMore = false;
+      _hasMore = false;
     }
 
     try {
@@ -83,6 +86,7 @@ class _MentorListScreenState extends State<MentorListScreen> {
       setState(() {
         if (reset) {
           _mentors = response.items;
+          _isRefreshing = false;
         } else {
           _mentors.addAll(response.items);
         }
@@ -91,6 +95,9 @@ class _MentorListScreenState extends State<MentorListScreen> {
       });
     } catch (e) {
       if (!mounted || currentRequestId != _requestId) return;
+      if (reset) {
+        setState(() => _isRefreshing = false);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceAll('Exception: ', '')),
@@ -104,13 +111,14 @@ class _MentorListScreenState extends State<MentorListScreen> {
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoadingMore &&
+        !_isRefreshing &&
         _hasMore) {
       _loadMore();
     }
   }
 
   Future<void> _loadMore() async {
-    if (_isLoadingMore || !_hasMore) return;
+    if (_isLoadingMore || _isRefreshing || !_hasMore) return;
     setState(() => _isLoadingMore = true);
     await _fetchMentors(page: _currentPage + 1);
     if (mounted) {

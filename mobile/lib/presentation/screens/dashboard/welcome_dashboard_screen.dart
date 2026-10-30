@@ -370,20 +370,22 @@ class _WelcomeDashboardScreenState extends State<WelcomeDashboardScreen> {
               ),
               const SizedBox(height: 12),
 
-              _buildActionTile(
-                icon: Icons.supervisor_account_rounded,
-                iconColor: const Color(0xFF1E40AF),
-                title: 'Manage Mentors',
-                subtitle: 'View mentor accounts, departments and supervision',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const MentorListScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
+              if (_currentUser?.roleDisplay == 'ADMIN') ...[
+                _buildActionTile(
+                  icon: Icons.supervisor_account_rounded,
+                  iconColor: const Color(0xFF1E40AF),
+                  title: 'Manage Mentors',
+                  subtitle: 'View mentor accounts, departments and supervision',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const MentorListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
 
               _buildActionTile(
                 icon: Icons.group_outlined,
@@ -400,22 +402,20 @@ class _WelcomeDashboardScreenState extends State<WelcomeDashboardScreen> {
               ),
               const SizedBox(height: 10),
 
-              if (_currentUser?.roleDisplay == 'ADMIN') ...[
-                _buildActionTile(
-                  icon: Icons.assignment_outlined,
-                  iconColor: const Color(0xFF8B5CF6),
-                  title: 'Evaluation Sessions',
-                  subtitle: 'Review intern scorecards and periodic evaluations',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Evaluation module coming soon'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-              ],
+              _buildActionTile(
+                icon: Icons.assignment_outlined,
+                iconColor: const Color(0xFF8B5CF6),
+                title: 'Evaluation Sessions',
+                subtitle: 'Review intern scorecards and periodic evaluations',
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Evaluation module coming soon'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
 
               _buildActionTile(
                 icon: Icons.assessment_outlined,
