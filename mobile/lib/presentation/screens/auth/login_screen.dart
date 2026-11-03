@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/app_validators.dart';
 import '../../../data/services/auth_service.dart';
 import '../dashboard/welcome_dashboard_screen.dart';
 
@@ -245,18 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Email is required';
-                              }
-                              final emailRegex = RegExp(
-                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                              );
-                              if (!emailRegex.hasMatch(value.trim())) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
-                            },
+                            validator: AppValidators.validateEmail,
                           ),
                           const SizedBox(height: 20),
 
@@ -327,15 +317,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              if (value.length < 8) {
-                                return 'Password must be at least 8 characters';
-                              }
-                              return null;
-                            },
+                            validator: (value) => AppValidators.validateRequired(
+                              value,
+                              fieldName: 'Password',
+                            ),
                           ),
                           const SizedBox(height: 28),
 
